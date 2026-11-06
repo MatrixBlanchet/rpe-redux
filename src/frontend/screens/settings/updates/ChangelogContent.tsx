@@ -1,79 +1,57 @@
 /**
- * The changelog modal body.
+ * The changelog modal: its rendered body and the version/date title fact.
  *
- * Release notes come from the configured GitHub Releases source. The surface is
- * opened only when that source has returned at least one release; there is no
- * bundled changelog in this build. Status, actions, and release rows are the
- * same shared components the Help page uses.
+ * Notes are the published GitHub release body, the same external source the
+ * release page shows. The body already lists Chinese first and English second,
+ * so this surface selects the section for the active language. It shows nothing
+ * else: no version cards, update controls, or release history.
  */
-import { Button } from "../../../../design/components/button/Button.tsx";
 import { useTranslation } from "../../../../i18n/react.ts";
-import { openSettings } from "../settingsWindowController.ts";
-import {
-  releaseNotesFromRemote,
-  ReleaseNotesList,
-  UpdateActionBar,
-  UpdateStatusNotice,
-  UpdateStatusText,
-} from "./UpdatePanels.tsx";
+import { ReleaseNotesBody } from "./ReleaseNotesBody.tsx";
+import { formatReleaseDate, selectChangelogRelease } from "./releaseNotes.ts";
 import { useUpdateState } from "./useUpdateState.ts";
-import { isPrereleaseVersion } from "../../../../core/utils/version.ts";
 
-/** The changelog modal body with release notes and the shared update actions. */
-export function ChangelogContent({ onClose }: { onClose(): void }): React.JSX.Element {
-  const { t } = useTranslation();
+/** The changelog modal body. */
+export function ChangelogContent(): React.JSX.Element {
+  const { t, language } = useTranslation();
   const state = useUpdateState();
-  const remote = state.releases.length > 0;
-  const releases = releaseNotesFromRemote(state.releases);
+  const release = selectChangelogRelease(state.releases, state.currentVersion, language);
 
+  if (!release) {
+    return (
+      <div className="redux-changelog">
+        <p className="redux-changelog-hint">
+          {state.phase === "checking"
+            ? t("settings.updates.checking")
+            : t("chrome.changelog.empty")}
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="redux-changelog">
-      <header className="redux-changelog-meta">
-        <span>
-          {t("settings.updates.current", { version: state.currentVersion })}
-          {isPrereleaseVersion(state.currentVersion) && (
-            <span className="redux-version-channel">{t("settings.version.test")}</span>
-          )}
-        </span>
-        <span className="redux-changelog-source">{t("chrome.changelog.github")}</span>
-      </header>
-
-      <div className="redux-changelog-notices">
-        <UpdateStatusNotice state={state} showUnconfigured />
-      </div>
-
-      <div className="redux-changelog-entries">
-        {releases.length > 0 ? (
-          <ReleaseNotesList releases={releases} currentVersion={state.currentVersion} />
-        ) : (
-          <p className="redux-changelog-hint">{t("chrome.changelog.empty")}</p>
-        )}
-      </div>
-
-      <footer className="redux-changelog-actions">
-        {state.repo && (
-          <span className="redux-changelog-status">
-            <UpdateStatusText state={state} />
-          </span>
-        )}
-        <UpdateActionBar
-          state={state}
-          requireRepo
-          showCheck={!state.portable}
-          showReleaseLink={remote}
-          leading={
-            <Button
-              variant="outlined"
-              onClick={() => {
-                onClose();
-                window.setTimeout(() => openSettings("help"), 220);
-              }}
-            >
-              {t("chrome.changelog.settings")}
-            </Button>
-          }
-        />
-      </footer>
+      <ReleaseNotesBody notes={release.notes} />
     </div>
+  );
+}
+
+/**
+ * The version and date the modal title shows, e.g. `(1.0.1, 2026-11-6)`.
+ *
+ * It subscribes to the update store because the notes are fetched after the
+ * modal opens, so the heading gains its facts as soon as the release arrives.
+ */
+export function ChangelogTitleMeta(): React.JSX.Element | null {
+  const { t, language } = useTranslation();
+  const state = useUpdateState();
+  const release = selectChangelogRelease(state.releases, state.currentVersion, language);
+  if (!release) {
+    return null;
+  }
+  const date = formatReleaseDate(release.publishedAt);
+  return (
+    <span className="redux-changelog-title-meta">
+      {date ? t("chrome.changelog.titleMeta", { version: release.version, date }) : release.version}
+    </span>
   );
 }

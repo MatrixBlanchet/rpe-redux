@@ -173,10 +173,15 @@ Two consequences matter when publishing the first signed release:
 - The release repository must stay public: the host fetches
   `releases/latest/download/<manifest>` without credentials.
 
-Help → Changelog opens a read-first release-notes modal when the configured
-GitHub Releases source returns at least one release. A check runs when the user
-presses Verify on Settings → Help, or at startup when
-**Settings → Help → Automatic updates** is enabled. The manual result is
+Help → Changelog opens a modal with the running version's published GitHub
+release notes, rendered in the interface language. The release workflow publishes
+the matching section of `CHANGELOG.md`, which holds only the current release's
+notes, as the GitHub release body; that file lists Chinese first and English
+second. The modal title names the shown release's version and date, and the notes
+may credit `@name` contributors and colour text (see `CHANGELOG.md`). Opening the
+surface fetches the notes when the store has not loaded them
+yet. A check runs when the user presses Verify on Settings → Help, or at startup
+when **Settings → Help → Automatic updates** is enabled. The manual result is
 reported as a toast.
 
 On Windows, a signed release installs through a portable update payload rather
@@ -297,9 +302,10 @@ The updater checks user resources for active writers and for changes during
 preparation and before handoff; the local helper checks again after the app
 exits. A conflict refuses installation and reopens the app with the affected
 path. The target is recorded in `pending-update.json` at handoff; the next launch
-records the matching version in `update-result.json`.
+records the matching version in `update-result.json`, opens the changelog with the
+published notes, and clears the marker so later launches stay quiet.
 
-Portable builds carry `portable.marker`, can view remote release notes when an
+Portable builds carry `portable.marker`, show the published release notes when an
 update source is configured, and update by replacing the portable folder.
 
 ## Session and window state
