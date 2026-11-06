@@ -1,0 +1,66 @@
+/* Composite search field: shell, bare input, and clear action. The shell owns
+   the focus ring through `.redux-input-shell`, so the inner input never draws a
+   second outline. */
+
+.redux-search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  height: var(--control-height);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--foreground-muted);
+  transition:
+    border-color var(--design-dur-tint) ease,
+    background-color var(--design-dur-tint) ease,
+    color var(--design-dur-tint) ease;
+
+  &:focus-within {
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+    color: var(--foreground);
+  }
+
+  .redux-icon {
+    flex: none;
+    --icon-color: currentColor;
+  }
+}
+
+.redux-search-field-compact {
+  height: var(--control-height-compact);
+  padding: 0 var(--space-2);
+}
+
+// The shared native-input rule is `.redux-app-root`-qualified and paints its own box.
+// This selector outranks it so the composite shell remains the only frame.
+.redux-app-root .redux-search-field .redux-search-field-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: var(--type-body);
+  // The shared input defaults to the trailing edge so values sit beside their
+  // reset action. A search field is read from its leading glyph, so the
+  // placeholder and typed text start on the same edge on every surface.
+  text-align: left;
+  outline: 0;
+  box-shadow: none;
+}
+
+.redux-search-field-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.redux-search-field-clear {
+  flex: none;
+}

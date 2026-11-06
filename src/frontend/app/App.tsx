@@ -1,0 +1,301 @@
+﻿/**
+ * Product entry for the React shell: starts the owned backend and local service,
+ * applies theme preferences, installs design-system hosts and editor surface
+ * providers, and gates the shell behind startup readiness.
+ */
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { Shell } from "./Shell.tsx";
+import { EditorBackdrop } from "./EditorBackdrop.tsx";
+import { useTooltipHost, setShortcutLookup } from "../../design/patterns/TooltipHost.tsx";
+import { ControlHost } from "../../design/controls/ControlHost.tsx";
+import { SettingsWindow } from "../screens/settings/SettingsWindow.tsx";
+import { initializeUpdates } from "../screens/settings/updates/updateStore.ts";
+import { preferences } from "../../core/state/preferences.ts";
+
+import { DEFAULT_THEME } from "../../core/theme/themes.ts";
+import { activeTheme, setActiveTheme, subscribeActiveTheme } from "../../core/theme/activeTheme.ts";
+import { applyTheme } from "../../core/theme/applyTheme.ts";
+import { getThemePackage, replaceDiscoveredThemes } from "../../core/theme/registry.ts";
+import { listExternalThemePackages } from "../../core/platform/desktop/themePackages.ts";
+import { refreshExternalNoteSkins } from "../../core/platform/desktop/noteSkinPackages.ts";
+import { loadPackagedExtensions, refreshPackagedExtensions } from "../platform/extensionLoader.ts";
+import { syncNativeWindowTheme } from "../platform/desktop/windowTheme.ts";
+import { localService } from "../../core/global/library/service.ts";
+import { createDesktopPreferenceClient } from "../platform/preferencesClient.ts";
+import {
+  adoptRuntimePortSettings,
+  initializeRuntimePorts,
+} from "../platform/desktop/runtimePorts.ts";
+import { NOTE_SKIN_EVENT, installNoteSkinBridge } from "../platform/noteSkinBridge.ts";
+import { prepareBackendInstance, startBackend } from "../../core/platform/desktop/backend.ts";
+import { StartupView } from "../screens/startup/StartupView.tsx";
+import { StartupBoundary } from "../screens/startup/StartupBoundary.tsx";
+import type { StartupFailureSource } from "../screens/startup/startupDiagnostics.ts";
+import { ExperimentalWarning } from "../screens/startup/ExperimentalWarning.tsx";
+import { diagnosticText } from "../platform/diagnosticLog.ts";
+import { ChartLoading } from "../screens/editor/workspace/document/loading/ChartLoading.tsx";
+import { RecordingHosts } from "../screens/editor/workspace/recording/RecordingHosts.tsx";
+import { TimingDetectionHost } from "../screens/editor/workspace/timingDetection/TimingDetectionHost.tsx";
+import { CollaborationHosts } from "../screens/editor/workspace/collaboration/CollaborationHosts.tsx";
+import { ExportDialog } from "../screens/editor/workspace/document/export/ExportDialog.tsx";
+import { ModalScrimPortal } from "../../design/components/modal/ModalScrimPortal.tsx";
+import { ModalHost } from "../overlays/modals/ModalHost.tsx";
+import { SessionPrompts } from "../overlays/SessionPrompts.tsx";
+import { ToastHost } from "../../design/patterns/ToastHost.tsx";
+import { ScriptGuideHost } from "../platform/ScriptGuideHost.tsx";
+import { OnboardingHost } from "../onboarding/OnboardingHost.tsx";
+import { ExtensionOverlays } from "../platform/ExtensionOverlays.tsx";
+import { WindowControls } from "../chrome/topbar/windowControls/WindowControls.tsx";
+import "../../design/styles/index.less";
+import { actionShortcuts, toolbar } from "../../core/shell/registries/toolbar.ts";
+import { shortcutChips } from "../../design/components/keyboardHint/shortcutChips.ts";
+import {
+  getEditorVisibility,
+  subscribeToEditorVisibility,
+} from "../../core/edit/state/visibility.ts";
+import { EditorProviderTree } from "../screens/editor/workspace/runtime/composition/EditorProviderTree.tsx";
+import {
+  EditorSessionProvider,
+  useEditorSession,
+} from "../screens/editor/workspace/runtime/providers/SessionProvider.tsx";
+import {
+  TimelineDomSurfaceProvider,
+  createTimelineDomSurface,
+} from "../screens/editor/workspace/timeline/surface/TimelineDomSurface.tsx";
+import {
+  PreviewSurfaceProvider,
+  createPreviewSurface,
+} from "../screens/editor/workspace/preview/surface/PreviewDomSurface.tsx";
+import {
+  InspectorSurfaceProvider,
+  createInspectorSurface,
+} from "../screens/editor/inspector/InspectorDomSurface.tsx";
+import {
+  TransportSurfaceProvider,
+  createTransportSurface,
+} from "../chrome/transport/TransportDomSurface.tsx";
+
+// Install the note-skin bridge at module load so the media layer can resolve
+// bundled skins and announce changes before any skin is read.
+installNoteSkinBridge();
+
+/**
+ * Root component: installs window controls and the startup boundary, then wraps
+ * the session provider around the shell content.
+ */
+export function App() {
+  return (
+    <>
+      <WindowControls />
+      <StartupBoundary>
+        <EditorSessionProvider>
+          <AppContent />
+        </EditorSessionProvider>
+      </StartupBoundary>
+    </>
+  );
+}
+
+/** Owns startup readiness, theme application, and the surface providers around the shell. */
+function AppContent() {
+  const editorSession = useEditorSession();
+  const tooltip = useTooltipHost();
+  const theme = useSyncExternalStore(subscribeActiveTheme, activeTheme, activeTheme);
+  const setTheme = setActiveTheme;
+  const editorVisibility = useSyncExternalStore(
+    subscribeToEditorVisibility,
+    getEditorVisibility,
+    getEditorVisibility,
+  );
+  const [error, setError] = useState("");
+  const [errorSource, setErrorSource] = useState<StartupFailureSource>("unknown");
+  const [ready, setReady] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [timelineSurface] = useState(createTimelineDomSurface);
+  const [previewSurface] = useState(createPreviewSurface);
+  const [inspectorSurface] = useState(createInspectorSurface);
+  const [transportSurface] = useState(createTransportSurface);
+  const [backendReady, setBackendReady] = useState(false);
+
+  /** Tags editor construction/render failures without changing callback identity. */
+  const handleEditorError = useCallback((value: string) => {
+    if (value) {
+      setErrorSource("editor");
+    }
+    setError(value);
+  }, []);
+
+  useEffect(() => {
+    applyTheme(theme);
+    syncNativeWindowTheme(theme);
+  }, [theme]);
+
+  // Live folder sniffing: themes, skin folders, and Extension folders are
+  // re-read on one timer, so dropping a package in place updates the UI without
+  // a manual refresh. Each helper no-ops outside the desktop host.
+  useEffect(() => {
+    let cancelled = false;
+    let themeSignature = "";
+    const scan = async () => {
+      const documents = await listExternalThemePackages();
+      if (cancelled) {
+        return;
+      }
+      const signature = JSON.stringify(documents);
+      if (signature !== themeSignature) {
+        themeSignature = signature;
+        replaceDiscoveredThemes(documents);
+        if (!getThemePackage(theme)) {
+          setTheme(DEFAULT_THEME);
+        } else {
+          applyTheme(theme);
+        }
+      }
+      void refreshPackagedExtensions();
+      void refreshExternalNoteSkins();
+    };
+    void scan();
+    const timer = window.setInterval(() => void scan(), 1500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [theme, setTheme]);
+
+  useEffect(() => {
+    const suppressNativeMenus = (event: MouseEvent) => event.preventDefault();
+    document.addEventListener("contextmenu", suppressNativeMenus, true);
+    let cancelled = false;
+    // The tooltip resolves live shortcut chips through this layer's toolbar
+    // registry, so the lookup is installed here rather than in design.
+    setShortcutLookup((actionId, shortcutId) => {
+      const action = toolbar.node(actionId);
+      if (action?.kind === "action") {
+        return shortcutChips(actionShortcuts(action));
+      }
+      if (!shortcutId) {
+        return [];
+      }
+      return shortcutChips(
+        actionShortcuts({
+          kind: "action",
+          id: "tooltip",
+          group: "editor",
+          order: 0,
+          label: "",
+          tooltip: "",
+          icon: "keyboard",
+          shortcutId,
+        }),
+      );
+    });
+
+    // Construct the provider tree only after the owned backend is healthy.
+    initializeRuntimePorts()
+      .then(() => startBackend())
+      .then(async () => {
+        adoptRuntimePortSettings();
+        await prepareBackendInstance();
+        if (cancelled) {
+          return;
+        }
+        const found = await localService({ refresh: true });
+        if (found) {
+          await preferences.attach(createDesktopPreferenceClient(found.library));
+          // Extension consent is kept in durable preferences, so package
+          // discovery runs only after the preference store attaches.
+          await loadPackagedExtensions();
+          void initializeUpdates();
+          if (!cancelled) {
+            window.dispatchEvent(new Event(NOTE_SKIN_EVENT));
+          }
+        }
+        if (cancelled) {
+          return;
+        }
+        setBackendReady(true);
+      })
+      .catch((failure) => {
+        if (!cancelled) {
+          setErrorSource("backend");
+          setError(diagnosticText(failure));
+        }
+      });
+
+    return () => {
+      document.removeEventListener("contextmenu", suppressNativeMenus, true);
+      cancelled = true;
+    };
+  }, [attempt]);
+
+  useEffect(() => {
+    if (ready) {
+      window.dispatchEvent(new Event("resize"));
+    }
+  }, [ready]);
+
+  return (
+    <TimelineDomSurfaceProvider surface={timelineSurface}>
+      <PreviewSurfaceProvider surface={previewSurface}>
+        <InspectorSurfaceProvider surface={inspectorSurface}>
+          <TransportSurfaceProvider surface={transportSurface}>
+            <EditorProviderTree
+              session={editorSession}
+              enabled={backendReady}
+              resetKey={attempt}
+              onReady={setReady}
+              onError={handleEditorError}
+            >
+              <ModalScrimPortal />
+              <div
+                className="redux-app-shell"
+                data-at-home={editorVisibility.atHome}
+                aria-hidden={!ready}
+                inert={!ready}
+              >
+                {!editorVisibility.atHome && <EditorBackdrop />}
+                <Shell />
+                <ExtensionOverlays scope="window" />
+                <ModalHost />
+                <SessionPrompts />
+                <ScriptGuideHost />
+                {ready && <OnboardingHost />}
+                <ControlHost />
+                <SettingsWindow theme={theme} setTheme={setTheme} />
+                <ExperimentalWarning enabled={ready} />
+                <ChartLoading />
+                {/* The export question is about the document, not about a panel, so it
+              hangs off the window frame beside the loading overlay — the other
+              `workspace/document/` surface that asks about the whole document. */}
+                <ExportDialog />
+                <RecordingHosts />
+                <TimingDetectionHost />
+                <CollaborationHosts />
+              </div>
+              {/* The toast stack is a document-level peer of the app shell. A
+                  modal scrim portals above the shell and must never clip, blur,
+                  or inert the app's notices. */}
+              {ready && (
+                <ToastHost className={`app-toasts${editorVisibility.atHome ? " is-home" : ""}`} />
+              )}
+              {tooltip.element}
+            </EditorProviderTree>
+            {!ready && (
+              <StartupView
+                error={error}
+                source={errorSource}
+                retry={() => {
+                  setError("");
+                  setErrorSource("unknown");
+                  setReady(false);
+                  setBackendReady(false);
+                  setAttempt((value) => value + 1);
+                }}
+              />
+            )}
+          </TransportSurfaceProvider>
+        </InspectorSurfaceProvider>
+      </PreviewSurfaceProvider>
+    </TimelineDomSurfaceProvider>
+  );
+}

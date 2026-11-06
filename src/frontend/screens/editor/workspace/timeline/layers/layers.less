@@ -1,0 +1,80 @@
+// The layer selector is the bottom strip of the event field: one equal cell per
+// layer, so picking a layer reads as picking a cell of that field rather than as
+// using a control floating over the canvas.
+//
+// The strip keeps the segmented control's connected silhouette — one outline
+// around the group, a hairline between neighbours, and the control radius — and
+// overrides only its geometry so the control fits the field's bottom row. Only
+// the selected cell is filled (green); every other cell states the layer as text
+// colour alone.
+.layer-buttons.redux-segmented {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: end;
+  z-index: 5;
+  display: flex;
+  justify-content: flex-start;
+  gap: 0;
+  // The shared segmented row is a 34px labelled field. This strip is a row of
+  // cells aligned to the field's bottom edge, so it takes the compact control
+  // height instead of inheriting the labelled row's.
+  min-height: 0;
+  margin: 0 var(--space-1) var(--space-1);
+
+  .redux-segmented-options {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+// The primitive owns the 1px outer outline, the input surface, the radius, and
+// the disabled state. These rules only compact the cells and make them divide
+// the strip evenly. The id and the compound selector keep this above the shared
+// button reset and any editor-wide button silhouette, so a cell never grows its
+// own border or radius.
+.redux-app-root .editor .layer-buttons button.redux-segmented-option {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  // A cell is a compact control rather than a chip: the strip is the primary
+  // layer switch, so the compact control height is also its click target.
+  height: var(--design-control-height-compact);
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  font-weight: bold;
+  text-align: center;
+  transition:
+    color var(--design-dur-tint) ease,
+    background-color var(--design-dur-tint) ease;
+
+  &:hover:not(.is-selected):not(:disabled) {
+    color: var(--foreground);
+    background: var(--surface-hover);
+  }
+
+  // The selected layer is the only filled cell in the strip. It keeps the
+  // timeline's playing colour instead of the shared accent, and the fill covers
+  // the cell edge to edge, leaving the separator visible.
+  &.is-selected {
+    color: var(--on-accent);
+    background: var(--playing-indicator);
+  }
+}
+
+// The hairline matches the primitive's separator and meets the outer outline.
+// The right-hand compound repeats only the cell class: a full `& + &` would
+// repeat the ancestor context and never match a sibling.
+.redux-app-root
+  .editor
+  .layer-buttons
+  button.redux-segmented-option
+  + button.redux-segmented-option {
+  border-left: 1px solid var(--outline);
+}

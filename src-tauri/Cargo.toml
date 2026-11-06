@@ -1,0 +1,47 @@
+[package]
+name = "rpe-redux"
+version = "1.0.0"
+description = "RPE Redux desktop document host"
+edition = "2021"
+license = "PolyForm-Noncommercial-1.0.0"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+zip = { version = "4", default-features = false, features = ["deflate"] }
+tempfile = "3"
+percent-encoding = "2"
+mime_guess = "2"
+minisign-verify = "0.3"
+semver = "1"
+uuid = { version = "1", features = ["v4"] }
+pathdiff = "0.2"
+notify = "8"
+sha2 = "0.10"
+base64 = "0.22"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading"] }
+windows-core = "0.62"
+webview2-com = "0.39"
+winreg = "0.55"
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

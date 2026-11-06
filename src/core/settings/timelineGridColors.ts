@@ -1,0 +1,26 @@
+/**
+ * The timeline subdivision colour table.
+ *
+ * The settings schema, the runtime decoder, and the beat-line preview all read
+ * the same denominators and defaults. The table lives in core because the schema
+ * owns the persisted keys; the preview imports it from there.
+ */
+export const TIMELINE_GRID_COLORS = [
+  ["1", "#ffffff", "settings.field.timeline-grid-color-1.label"],
+  ["2", "#ed1121", "settings.field.timeline-grid-color-2.label"],
+  ["3", "#8866ee", "settings.field.timeline-grid-color-3.label"],
+  ["4", "#66ccff", "settings.field.timeline-grid-color-4.label"],
+  ["6", "#eeaa00", "settings.field.timeline-grid-color-6.label"],
+  ["8", "#ffcc22", "settings.field.timeline-grid-color-8.label"],
+  ["12", "#cc6600", "settings.field.timeline-grid-color-12.label"],
+  ["16", "#6644cc", "settings.field.timeline-grid-color-16.label"],
+  ["default", "#6aa7ff", "settings.field.timeline-grid-color-default.label"],
+] as const;
+
+/** Denominators with a dedicated grid colour, plus the fallback entry. */
+export type TimelineGridDenominator = (typeof TIMELINE_GRID_COLORS)[number][0];
+
+/** Preference key holding the colour for one subdivision denominator. */
+export function timelineGridColorKey(denominator: TimelineGridDenominator): string {
+  return `timeline-grid-color-${denominator}`;
+}

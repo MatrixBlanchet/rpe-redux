@@ -1,0 +1,65 @@
+// Native `primary` buttons mapped onto the theme's accent and action-foreground
+// tokens. Cascade position is fixed by src/design/styles/index.less.
+
+.redux-app-root button.primary:not(.redux-action) {
+  background: var(--accent);
+  color: var(--action-foreground-resting, var(--on-accent));
+}
+
+.redux-app-root button.primary:not(.redux-action):hover:not(:disabled) {
+  color: var(--action-foreground-hover, var(--on-accent-hover, var(--on-accent)));
+}
+
+.redux-app-root button.primary:not(.redux-action):active:not(:disabled) {
+  color: var(--action-foreground-pressed, var(--on-accent-pressed, var(--on-accent)));
+}
+
+.redux-app-root button.primary:not(.redux-action):focus-visible:not(:active) {
+  color: var(--action-foreground-focus, var(--on-accent));
+}
+
+.redux-app-root button.primary:not(.redux-action)[data-emphasized="true"] {
+  color: var(--action-foreground-emphasized, var(--on-accent));
+}
+
+.redux-app-root button.primary:not(.redux-action):disabled {
+  color: var(--action-foreground-disabled, var(--foreground-muted));
+}
+
+.redux-app-root button.urgent:not(.redux-action):hover:not(:disabled) {
+  background: var(--design-fill-urgent);
+  color: var(--on-danger);
+}
+
+.redux-app-root button.active:not(.redux-action),
+.redux-app-root button[aria-pressed="true"]:not(.redux-action) {
+  background: var(--active-accent-fill);
+  color: var(--active-accent);
+}
+
+.redux-app-root input,
+.redux-app-root select,
+.redux-app-root textarea {
+  background: var(--input-surface);
+  color: var(--foreground);
+  border-color: var(--input-border);
+}
+
+.redux-app-root input[type="range"] {
+  background: transparent;
+}
+
+.redux-app-root input[type="checkbox"] {
+  background: initial;
+}
+
+.line-switcher,
+.asset-details,
+.batch-panel-actions,
+.trajectory-preset-editor,
+.trajectory-footer,
+.asset-row {
+  background: var(--surface-raised);
+  border-color: var(--panel-border);
+  color: var(--foreground);
+}

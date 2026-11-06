@@ -1,0 +1,194 @@
+// Progress card styles: the scrubber, its spectrum canvas, and the timeline
+// marker layer.
+
+@import (reference) "../../../design/styles/palette.less";
+#clock {
+  min-width: 72px;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+#bpm-display {
+  color: var(--accent);
+  white-space: nowrap;
+  font-size: var(--type-caption);
+}
+
+#scrubber {
+  flex: 1;
+  min-width: 65px;
+}
+
+.scrubber-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  flex: 1 1 120px;
+  min-width: 65px;
+  height: 100%;
+  // The marker strip (`#timeline-markers`, 16px, absolute at the top) keeps its
+  // band; everything below it is the bar.
+  padding-top: var(--space-4);
+}
+
+.scrubber-wrap #scrubber {
+  width: 100%;
+  min-width: 0;
+}
+
+.scrubber-wrap .redux-setting-range {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.redux-app-root #scrubber {
+  height: 100%;
+  min-height: 40px;
+}
+
+.scrubber-spectrum-window {
+  position: absolute;
+  left: 0;
+  top: 16px;
+  width: 100%;
+  height: calc(100% - 16px);
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: var(--radius-control, 6px);
+}
+
+.scrubber-ab-range {
+  position: absolute;
+  inset-block: 0;
+  left: var(--scrubber-ab-left);
+  width: var(--scrubber-ab-width);
+  box-sizing: border-box;
+  z-index: 3;
+  border: 2px solid var(--warning);
+  border-radius: var(--radius-control, 6px);
+  pointer-events: none;
+}
+
+.redux-app-root #scrubber-spectrum {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.9;
+}
+
+// The scrubber marks a position, so the level bar's fill and printed value are
+// removed: nothing is printed inside the track, and the position is a rule drawn
+// at the ratio `Input` measures. The rule is inset by its own half-width at both
+// ends so the slider's rounded `overflow: hidden` never clips it.
+.redux-app-root .scrubber-wrap .redux-slider-fill,
+.redux-app-root .scrubber-wrap .redux-slider-value,
+.redux-app-root .scrubber-wrap .redux-slider-value-clip {
+  display: none;
+}
+
+.redux-app-root .scrubber-wrap .redux-slider::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: clamp(0px, calc(var(--redux-ratio, 0%) - 2px), calc(100% - 4px));
+  width: 4px;
+  border-radius: var(--design-radius-micro);
+  background: var(--playing-indicator);
+}
+
+@media (max-width: 1250px) {
+  .redux-status-card kbd {
+    display: none;
+  }
+}
+
+.redux-status-card {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  grid-template-rows: minmax(40px, 1fr) auto;
+  gap: 1px;
+  padding: var(--space-1-5);
+  border: 0;
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  min-width: 0;
+}
+
+.redux-status-card .scrubber-wrap {
+  margin: 0;
+  height: 100%;
+  min-height: 40px;
+}
+
+.redux-status-line {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
+.redux-status-line > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redux-status-line > span:nth-child(2) {
+  text-align: center;
+}
+
+.redux-status-line > span:last-child {
+  text-align: right;
+}
+
+.redux-status-line #clock {
+  min-width: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.redux-status-line #bpm-display {
+  font-size: inherit;
+}
+
+.transport #clock {
+  color: @accent;
+}
+
+.redux-app-root .redux-status-card {
+  .scrubber-wrap {
+    min-height: 48px;
+    padding-top: 0;
+  }
+}
+
+.redux-app-root .redux-status-card .scrubber-spectrum-window {
+  top: 0;
+  height: 100%;
+}
+
+// The marker prompt is one labeled input, so it uses a prompt-sized surface
+// rather than the modal shell's document width.
+dialog.redux-marker-dialog {
+  width: min(460px, calc(100vw - 32px));
+}
+
+// The jump dialog is one mode switch, one value field, and one hint; the body
+// keeps the modal's padding and stacks those parts on one rhythm.
+dialog.redux-jump-dialog {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.redux-jump-dialog .modal-content {
+  display: grid;
+  gap: var(--space-3);
+}

@@ -1,0 +1,218 @@
+// Failure screen styles: the explanation, Extension evidence, folded report,
+// actions, and the stacking that keeps the independent window controls reachable.
+
+@import (reference) "../../../design/styles/palette.less";
+.redux-app-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.redux-app-shell[aria-hidden="true"] {
+  visibility: hidden;
+}
+.redux-startup {
+  position: fixed;
+  inset: 0;
+  // Plain overlays stay below the failure screen; the safe-mode confirmation
+  // lifts itself and its scrim just above it.
+  z-index: calc(var(--z-debug) - 2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+// The failure screen owns the one dialog that may open above it. Keep the modal
+// layer below the independent window controls, which stay reachable.
+.redux-app-root dialog.redux-startup-safe-mode {
+  z-index: var(--z-debug);
+}
+
+body:has(.redux-app-root dialog.redux-startup-safe-mode[open]) > .redux-modal-scrim {
+  z-index: calc(var(--z-debug) - 1);
+}
+.redux-startup-card {
+  width: min(440px, calc(100% - 48px));
+  text-align: center;
+  margin: auto;
+  .redux-startup-icon {
+    display: block;
+    margin: 0 auto var(--space-5);
+    object-fit: contain;
+  }
+  .redux-startup-title {
+    margin: 0;
+  }
+  .redux-startup-wordmark {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+  p {
+    margin: var(--space-2) 0 var(--space-5);
+  }
+  small {
+    color: var(--foreground-muted);
+  }
+}
+.redux-startup-progress {
+  height: 3px;
+  margin: var(--space-6) 0 var(--space-3);
+  overflow: hidden;
+  border-radius: var(--design-radius-micro);
+  background: var(--surface-muted);
+  &::after {
+    content: "";
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: var(--accent);
+    animation: redux-startup-slide 1.2s linear infinite;
+  }
+}
+@keyframes redux-startup-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .redux-startup-progress::after {
+    animation: none;
+    width: 100%;
+  }
+}
+
+.redux-startup-report-details {
+  width: min(840px, calc(100% - 64px));
+  margin: var(--space-3) auto 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  text-align: center;
+  > summary {
+    cursor: pointer;
+  }
+}
+
+.redux-startup-report {
+  position: static;
+  width: 100%;
+  max-height: 34vh;
+  overflow: auto;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+  font-family: var(--font-mono);
+  text-align: left;
+  user-select: text;
+}
+
+.redux-startup-extensions {
+  width: min(840px, calc(100% - 64px));
+  margin: var(--space-3) auto 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  text-align: left;
+  h2 {
+    margin: 0;
+    font-size: var(--type-heading);
+  }
+  ul {
+    display: grid;
+    gap: var(--space-1);
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-control);
+    background: var(--input-surface);
+  }
+  code {
+    color: var(--foreground-muted);
+    font-family: var(--font-mono);
+    font-size: var(--type-caption);
+  }
+  small {
+    flex-basis: 100%;
+    color: var(--foreground-muted);
+    font-size: var(--type-caption);
+    overflow-wrap: anywhere;
+  }
+}
+
+.redux-startup-extension-name {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.redux-startup-extensions-heading {
+  margin: var(--space-2) 0 0;
+  color: var(--foreground);
+  font-size: var(--type-caption);
+  font-weight: 600;
+}
+
+.redux-startup-extensions-hint {
+  margin: var(--space-2) 0 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+}
+
+.redux-startup-log-guide {
+  width: min(840px, calc(100% - 64px));
+  margin: var(--space-2-5) auto 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  text-align: center;
+  p {
+    margin: 0 0 var(--space-1-5);
+  }
+  code {
+    display: block;
+    overflow-wrap: anywhere;
+    color: var(--foreground);
+    font: inherit;
+  }
+}
+
+.redux-startup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: auto;
+  flex: none;
+  padding: var(--space-3) var(--space-6) 28px;
+}
+
+.redux-startup[data-failed="true"] {
+  justify-content: flex-start;
+  padding: var(--space-6) 0;
+  .redux-startup-card {
+    margin: 0 auto;
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "kind": "extension",
+  "id": "example.recipe",
+  "name": "Example recipe",
+  "version": "1.0.0",
+  "engines": { "rpe-redux": 1 },
+  "i18n": "i18n.json",
+  "capabilities": ["scripts"],
+  "scripts": [
+    {
+      "id": "scale",
+      "label": { "key": "script.scale.label" },
+      "description": { "key": "script.scale.description" },
+      "parameters": {
+        "order": ["scale"],
+        "parameters": {
+          "scale": { "kind": "number", "min": 0.1, "max": 4, "default": 1.25 }
+        }
+      },
+      "steps": [
+        {
+          "op": "batch",
+          "kind": "notes",
+          "parameters": {
+            "field": "size",
+            "operation": "Times",
+            "lower": { "parameter": "scale" },
+            "upper": { "parameter": "scale" },
+            "easingType": 1
+          }
+        }
+      ]
+    }
+  ]
+}

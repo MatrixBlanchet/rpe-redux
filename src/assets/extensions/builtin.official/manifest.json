@@ -1,0 +1,9 @@
+{
+  "kind": "extension",
+  "id": "builtin.official",
+  "version": "1.0.0",
+  "engines": { "rpe-redux": 1 },
+  "entry": "index.js",
+  "i18n": "i18n.json",
+  "capabilities": ["scripts", "chart.read", "selection.read", "chart.write", "ui.notice"]
+}

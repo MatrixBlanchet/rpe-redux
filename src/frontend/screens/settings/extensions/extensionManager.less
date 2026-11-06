@@ -1,0 +1,560 @@
+// Extensions page styles: the risk note, trust acknowledgement, and installed
+// Extension list.
+
+.redux-extension-manager {
+  padding: 0 var(--space-3);
+}
+
+.redux-settings-panel[data-category="extensions"]
+  .redux-setting[data-setting="extensions-disclaimer-accepted"] {
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--warning) 55%, var(--panel-border));
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+}
+
+.redux-extension-risk {
+  max-width: 720px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--warning) 55%, var(--panel-border));
+  border-radius: var(--radius-control);
+  color: var(--warning);
+  line-height: var(--line-body);
+}
+
+.redux-extension-risk-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  color: var(--foreground-muted);
+}
+
+.redux-extension-risk-check input {
+  width: 20px;
+  height: 20px;
+}
+
+.redux-extension-manager-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.redux-extension-manager-heading h2 {
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+/* The install review reuses the runtime's capability chips and file rows. */
+.redux-extension-install-dialog {
+  width: min(720px, calc(100vw - var(--space-7)));
+}
+
+.redux-extension-install-form,
+.redux-extension-install-review {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.redux-extension-install-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.redux-extension-install-heading h3 {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: 600;
+}
+
+.redux-extension-install-author,
+.redux-extension-install-description,
+.redux-extension-install-risk {
+  margin: 0;
+  color: var(--foreground-muted);
+  line-height: var(--line-body);
+  overflow-wrap: anywhere;
+}
+
+.redux-extension-install-version {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  color: var(--accent);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-install-facts,
+.redux-extension-error-facts {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.redux-extension-install-facts dt,
+.redux-extension-error-facts dt {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-install-facts dd,
+.redux-extension-error-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.redux-extension-install-files {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.redux-extension-install-files li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-install-risk {
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--warning) 55%, var(--panel-border));
+  border-radius: var(--radius-control);
+  color: var(--warning);
+}
+
+/* The install review's per-capability consent gate. */
+.redux-extension-consent {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+}
+
+.redux-extension-consent-title {
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.redux-extension-consent-description,
+.redux-extension-consent-hint,
+.redux-extension-consent-required {
+  margin: 0;
+  color: var(--foreground-muted);
+  line-height: var(--line-body);
+  overflow-wrap: anywhere;
+}
+
+.redux-extension-consent-group {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.redux-extension-consent-group h5 {
+  margin: 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  font-weight: 600;
+}
+
+.redux-extension-consent-rows {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.redux-extension-consent-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+}
+
+.redux-extension-consent-row[data-risk="write"] {
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--panel-border));
+}
+
+.redux-extension-consent-row[data-risk="sensitive"] {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--panel-border));
+}
+
+.redux-extension-consent-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-extension-consent-check input {
+  flex: none;
+}
+
+.redux-extension-consent-copy {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.redux-extension-consent-label {
+  font-weight: 600;
+}
+
+.redux-extension-consent-hint {
+  font-size: var(--type-caption);
+}
+
+.redux-extension-consent-badge {
+  flex: none;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-consent-badge[data-risk="write"] {
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--panel-border));
+  color: var(--warning);
+}
+
+.redux-extension-consent-badge[data-risk="sensitive"] {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--panel-border));
+  color: var(--danger);
+}
+
+.redux-extension-consent-required {
+  color: var(--warning);
+}
+
+.redux-extension-install-success {
+  margin: 0;
+  color: var(--foreground-muted);
+  line-height: var(--line-body);
+}
+
+.redux-extension-error {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--danger) 55%, var(--panel-border));
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+.redux-extension-error-label {
+  margin: 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  font-weight: 600;
+}
+
+.redux-extension-error-source {
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-error-hint {
+  margin: 0;
+  color: var(--foreground-muted);
+  line-height: var(--line-body);
+}
+
+/* The installed-extension list: the settings page is its only home. */
+.redux-extension-list {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.redux-extension-card {
+  padding: var(--space-4);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+}
+
+.redux-extension-card-heading {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) minmax(160px, max-content);
+  align-items: flex-start;
+  gap: var(--space-2);
+  // Pull the reorder grip into the card inset so the title starts close to the
+  // card edge instead of after the full handle column.
+  margin-left: calc(-1 * var(--space-3));
+}
+
+.redux-extension-card-copy {
+  min-width: 0;
+}
+
+.redux-extension-card.is-dragging {
+  border-color: var(--accent);
+  opacity: 0.72;
+}
+
+.redux-extension-drag-handle {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  min-width: 18px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--foreground-muted);
+  background: transparent;
+  cursor: var(--app-cursor-pointer);
+  touch-action: none;
+}
+
+.redux-extension-drag-handle:hover:not(:disabled) {
+  color: var(--foreground);
+  background: var(--surface-hover);
+  border-color: var(--panel-border);
+}
+
+.redux-extension-drag-handle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.redux-extension-drag-handle:disabled {
+  opacity: 0.3;
+  cursor: var(--app-cursor-default);
+}
+
+.redux-extension-drag-grip {
+  width: 10px;
+  height: 16px;
+  background-image: radial-gradient(circle, currentColor 1.5px, transparent 1.7px);
+  background-size: 5px 5px;
+  background-position: 0 0;
+}
+
+.redux-extension-reorder-hint {
+  margin: 0;
+}
+
+.redux-extension-card-heading h3 {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: 400;
+}
+
+.redux-extension-card-heading small,
+.redux-extension-card-heading span,
+.redux-extension-meta,
+.redux-extension-details,
+.redux-extension-description {
+  color: var(--foreground-muted);
+}
+
+.redux-extension-card-heading small {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+.redux-extension-card-heading span {
+  color: var(--accent);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-card-heading span[data-status="failed"] {
+  color: var(--danger);
+}
+
+.redux-extension-description {
+  margin: var(--space-2) 0 0;
+  line-height: var(--line-body);
+  overflow-wrap: anywhere;
+}
+
+.redux-extension-meta,
+.redux-extension-capabilities,
+.redux-extension-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.redux-extension-meta {
+  font-size: var(--type-caption);
+}
+
+.redux-extension-capabilities {
+  margin-top: var(--space-3);
+}
+
+.redux-extension-capability {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+/* Capability badges are display-only; colour is not a trust grant. */
+.redux-extension-capability[data-tone="positive"] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--panel-border));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.redux-extension-capability[data-tone="warning"] {
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--panel-border));
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  color: var(--warning);
+}
+
+.redux-extension-capability[data-tone="danger"] {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--panel-border));
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+
+.redux-extension-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: 0;
+}
+
+.redux-app-root .redux-extension-actions > .redux-button {
+  width: auto;
+  min-width: 0;
+}
+
+.redux-extension-details {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--panel-border);
+}
+
+.redux-extension-details h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--foreground);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-details ul {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.redux-extension-details li {
+  margin: var(--space-1) 0;
+}
+
+.redux-extension-details li small {
+  display: block;
+}
+
+.redux-extension-review {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--panel-border);
+}
+
+.redux-extension-review > summary {
+  cursor: pointer;
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.redux-extension-review h3 {
+  margin: var(--space-3) 0 var(--space-2);
+  color: var(--foreground);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: var(--space-1) 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  overflow-wrap: anywhere;
+}
+
+.redux-extension-review-files {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.redux-extension-review-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.redux-extension-review-capabilities code {
+  padding: 1px var(--space-2);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-extension-review-file {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+}
+
+.redux-extension-review-file > summary {
+  cursor: pointer;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  overflow-wrap: anywhere;
+}
+
+.redux-extension-review-source,
+.redux-extension-review-log {
+  max-height: 260px;
+  margin: var(--space-2) 0 0;
+  overflow: auto;
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+  color: var(--foreground-muted);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

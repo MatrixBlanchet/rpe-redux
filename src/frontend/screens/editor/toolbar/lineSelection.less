@@ -1,0 +1,397 @@
+// Toolbar multi-line selector. The leading glyph owns its own cell, then the
+// select-style box starts: its border encloses the value and the chevron, so the
+// glyph reads like every other toolbar field label. The folder tree is a fixed
+// popover so it is not clipped by the toolbar row. Its surface, inset, and row
+// palette mirror the embedded list in the multi-line inspector pane.
+.line-picker-control {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  width: calc(var(--tool-cell) * 4 + var(--tool-gap) * 3);
+  min-width: 0;
+  border-radius: var(--radius-control);
+}
+
+// The control spans four button cells plus the gaps between them, so its right
+// edge lands on the same rail as the four-button stage cluster. The glyph uses
+// the first cell and the field takes the rest, so its right edge stays on that
+// rail; `toolbarGrid.less` leaves the picker label out of shared cell sizing.
+.line-picker-control > .editor-grid,
+.line-picker-control .line-field {
+  width: 100%;
+}
+
+.line-picker-control .line-field {
+  position: relative;
+  box-sizing: border-box;
+  flex: none;
+}
+
+// The chevron is an overlay, so the input's own :hover never sees it. Hover the
+// whole selector frame instead; the ids outrank the control sheet's guarded
+// resting border.
+.redux-app-root .redux-toolbar .line-picker-control:hover #line-input {
+  border-color: var(--input-border-hover);
+}
+
+// The glyph keeps its leading cell, and the input starts after it. The trailing
+// cell stays reserved for the chevron, so the value's centred content box is
+// centred on the bordered field rather than on the glyph-plus-field control.
+.redux-app-root .redux-toolbar .line-picker-control #line-input {
+  width: calc(100% - var(--tool-cell));
+  padding-right: var(--tool-cell);
+  border-radius: var(--radius-control);
+}
+
+// The trigger is a compact pill inset in the field, not a full-height second
+// button: the field's border stays visible on every side, and the hover fill
+// keeps the same radius as the split-action chevrons.
+.line-picker-toggle {
+  position: absolute;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--foreground-muted);
+  cursor: var(--app-cursor-pointer);
+  transition:
+    background-color var(--design-dur-tint) ease,
+    color var(--design-dur-tint) ease;
+  z-index: 1;
+}
+
+// The pill is centred in the trailing chevron cell. The ID-qualified selector
+// outranks IconButton's `md` preset, whose fixed 32px box would otherwise
+// overflow the 34px field and leave the pill off-centre.
+.redux-app-root .redux-toolbar .line-picker-control .line-picker-toggle {
+  top: 3px;
+  right: 2px;
+  bottom: 3px;
+  width: var(--control-height-compact);
+  min-width: var(--control-height-compact);
+  height: auto;
+  min-height: 0;
+}
+
+.line-picker-toggle:hover,
+.line-picker-toggle[aria-expanded="true"] {
+  background: var(--surface-hover);
+  color: var(--foreground);
+}
+
+.line-picker-toggle[aria-expanded="true"] .redux-icon {
+  transform: rotate(180deg);
+}
+
+.line-selection-popover {
+  position: fixed;
+  z-index: var(--z-content-overlay);
+  display: flex;
+  flex-direction: column;
+  width: min(340px, calc(100vw - 16px));
+  max-height: min(70vh, 540px);
+  overflow: hidden;
+  // The picker reads as the same line list the multi-line pane embeds, not as
+  // a second raised surface. The shared background and border also give the
+  // selection wash the same final colour in both places.
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: var(--shadow-panel);
+  // The popover hugs the field's left edge; the opening motion only slides, so
+  // its measured box never drifts away from that edge.
+  transform-origin: var(--popover-origin-x, 0) var(--popover-origin-y, 0);
+  animation: redux-control-in var(--design-dur-tint) var(--design-ease-enter);
+  // Selection states use a lighter wash than a standalone toggle so a full
+  // folder does not turn into one saturated block.
+  --line-selection-tint: color-mix(in srgb, var(--accent) 14%, transparent);
+  --line-selection-tint-hover: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.line-selection-list {
+  position: relative;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  // Same vertical inset as the embedded multi-line list, so a folder renders at
+  // the same height whether it opens from the toolbar or the inspector.
+  padding: var(--space-2) 0;
+}
+
+.line-selection-marquee {
+  position: absolute;
+  // Above the row fills: the drag edge must stay visible while it crosses
+  // already selected rows, and the transparent wash keeps text readable. The
+  // inline box carries both axes so this is a true pointer rectangle.
+  z-index: 2;
+  border: 1px dashed color-mix(in srgb, var(--accent) 72%, transparent);
+  border-radius: var(--design-radius-micro);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  pointer-events: none;
+}
+
+.line-selection-group {
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+// Groups are sections, not nested cards: a hairline separates them, and only
+// the row under the pointer carries a surface.
+.line-selection-group + .line-selection-group {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+// A click on the folder row toggles every line in the group; the disclosure is
+// a separate target that only folds. The header carries the same hover and
+// selection wash as its rows, so the folder reads as one selectable target.
+.line-selection-group-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 30px;
+  margin: 0 0 var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-control);
+  cursor: var(--app-cursor-pointer);
+  transition: background-color var(--design-dur-tint) ease;
+}
+
+// The folder row is a target, not a card: hover paints the same quiet surface
+// as a row, while a folder with selected lines carries the selection wash.
+.line-selection-group-head:hover {
+  background: var(--surface-hover);
+}
+
+.line-selection-group-head:hover .line-selection-group-name {
+  color: var(--foreground);
+}
+
+// A partial selection stays lighter than a full one, so the folder still reads
+// as selected without looking identical to “every line is picked”.
+.line-selection-group-head[data-state="some"] {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.line-selection-group-head[data-state="all"] {
+  background: var(--line-selection-tint);
+}
+
+.line-selection-group-head[data-state="some"]:hover,
+.line-selection-group-head[data-state="all"]:hover {
+  background: var(--line-selection-tint-hover);
+}
+
+.line-selection-group-head[data-state="all"] .line-selection-group-disclosure {
+  color: var(--accent);
+}
+
+.line-selection-group-disclosure {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--design-radius-chip);
+  background: transparent;
+  color: var(--foreground-muted);
+  cursor: var(--app-cursor-pointer);
+}
+
+// IconButton's base box is taller than the folder row; the selector's
+// disclosure is a compact tree affordance, so pin it to 16px in both the
+// embedded multi-line pane and the portalled toolbar picker. The smaller square
+// leaves visible space above and below it, so the folder keeps its 30px height
+// in both surfaces.
+.line-selection-group-head .line-selection-group-disclosure.redux-icon-button-md,
+.redux-app-root .line-selection-group-head .line-selection-group-disclosure.redux-icon-button-md {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+}
+
+.line-selection-group-disclosure:hover {
+  background: var(--surface-hover);
+  color: var(--foreground);
+}
+
+.line-selection-group-head[data-state="some"] .line-selection-group-disclosure:hover,
+.line-selection-group-head[data-state="all"] .line-selection-group-disclosure:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.line-selection-group-disclosure .redux-icon {
+  transition: transform var(--design-dur-tint) ease;
+}
+
+.line-selection-group-disclosure[aria-expanded="false"] .redux-icon {
+  transform: rotate(-90deg);
+}
+
+// The name is the group's batch-toggle button. It is a text target inside the
+// row, not a second box: every pointer state keeps the header's own surface and
+// the count carries the selected state.
+.line-selection-group-name {
+  display: inline-flex;
+  flex: 1;
+  align-self: stretch;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0 var(--space-1);
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground-muted);
+  font-size: var(--type-body);
+  font-weight: 600;
+  text-align: left;
+}
+
+// The shared button reset paints `aria-pressed` toggles with the active fill.
+// These selectors clear it for the text-only folder toggle in both the
+// portalled picker and the embedded multi-line pane.
+.line-selection-group-head .line-selection-group-name:is(:hover, :active, [aria-pressed="true"]),
+.redux-app-root
+  .line-selection-group-head
+  .line-selection-group-name:is(:hover, :active, [aria-pressed="true"]) {
+  background: transparent;
+  color: var(--foreground);
+}
+
+.line-selection-group-head:not([data-state="none"]) .line-selection-group-name,
+.redux-app-root .line-selection-group-head:not([data-state="none"]) .line-selection-group-name {
+  color: var(--foreground);
+}
+
+.line-selection-group-head[data-state="all"] .line-selection-group-name,
+.redux-app-root .line-selection-group-head[data-state="all"] .line-selection-group-name {
+  color: var(--accent);
+}
+
+.line-selection-group-name:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.line-selection-group-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-selection-children {
+  display: grid;
+  gap: var(--space-1);
+  margin-left: var(--space-3);
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--border-subtle);
+}
+
+// Rows are selectable pills rather than a continuous table: selection fills the
+// rounded row, and the leading accent rail still groups the folder's lines.
+.line-selection-row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--line-selection-index-width, 3ch) minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: center;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--foreground);
+  font-size: var(--type-body);
+  text-align: left;
+  cursor: var(--app-cursor-pointer);
+  transition:
+    background-color var(--design-dur-tint) ease,
+    color var(--design-dur-tint) ease;
+}
+
+.line-selection-row:hover {
+  background: var(--surface-hover);
+}
+
+// The inspector's button reset paints selected rows with the active fill. The
+// portalled picker sits outside `.redux-app-root`, so it carries the same fill explicitly
+// instead of falling back to the lighter folder tint.
+.line-selection-row.is-selected,
+.redux-app-root .line-selection-row.is-selected {
+  background: var(--active-accent-fill);
+}
+
+.line-selection-row.is-selected:hover,
+.redux-app-root .line-selection-row.is-selected:hover {
+  background: var(--line-selection-tint-hover);
+}
+
+// The same reset colours an `aria-pressed` row with the active accent. Keep
+// selected names neutral so only the current line carries accent text.
+.line-selection-row[aria-pressed="true"],
+.redux-app-root .line-selection-row[aria-pressed="true"] {
+  color: var(--foreground);
+}
+
+.line-selection-row.is-current,
+.redux-app-root .line-selection-row.is-current,
+.line-selection-row.is-current[aria-pressed="true"],
+.redux-app-root .line-selection-row.is-current[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+// A Shift drag outlines only the rows whose selection would actually change.
+// Already-selected rows stay solid, so dragging a new box through a full
+// selection does not repaint the whole list as dashed. Additions use the
+// theme's green success role; removals keep the danger colour.
+.line-selection-row.is-marquee-preview {
+  outline: 1px dashed color-mix(in srgb, var(--playing-indicator) 72%, transparent);
+  outline-offset: -1px;
+  background: color-mix(in srgb, var(--playing-indicator) 10%, transparent);
+}
+
+.line-selection-row.is-marquee-remove {
+  outline: 1px dashed color-mix(in srgb, var(--danger) 72%, transparent);
+  outline-offset: -1px;
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+// The number is its own fixed tab column, so names line up down the list even
+// though the typeface is proportional; tabular digits keep 0-9 the same width.
+.line-selection-index {
+  color: var(--foreground-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.line-selection-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line-selection-popover {
+    animation: none;
+  }
+}

@@ -1,0 +1,88 @@
+// Segmented control: one labelled row with the choices joined on the right.
+//
+// It reuses the field rhythm of the inspector (`min-height` of a control, the
+// same label colour) so it can sit between ordinary fields without its own
+// vertical spacing.
+.redux-segmented {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--design-control-height);
+  min-width: 0;
+}
+
+.redux-segmented-label {
+  // The label is the field label of the row, not a caption: it must read at the
+  // same weight, size, and colour as the label beside every other control.
+  color: var(--foreground);
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.redux-segmented-options {
+  display: flex;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+}
+
+.redux-segmented-option {
+  min-height: calc(var(--design-control-height) - 2px);
+  padding-inline: var(--space-3);
+  // The shared `button` baseline gives every button a radius, a border and a
+  // transparent fill. A segment must own none of them: a radius would round the
+  // inner junction as well as the control's outer corners, and a border would
+  // draw a second line beside the one below. Clear them here; a consumer rule
+  // that paints whole buttons (the inspector's raw-button silhouette, the global
+  // hover fill) excludes `.redux-segmented-option` instead of relying on this
+  // rule to out-specify it.
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  white-space: nowrap;
+  cursor: var(--app-cursor-pointer);
+
+  & + & {
+    border-left: 1px solid var(--outline);
+  }
+
+  &:hover:not(:disabled):not(.is-selected) {
+    background: var(--surface-hover);
+    color: var(--foreground);
+  }
+
+  &.is-selected {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: var(--app-cursor-disabled);
+  }
+}
+
+// The block form: the choices themselves are the row, each taking half of it.
+// Used where the two choices are the field's whole meaning (`Easing | Bezier`),
+// so a label would only repeat them.
+.redux-segmented.is-block {
+  display: block;
+  margin: var(--space-3) var(--space-5);
+
+  .redux-segmented-options {
+    width: 100%;
+  }
+
+  .redux-segmented-option {
+    flex: 1 1 0;
+    text-align: center;
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "//": "The SDK is its own project: it type-checks the source-linked entry and the examples, emits nothing, and never joins the application build.",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@rpe-redux/extension-sdk": ["./index.d.ts"]
+    }
+  },
+  "include": ["index.d.ts", "examples/**/*", "type-tests/**/*", "../src/vite-env.d.ts"]
+}

@@ -1,0 +1,152 @@
+/* Shell framing: workbench panel edges, shared panel headers, pane action rows,
+   and the fixed inspector column that hosts the workspace and sidebar. */
+.redux-app-root .workbench {
+  padding: 0;
+}
+.redux-app-root .workspace.panel,
+.redux-app-root .inspector.panel {
+  border-radius: 0;
+  border-width: 0;
+}
+// ...but the inspector keeps its left edge: that line is the boundary between the
+// canvas and the panel it drives, and the flat look above had removed the only
+// thing separating them. It is `--outline` rather than `--panel-border`, which
+// sits within a shade of both surfaces and reads as no line at all.
+.redux-app-root .inspector.panel {
+  border-left: 1px solid var(--outline);
+}
+// Shared workspace framing lives here; the editing toolbar is a sibling owned by `toolbar/`.
+.redux-app-root .panel-title {
+  color: var(--foreground);
+}
+
+// The inspector is resizable down to 260px (see `Workbench.tsx` Splitter), which
+// leaves ~190px for a panel's content. Two fixed `1fr` columns then give each
+// icon+label button less width than its nowrap label needs, so the row is a
+// track-fitting grid instead: still two up at the default 340px rail, one up
+// when the rail is dragged narrow.
+.redux-app-root .action-grid {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-1);
+  padding: var(--space-3);
+  button {
+    justify-content: flex-start;
+  }
+}
+
+// Pane action rows: keep each button whole instead of squeezing the pair.
+.redux-app-root .metadata-media-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+.redux-app-root footer {
+  font-size: var(--type-caption);
+}
+.redux-app-root .redux-app-shell[data-at-home="true"] .shell-body > footer {
+  display: none;
+}
+
+.shell-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.shell-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+// The toolbar owns the left column only while it is actually visible. The home
+// page has no toolbar, so its content must span the full width.
+:root[data-chrome-toolbar-placement="left"] .shell-body {
+  display: grid;
+  grid-template-columns: var(--chrome-toolbar-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "toolbar content"
+    "toolbar status";
+}
+
+:root[data-chrome-toolbar-placement="left"] .shell-body > .redux-toolbar {
+  grid-area: toolbar;
+}
+
+:root[data-chrome-toolbar-placement="left"] .shell-body > .shell-content {
+  grid-area: content;
+}
+
+:root[data-chrome-toolbar-placement="left"] .shell-body > footer {
+  grid-area: status;
+}
+
+.redux-app-root .redux-app-shell[data-at-home="true"] .shell-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.workbench {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+.workbench-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) minmax(260px, min(var(--inspector-width), 57%))
+    56px;
+  grid-template-areas: "workspace inspector sidebar";
+  gap: 0;
+}
+
+.workbench-workspace,
+.workbench-inspector {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workbench-workspace {
+  grid-area: workspace;
+  position: relative;
+}
+
+.workbench-inspector {
+  grid-area: inspector;
+}
+
+.workbench-workspace > .workspace {
+  flex: 1;
+  min-height: 0;
+}
+
+.workbench-inspector > .inspector {
+  flex: 1;
+  min-height: 0;
+}
+
+.workbench-body > .sidebar {
+  grid-area: sidebar;
+}
+
+// A top rail is a separate row above the body; the body only has the workspace
+// and inspector columns. Moving the rail into the inspector removes its track
+// in the same way.
+.workbench[data-sidebar="top"] > .workbench-body,
+.workbench[data-sidebar="inspector"] > .workbench-body {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, min(var(--inspector-width), 57%));
+  grid-template-areas: "workspace inspector";
+}

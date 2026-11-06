@@ -1,0 +1,104 @@
+/**
+ * Free camera: isolate the preview and float the reset dock.
+ *
+ * The renderer's camera moves the chart content, background, and chart-frame
+ * outline together. The outline lives inside a viewport-sized clip wrapper, so
+ * zooming in does not spill it into the letterbox around the preview.
+ */
+.stage.free-camera-active
+  > :not(.preview-underlay):not(.free-camera-layer):not(.sampling-overlay):not(
+    .curve-preview-layer
+  ) {
+  display: none;
+}
+
+.free-camera-frame-clip {
+  display: none;
+  position: absolute;
+  z-index: 3;
+  left: var(--preview-frame-left, 0);
+  top: var(--preview-frame-top, 0);
+  width: var(--preview-frame-width, 0);
+  height: var(--preview-frame-height, 0);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.free-camera-active .free-camera-frame-clip {
+  display: block;
+}
+
+.free-camera-frame {
+  position: absolute;
+  left: var(--free-camera-frame-left, 0);
+  top: var(--free-camera-frame-top, 0);
+  width: var(--free-camera-frame-width, 0);
+  height: var(--free-camera-frame-height, 0);
+  box-sizing: border-box;
+  border: 1.5px solid var(--preview-frame, var(--foreground));
+  box-shadow:
+    0 0 0 1px var(--shadow-color),
+    0 0 8px var(--shadow-color);
+  pointer-events: none;
+}
+
+.free-camera-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.free-camera-layer[data-panning="true"] {
+  cursor: grabbing;
+}
+
+.free-camera-dock {
+  position: absolute;
+  top: var(--space-4);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: var(--shadow-panel);
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.free-camera-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  white-space: nowrap;
+}
+
+.free-camera-field > .redux-input {
+  width: 5ch;
+  min-width: 0;
+  min-height: var(--control-height);
+  padding-inline: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.free-camera-unit {
+  margin-left: calc(var(--space-1) * -1);
+}
+
+@media (max-width: 720px) {
+  .free-camera-dock {
+    gap: var(--space-1);
+  }
+
+  .free-camera-field > .redux-input {
+    width: 4ch;
+  }
+}

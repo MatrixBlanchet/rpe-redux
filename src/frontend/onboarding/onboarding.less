@@ -1,0 +1,241 @@
+/* First-run walkthrough: the entry choice cards and the anchored coach card.
+   The dimmed layer lets the highlighted control keep receiving pointer input. */
+
+.redux-onboarding-choice-dialog {
+  width: min(720px, calc(100vw - var(--space-7)));
+}
+
+.redux-onboarding-choices {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.redux-onboarding-choice {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  color: var(--foreground);
+  background: var(--surface-raised);
+  text-align: left;
+  cursor: var(--app-cursor-pointer);
+  transition:
+    border-color var(--design-dur-tint) ease,
+    background-color var(--design-dur-tint) ease;
+}
+
+.redux-onboarding-choice:hover,
+.redux-onboarding-choice:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.redux-onboarding-choice:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.redux-onboarding-choice-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--panel-border));
+  border-radius: var(--radius-control);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.redux-onboarding-choice-copy {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.redux-onboarding-choice-copy strong {
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.redux-onboarding-choice-copy span,
+.redux-onboarding-choice-note {
+  color: var(--foreground-muted);
+  line-height: var(--line-body);
+}
+
+.redux-onboarding-choice-note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--type-caption);
+}
+
+.redux-onboarding-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-guide);
+  pointer-events: none;
+}
+
+.redux-onboarding-layer.is-suspended {
+  visibility: hidden;
+}
+
+.redux-onboarding-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  pointer-events: none;
+}
+
+.redux-onboarding-spotlight {
+  position: fixed;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-control);
+  box-shadow: 0 0 0 100vmax var(--scrim);
+  pointer-events: none;
+  transition:
+    left var(--design-dur-disclosure) ease-out,
+    top var(--design-dur-disclosure) ease-out,
+    width var(--design-dur-disclosure) ease-out,
+    height var(--design-dur-disclosure) ease-out;
+}
+
+.redux-onboarding-card {
+  position: fixed;
+  z-index: calc(var(--z-guide) + 1);
+  display: grid;
+  gap: var(--space-3);
+  width: min(380px, calc(100vw - var(--space-6)));
+  max-height: calc(100vh - var(--space-6));
+  overflow: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-panel);
+  color: var(--foreground);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-panel);
+  visibility: hidden;
+  pointer-events: auto;
+  outline: none;
+}
+
+.redux-onboarding-card.is-placed {
+  visibility: visible;
+  animation: onboarding-reveal var(--design-dur-tint) ease-out;
+}
+
+@keyframes onboarding-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-onboarding-spotlight {
+    transition: none;
+  }
+}
+
+.redux-onboarding-card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.redux-onboarding-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.redux-onboarding-kicker {
+  display: block;
+  color: var(--accent);
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.redux-onboarding-count {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-onboarding-progress {
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--outline);
+}
+
+.redux-onboarding-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width var(--design-dur-disclosure) ease-out;
+}
+
+.redux-onboarding-card h2 {
+  margin: 0;
+  font-size: var(--type-title);
+  line-height: 1.2;
+}
+
+.redux-onboarding-card p {
+  margin: 0;
+  color: var(--foreground-muted);
+  line-height: var(--line-body);
+  overflow-wrap: anywhere;
+}
+
+.redux-onboarding-bullets {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 240px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.redux-onboarding-bullets li {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-left: 1px solid var(--panel-border);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-onboarding-bullets strong {
+  color: var(--foreground);
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.redux-onboarding-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.redux-onboarding-actions > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

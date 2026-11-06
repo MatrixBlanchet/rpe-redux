@@ -1,0 +1,187 @@
+/*
+ * The AI activity pane lists the bridge requests an AI client sent and the
+ * responses it received. The inspector frame, status bar, and meta row are
+ * shared; this sheet owns the row disclosure and the request/response code
+ * blocks.
+ */
+
+.redux-ai-activity-panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.redux-ai-activity-clear {
+  margin-left: auto;
+}
+
+.redux-ai-activity-body {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--space-2-5);
+  min-height: 0;
+}
+
+.redux-ai-activity-disabled {
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 32%, var(--border-subtle));
+  border-radius: var(--radius-control);
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.redux-ai-activity-disabled p {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+  margin: 0;
+}
+
+.redux-ai-activity-list {
+  display: grid;
+  gap: var(--space-1-5);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.redux-ai-activity-item {
+  min-width: 0;
+}
+
+// The shared inspector sheet paints every `details` element as a raised card.
+// A log row is quieter: its border carries the row and its open state reveals
+// the body without changing the outer rhythm.
+.inspector .redux-ai-activity-entry {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.inspector .redux-ai-activity-entry[open] {
+  background: var(--surface-muted);
+  border-color: var(--outline);
+}
+
+.inspector .redux-ai-activity-summary {
+  align-items: center;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  gap: var(--space-1-5);
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  list-style: none;
+  padding: var(--space-1-5) var(--space-2);
+}
+
+.inspector .redux-ai-activity-summary::-webkit-details-marker {
+  display: none;
+}
+
+.inspector .redux-ai-activity-summary:hover {
+  background: var(--surface-hover);
+}
+
+.redux-ai-activity-chevron {
+  --icon-color: var(--foreground-muted);
+  color: var(--foreground-muted);
+  transition: transform var(--design-dur-tint) ease;
+}
+
+.redux-ai-activity-entry[open] .redux-ai-activity-chevron {
+  transform: rotate(90deg);
+}
+
+.redux-ai-activity-status {
+  background: var(--foreground-muted);
+  border-radius: 50%;
+  height: var(--space-1-5);
+  width: var(--space-1-5);
+}
+
+.redux-ai-activity-status[data-status="ok"] {
+  background: var(--accent);
+}
+
+.redux-ai-activity-status[data-status="error"] {
+  background: var(--danger);
+}
+
+.redux-ai-activity-status[data-status="pending"] {
+  background: var(--warning);
+}
+
+.redux-ai-activity-method {
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redux-ai-activity-meta {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.redux-ai-activity-detail {
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+
+.redux-ai-activity-section {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.redux-ai-activity-section-heading {
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.redux-ai-activity-section-heading small {
+  color: var(--foreground-muted);
+  font-family: var(--font-mono);
+  font-size: var(--type-micro);
+  overflow-wrap: anywhere;
+}
+
+.redux-ai-activity-label {
+  color: var(--foreground-muted);
+  font-size: var(--type-micro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.redux-ai-activity-code {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  line-height: 1.45;
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: var(--space-2);
+  white-space: pre-wrap;
+}
+
+// Cell source keeps its authored line breaks; the request JSON above may wrap
+// because escaped newlines make its strings one long run.
+.redux-ai-activity-source {
+  overflow-wrap: normal;
+  white-space: pre;
+}

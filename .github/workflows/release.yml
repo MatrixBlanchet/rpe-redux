@@ -1,0 +1,353 @@
+name: Release desktop builds
+
+on:
+  push:
+    tags:
+      - "v*"
+  release:
+    types: [published]
+  # One-click release from the Actions tab: creates the tag and the published
+  # Release at the selected branch head, then builds and uploads in the same run.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish without the leading v, for example 1.0.0 or 1.1.0-beta.1
+        required: true
+        type: string
+
+# Stable and beta builds share this workflow. A version with a hyphen (for
+# example 1.1.0-beta.1) is published as a GitHub pre-release; the desktop app
+# filters that flag unless the user opts into the beta channel. Do not move a
+# beta onto the stable latest release.
+
+permissions:
+  contents: read
+
+concurrency:
+  # A tag created from the Releases UI fires both the push and release events.
+  # Cancelling the earlier run keeps one build uploading to one Release.
+  group: release-${{ github.event.release.tag_name || inputs.version || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  prepare_release:
+    name: Create or reuse GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.release.outputs.release_id }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Check out the release revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check the version files
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TAG: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            version="${INPUT_VERSION#v}"
+          else
+            version="${REF_TAG#v}"
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Unsupported release version: $version" >&2
+            exit 1
+          fi
+
+          package_version="$(jq -r '.version' package.json)"
+          tauri_version="$(jq -r '.version' src-tauri/tauri.conf.json)"
+          cargo_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' src-tauri/Cargo.toml | head -n 1)"
+          failed=0
+          for entry in "package.json=$package_version" "src-tauri/tauri.conf.json=$tauri_version" "src-tauri/Cargo.toml=$cargo_version"; do
+            file="${entry%%=*}"
+            actual="${entry#*=}"
+            if [[ "$actual" != "$version" ]]; then
+              echo "$file is $actual, expected $version. Bump the version before releasing." >&2
+              failed=1
+            fi
+          done
+          if [[ "$failed" -ne 0 ]]; then
+            exit 1
+          fi
+          echo "Releasing version $version."
+
+      - name: Create or reuse the GitHub Release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          EVENT_RELEASE_ID: ${{ github.event.release.id }}
+          REF_TAG: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          case "$EVENT_NAME" in
+            release)
+              tag="$EVENT_TAG"
+              release_id="$EVENT_RELEASE_ID"
+              ;;
+            workflow_dispatch)
+              version="${INPUT_VERSION#v}"
+              tag="v$version"
+              if release_json="$(gh api "repos/$REPOSITORY/releases/tags/$tag" 2>/dev/null)"; then
+                release_id="$(jq -r '.id' <<<"$release_json")"
+                echo "Reusing existing GitHub Release for $tag"
+              else
+                # GITHUB_TOKEN-created releases do not trigger this workflow
+                # again, so this run owns the build for the release it creates.
+                release_args=(--title "RPE Redux $version" --target "$COMMIT_SHA" --generate-notes)
+                if [[ "$version" == *-* ]]; then
+                  release_args+=(--prerelease)
+                fi
+                gh release create "$tag" --repo "$REPOSITORY" "${release_args[@]}"
+                release_json="$(gh api "repos/$REPOSITORY/releases/tags/$tag")"
+                release_id="$(jq -r '.id' <<<"$release_json")"
+                echo "Created GitHub Release $release_id for $tag"
+              fi
+              ;;
+            *)
+              tag="$REF_TAG"
+              version="${tag#v}"
+              if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+                echo "Unsupported release tag: $tag" >&2
+                exit 1
+              fi
+              if release_json="$(gh api "repos/$REPOSITORY/releases/tags/$tag" 2>/dev/null)"; then
+                release_id="$(jq -r '.id' <<<"$release_json")"
+                echo "Reusing existing GitHub Release for $tag"
+              else
+                release_args=(--title "RPE Redux $version" --generate-notes)
+                if [[ "$version" == *-* ]]; then
+                  release_args+=(--prerelease)
+                fi
+                gh release create "$tag" --repo "$REPOSITORY" "${release_args[@]}"
+                release_json="$(gh api "repos/$REPOSITORY/releases/tags/$tag")"
+                release_id="$(jq -r '.id' <<<"$release_json")"
+                echo "Created GitHub Release $release_id for $tag"
+              fi
+              ;;
+          esac
+
+          if [[ -z "$tag" || -z "$release_id" || "$release_id" == "null" ]]; then
+            echo "The release tag or id is empty" >&2
+            exit 1
+          fi
+          {
+            echo "tag_name=$tag"
+            echo "release_id=$release_id"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: ${{ matrix.name }}
+    needs: prepare_release
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS remains a future target until a maintainer can perform native
+          # acceptance. Windows ships x64, x86, and native ARM64 NSIS installers;
+          # Linux ships deb, rpm, and AppImage packages.
+          - name: Windows x64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+          # Native ARM64 app and Go sidecar. The bundled FFmpeg and cloudflared
+          # helpers remain x64 and run under Windows ARM64 emulation.
+          - name: Windows ARM64
+            runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            bundles: nsis
+          # Full 32-bit build with a pinned win32 FFmpeg and the 386
+          # cloudflared/Go sidecar. The host MSVC environment is switched to
+          # x86 before Cargo runs.
+          - name: Windows x86
+            runner: windows-latest
+            target: i686-pc-windows-msvc
+            bundles: nsis
+          # AppImage is the only Linux format the in-app updater can replace;
+          # deb and rpm users upgrade through the distribution or a fresh
+          # download. All three share the same signed build inputs.
+          - name: Linux x64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundles: deb,rpm,appimage
+
+    permissions:
+      contents: write
+
+    env:
+      CARGO_BUILD_TARGET: ${{ matrix.target }}
+      # Expose only whether signing is configured. The key and its password are
+      # injected into the individual signing steps below.
+      TAURI_SIGNING_ENABLED: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+      # Public half of the updater key pair, compiled into the binary as the
+      # Rust trust anchor (`option_env!("REDUX_UPDATE_PUBLIC_KEY")`) and shown by
+      # the settings update page. It is public information, so a repository
+      # variable is enough; only the private key belongs in secrets.
+      REDUX_UPDATE_PUBLIC_KEY: ${{ vars.REDUX_UPDATE_PUBLIC_KEY }}
+
+    steps:
+      - name: Check out released revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare_release.outputs.tag_name }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libfuse2
+
+      - name: Configure 32-bit MSVC
+        if: matrix.target == 'i686-pc-windows-msvc'
+        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
+        with:
+          arch: x86
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable (toolchain: stable)
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Build Go sidecar
+        run: npm run build:server
+
+      - name: Stage desktop media helpers
+        run: |
+          node scripts/prepareFfmpeg.mjs
+          node scripts/prepareCloudflared.mjs
+
+      - name: Build and upload signed release assets
+        if: env.TAURI_SIGNING_ENABLED == 'true'
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          releaseId: ${{ needs.prepare_release.outputs.release_id }}
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config src-tauri/updater.conf.json
+
+      # Until the updater signing secret is configured, keep producing regular
+      # installers instead of failing the whole release. The app's update page
+      # stays in "not configured" mode in that case.
+      - name: Build and upload unsigned release assets
+        if: env.TAURI_SIGNING_ENABLED != 'true'
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.prepare_release.outputs.release_id }}
+          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+
+      # A signed portable ZIP lets the installed editor replace its files in
+      # place on exit, without running NSIS. The manifest job below merges the
+      # per-architecture signatures.
+      - name: Package signed portable update
+        if: runner.os == 'Windows' && env.TAURI_SIGNING_ENABLED == 'true'
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        shell: pwsh
+        run: >-
+          node scripts/packagePortableUpdate.mjs
+          --target "${{ matrix.target }}"
+          --version "${{ needs.prepare_release.outputs.tag_name }}"
+          --out release/portable-update
+
+      - name: Upload portable update
+        if: runner.os == 'Windows' && env.TAURI_SIGNING_ENABLED == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          Get-ChildItem release/portable-update -File |
+            Where-Object { $_.Extension -in '.zip', '.sig' } |
+            ForEach-Object { gh release upload "${{ needs.prepare_release.outputs.tag_name }}" $_.FullName --clobber }
+
+  portable-manifest:
+    name: Portable update manifest
+    needs: [prepare_release, build]
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      # The manifest only merges existing signatures; it never holds the key.
+      TAURI_SIGNING_ENABLED: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+    steps:
+      - name: Check out released revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare_release.outputs.tag_name }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+
+      - name: Collect portable signatures
+        if: env.TAURI_SIGNING_ENABLED == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p portable-signatures
+          gh release download "${{ needs.prepare_release.outputs.tag_name }}" \
+            --pattern "*_portable-update.zip.sig" \
+            --dir portable-signatures
+
+      - name: Write portable update manifest
+        if: env.TAURI_SIGNING_ENABLED == 'true'
+        run: |
+          node scripts/buildPortableManifest.mjs \
+            --repo "${{ github.repository }}" \
+            --tag "${{ needs.prepare_release.outputs.tag_name }}" \
+            --version "${{ needs.prepare_release.outputs.tag_name }}" \
+            --dir portable-signatures \
+            --out redux-latest.json
+
+      - name: Upload portable update manifest
+        if: env.TAURI_SIGNING_ENABLED == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ needs.prepare_release.outputs.tag_name }}" redux-latest.json --clobber

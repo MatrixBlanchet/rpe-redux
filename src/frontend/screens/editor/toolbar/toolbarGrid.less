@@ -1,0 +1,110 @@
+// Toolbar controls share predictable button-sized cells. Each editor group
+// lives in its own file under `screens/editor/toolbar/` and owns only the widths
+// it displays.
+.redux-app-root .redux-toolbar {
+  // Cells follow the icon-control token so compact/comfortable density keeps
+  // dividers and field clusters on the same vertical rails.
+  --tool-cell: var(--theme-toolbar-cell, 41px);
+  // The glyph a field is named by. It has a cell of its own, so the sheet has to
+  // know its size to centre it in that cell; `ToolbarFields.tsx` draws it at 16px.
+  --tool-icon: 16px;
+  // A rule paints its line a few pixels inside its own box, and the row gap adds
+  // more, so the field's first cell starts well right of the visible rule. The
+  // glyph is nudged back toward the rule by that half-difference, otherwise it
+  // reads as glued to the box it names even though it is centred in its cell.
+  --tool-icon-shift: 5px;
+
+  label {
+    white-space: nowrap;
+  }
+
+  // A stepper's two buttons are drawn inside their field, the line picker's
+  // chevron is an inset overlay, and the picker's field takes the whole control
+  // span, so none of them is sized as a cell of its own.
+  .redux-toolbar-line
+    :is(button, label, input:not([type="checkbox"]), select):not(.redux-stepper-button):not(
+      .line-picker-toggle
+    ):not(.line-field) {
+    box-sizing: border-box;
+    flex: none;
+    width: calc(var(--tool-cell) * var(--cells, 1));
+  }
+
+  // A bare button is one cell with a glyph in it, so that glyph stays centred.
+  .redux-toolbar-line button {
+    justify-content: center;
+  }
+
+  // A field that carries a glyph spends its first cell on the glyph: the glyph
+  // sits in that cell and the box starts where the cell ends. The two then fill
+  // the label's declared cells exactly, which is why this label is packed from
+  // the left — there is no slack left for centring to distribute.
+  .redux-toolbar-line label:has(> .redux-icon) {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .redux-toolbar-line label:has(> .redux-icon) > .redux-icon {
+    flex: none;
+    margin-inline: calc((var(--tool-cell) - var(--tool-icon)) / 2 - var(--tool-icon-shift))
+      calc((var(--tool-cell) - var(--tool-icon)) / 2 + var(--tool-icon-shift));
+  }
+
+  // A field's tooltip target is the glyph's whole cell, not the 16px mask. The
+  // padding keeps the glyph at the same optical position as the direct-icon rule.
+  .redux-toolbar-line label:has(> .toolbar-field-icon) {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .redux-toolbar-line .toolbar-field-icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--tool-cell);
+    height: 100%;
+    padding-right: 0;
+  }
+
+  #play {
+    --cells: 1;
+  }
+  #rewind {
+    --cells: 1;
+  }
+
+  // Each iconed field is glyph cell + box: the box keeps the width its value
+  // needs, so the glyph never steals room from it.
+  // The line picker builds one select-style box rather than a cell cluster;
+  // `lineSelection.less` sizes that box to the picker's whole span.
+
+  .rate-field {
+    --cells: 3;
+  }
+  #rate {
+    --cells: 2;
+  }
+
+  :is(.division-field, .grid-count-field) {
+    --cells: 3;
+  }
+
+  #division,
+  #grid-count {
+    --cells: 2;
+  }
+
+  .ratio-field {
+    --cells: 3;
+  }
+
+  #preview-ratio {
+    --cells: 2;
+  }
+}

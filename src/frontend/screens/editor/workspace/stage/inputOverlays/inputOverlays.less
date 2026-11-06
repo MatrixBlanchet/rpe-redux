@@ -1,0 +1,54 @@
+// Input overlays: the transient key-press label and the pointer trail. They sit
+// just below the performance HUD, the diagnostics surface the user can drag,
+// and never take pointer events; their models own the state.
+
+.input-overlays {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-performance-hud) - 1);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.key-press-label {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  min-width: 48px;
+  padding: 5px var(--space-3);
+  border-radius: var(--design-radius-chip);
+  background: var(--media-surface);
+  color: var(--media-ink);
+  font-size: var(--type-body);
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  opacity: 0.92;
+}
+
+.key-press-label.is-released {
+  animation: input-key-label-fade 500ms ease-out both;
+  animation-delay: calc(-1 * var(--key-label-age, 0ms));
+}
+
+.mouse-trail {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  color: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+@keyframes input-key-label-fade {
+  from {
+    opacity: 0.92;
+    transform: translate(-50%, 0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+}

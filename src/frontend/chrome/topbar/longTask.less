@@ -1,0 +1,128 @@
+// Background-task trigger and its anchored panel in the title bar.
+//
+// The trigger is a window-wide control, not a sidebar section, so the panel
+// grows from a stable top-right anchor independent of the rail's hover state.
+
+.redux-long-task {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+.redux-app-root .redux-long-task-button {
+  position: relative;
+}
+
+.redux-long-task-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--panel-header);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--type-micro);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.long-task-popover {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, calc(100vw - var(--space-4)));
+  max-height: calc(100vh - var(--titlebar-height) - var(--space-4));
+  margin: 0;
+  padding: var(--space-2);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: var(--shadow-panel);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(calc(-1 * var(--space-1-5))) scale(0.985);
+  transform-origin: var(--popover-origin-x, 100%) var(--popover-origin-y, 0);
+  transition:
+    opacity var(--design-dur-exit) var(--design-ease-exit),
+    transform var(--design-dur-exit) var(--design-ease-exit),
+    visibility 0s linear var(--design-dur-exit);
+
+  &.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    transition:
+      opacity var(--design-dur-enter) var(--design-ease-enter),
+      transform var(--design-dur-enter) var(--design-ease-enter),
+      visibility 0s;
+  }
+}
+
+.redux-app-root .long-task-popover > .redux-long-task-close {
+  position: absolute;
+  z-index: 1;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.long-task-popover-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: var(--space-1);
+}
+
+.long-task-row {
+  flex: none;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--panel-header);
+}
+
+.long-task-row-title {
+  display: block;
+  min-width: 0;
+  padding-right: 28px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.long-task-progress-line {
+  margin: var(--space-2) 0 var(--space-1);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  overflow-wrap: anywhere;
+}
+
+.long-task-progress {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .long-task-popover {
+    transform: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,218 @@
+/* The one modal surface: shared chrome, the document-level scrim, and the
+   stacked native `<dialog>` entry/exit motion. `Modal.tsx` is the only owner of
+   the element, so there is no separate dialog stylesheet or shell. */
+
+// ------------------------------------------------------------ shared chrome
+// A modal has three predictable zones: heading, content, and actions. Feature
+// panels provide content and their own layout; they do not repaint the shell.
+dialog {
+  width: min(850px, calc(100vw - 32px));
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: var(--shadow-panel);
+}
+
+dialog::backdrop {
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
+}
+
+.modal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--panel-header);
+}
+
+.modal-heading h2 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--type-title);
+  font-weight: 500;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.modal-description {
+  margin: 0;
+  padding: var(--space-3) var(--space-5) 0;
+  color: var(--foreground-muted);
+  white-space: pre-wrap;
+  line-height: var(--line-body);
+}
+
+.modal-content {
+  max-height: 58vh;
+  overflow: auto;
+  padding: var(--space-5);
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+// A compact prompt is a sentence and a decision, not a document workspace.
+dialog.redux-prompt-dialog {
+  width: min(520px, calc(100vw - 32px));
+}
+
+// A keyboard capture is one chord and its feedback; the body owns focus so
+// typing does not land on an action button.
+dialog.redux-keyboard-capture {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.redux-keyboard-capture .modal-content {
+  text-align: center;
+}
+
+.redux-keyboard-capture-body {
+  display: grid;
+  gap: var(--space-3);
+  outline: none;
+}
+
+// Prompt fields use the shared `FieldRow` inline layout; the modal sheet does
+// not repaint their label/control grid.
+
+.modal-actions {
+  display: flex;
+  // A footer decision row stays horizontal: extra answers wrap onto another
+  // row, never into a vertical stack.
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin: 0;
+  // The action row is part of the content, not a separate band: keep the
+  // dialog's own surface and rely on spacing instead of a divider.
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border-top: 0;
+  background: transparent;
+
+  // Short labels such as Cancel/Apply keep the same target width; the pair
+  // reads as one deliberate action row instead of two differently sized chips.
+  > .redux-button {
+    flex: 0 1 auto;
+    min-width: 88px;
+    justify-content: center;
+  }
+
+  // A choice answer is a sentence, not a dense toolbar label. It may wrap
+  // instead of pushing the footer past the dialog edge.
+  > .modal-choice-action {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+}
+
+.modal-error {
+  color: var(--danger);
+  white-space: pre-wrap;
+}
+
+.modal-choice {
+  display: block;
+  width: 100%;
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  text-align: left;
+  white-space: normal;
+}
+
+dialog button.primary {
+  background: var(--accent);
+  color: var(--action-foreground-resting, var(--on-accent));
+}
+
+dialog input,
+dialog select,
+dialog textarea {
+  color: var(--foreground);
+  background: var(--input-surface);
+  border-color: var(--input-border);
+}
+
+// Every dialog joins the shared modal layer. The stack sets a zero-based
+// `--modal-stack-layer`; the token supplies the base value.
+dialog[data-redux-modal="true"] {
+  z-index: calc(var(--z-modal) + 1 + var(--modal-stack-layer, 0));
+}
+
+// --------------------------------------------------------- scrim and motion
+// The scrim is a document-level portal so it can cover the title bar; the
+// desktop window controls are rendered separately above this layer and remain
+// interactive by modal policy.
+.redux-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) + var(--modal-scrim-layer, 0));
+  background: transparent;
+  backdrop-filter: blur(0);
+  transition:
+    background-color var(--design-dur-exit) var(--design-ease-exit),
+    backdrop-filter var(--design-dur-exit) var(--design-ease-exit);
+  &[data-state="open"] {
+    background: var(--scrim);
+    backdrop-filter: blur(6px);
+    transition-duration: var(--design-dur-enter);
+    transition-timing-function: var(--design-ease-enter);
+    @starting-style {
+      background: transparent;
+      backdrop-filter: blur(0);
+    }
+  }
+  // Keep the visual blur fading out, but release input as soon as closing starts.
+  // Otherwise a just-closed modal still intercepts clicks for the transition.
+  &[data-state="closing"] {
+    pointer-events: none;
+  }
+}
+
+.redux-app-root dialog[data-redux-modal] {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  max-height: calc(100vh - 2 * var(--space-6));
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  // Set by `openModal` from the trigger's centre when one is focused. When
+  // there is no meaningful source, the surface breathes from its own heading.
+  transform-origin: var(--modal-origin-x, 50%) var(--modal-origin-y, 38%);
+  transition:
+    opacity var(--design-dur-enter) var(--design-ease-enter),
+    transform var(--design-dur-enter) var(--design-ease-enter);
+  &[data-closing="true"] {
+    opacity: 0;
+    transform: translateY(2px) scale(0.975);
+    transition-duration: var(--design-dur-exit);
+    transition-timing-function: var(--design-ease-exit);
+  }
+  &[open] {
+    @starting-style {
+      opacity: 0;
+      transform: translateY(5px) scale(0.97);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog::backdrop {
+    backdrop-filter: none;
+  }
+  .redux-modal-scrim,
+  .redux-app-root dialog[data-redux-modal] {
+    transition: none;
+  }
+}

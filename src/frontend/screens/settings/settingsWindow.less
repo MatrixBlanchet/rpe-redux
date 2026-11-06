@@ -1,0 +1,225 @@
+// The settings window frame: its header, the rail and content columns, and the
+// search layout.
+
+.redux-settings {
+  width: min(1040px, 94vw);
+  max-width: none;
+  height: min(720px, 90vh);
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  // Every settings page shares one form grid: the label starts at the leading
+  // edge and the control column keeps a stable trailing width, so inputs,
+  // selects, sliders, and toggles all end on the same vertical line.
+  --field-control-width: 32%;
+  --settings-control-width: clamp(220px, 32%, 360px);
+}
+
+.redux-settings[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+// The shared dialog's content box is a scroll area for message boxes; this window
+// sizes its own panes, so the wrapper turns into the flex row they need instead.
+.redux-settings .modal-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+  // The settings window sizes its own panes; a reserved scrollbar gutter here
+  // would leave a strip of dialog background to the right of the heading.
+  scrollbar-gutter: auto;
+  padding: 0;
+}
+
+.redux-settings-shell {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.redux-settings-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.redux-settings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--panel-header);
+  border-bottom: 1px solid var(--panel-border);
+  overflow: hidden;
+}
+
+.redux-settings-heading h2 {
+  margin: 0;
+  font-size: var(--type-hero);
+  line-height: var(--line-body);
+}
+
+.redux-settings-breadcrumb-item + .redux-settings-breadcrumb-item {
+  color: var(--foreground-muted);
+}
+
+.redux-settings-breadcrumb-separator {
+  display: inline-block;
+  margin: 0 var(--space-2);
+  color: var(--foreground-muted);
+}
+
+.redux-settings-heading p {
+  margin: 0;
+}
+
+.redux-settings-panels {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  // Section `offsetTop` values are the scroll offsets used for restore. A
+  // positioning context keeps them relative to this scroller and independent of
+  // the dialog's opening transform.
+  position: relative;
+  // Category switches must not move the headings sideways when one page is
+  // taller than another and its scrollbar appears.
+  scrollbar-gutter: stable;
+  padding: var(--space-2) var(--space-5) var(--space-5);
+}
+
+.redux-settings-search-empty {
+  min-height: 100%;
+}
+
+.redux-settings-panel:not([hidden]) {
+  animation: redux-settings-panel-in var(--design-dur-tint) ease both;
+}
+
+// Every right-hand page names its category. The heading is part of the scroll
+// content, not the window chrome, so it scrolls away with the page it labels.
+// The title is plain text: the seam and the space below carry the hierarchy, so
+// it never reads as a link or as a group heading.
+.redux-settings-page-title {
+  position: relative;
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  color: var(--foreground);
+  font-size: var(--type-heading);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+// The bar starts at the row inset so it aligns with the setting labels and
+// column headers instead of the panel edge.
+.redux-settings .redux-settings-page-title::after {
+  left: var(--space-3);
+}
+
+.redux-settings-page-title + .redux-setting-group {
+  margin-top: 0;
+}
+
+// All pages share one scroll: a selected page is not swapped in, it is the
+// section under the top of the viewport. The seam is deliberately stronger than
+// a group divider so a wheel scroll cannot read as one endless page.
+.redux-settings-panel:not([hidden]) ~ .redux-settings-panel:not([hidden]) {
+  margin-top: var(--space-7);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-strong);
+}
+
+@keyframes redux-settings-panel-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.redux-settings-search-path {
+  margin: var(--space-4) 0 var(--space-2);
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.redux-setting-label-with-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.redux-setting-restart-marker {
+  flex: none;
+  align-self: center;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+.redux-app-root .redux-settings {
+  width: min(1120px, calc(100vw - 64px));
+  height: min(810px, calc(100vh - 64px));
+  border: 1px solid var(--outline);
+  box-shadow: var(--shadow-panel);
+}
+
+.redux-app-root .redux-settings-heading {
+  background: var(--surface);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 0;
+  align-items: center;
+  > div {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    min-height: var(--control-height-icon);
+  }
+  h2 {
+    font-size: var(--type-hero);
+    font-weight: 500;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  > .redux-button:not(.redux-icon-button) {
+    font-size: var(--type-label);
+    min-height: 28px;
+    padding: 3px var(--space-2);
+  }
+}
+
+.redux-app-root .redux-settings-panels {
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+@media (max-width: 1100px) {
+  .redux-app-root .redux-settings-heading {
+    padding: var(--space-5);
+  }
+
+  .redux-app-root .redux-settings-panels {
+    padding: 0 var(--space-5) var(--space-5);
+  }
+}
+
+// The settings dialog is usable down to the host window's minimum width. A
+// narrower control column keeps the label column readable without letting a
+// long field push the row past the dialog edge.
+@media (max-width: 860px) {
+  .redux-app-root .redux-settings {
+    --settings-control-width: clamp(180px, 30%, 260px);
+  }
+}

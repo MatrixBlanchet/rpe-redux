@@ -1,0 +1,19 @@
+// Curve-note pane styling: the two anchor-pick actions, the generated-note
+// preview toggle, and the parse-error line.
+//
+// These controls sit outside the shared field grid, so this sheet owns their
+// margins and the error color; the design system owns their pressed states.
+// Picking the two anchors is a pair of ordinary actions: they carry the explicit
+// edge the design system gives secondary choices.
+.curve-pick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-3) var(--space-5);
+}
+
+// The failed parse of one field. The count of generated notes used to sit here
+// too; it is no longer shown, only the reason a value could not be used.
+.curve-error {
+  margin: var(--space-2) var(--space-5);
+}

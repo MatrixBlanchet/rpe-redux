@@ -1,0 +1,70 @@
+// Rules split out of the pre-refactor monolithic sheets (base.less, theme.less,
+// shell.less, settings.less — all four are gone). They keep their original
+// relative order; cascade position is fixed by src/design/styles/index.less.
+
+// The realtime preview is the workspace's *underlay*, not a pane of its own: it
+// covers the whole stage and the authoring canvases sit on top of it
+// (`panels/timeline/timeline.less`). The two used to split the stage by
+// `--effective-timeline-height`, with the preview in the upper half and the
+// authoring strip in the lower one.
+//
+// Its opacity is written every frame by `preview.ts` from the live alpha value
+// preference, so the value here only covers the frames before the first one.
+//
+// The wrapper is one local stacking context. The preview layers carry their own
+// z-indexes relative to each other; the whole group must still paint below every
+// timeline layer (`#notes-backdrop` is z-index 0 and `#notes`/`#events` are 2), so
+// the group is isolated instead of letting its numbers join the stage's stacking
+// context.
+.preview-underlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+#realtime-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.1;
+}
+
+.preview-note-batch {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.preview-shader-layer,
+.preview-overlay-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.preview-shader-layer[hidden] {
+  display: none;
+}
+
+.preview-shader-layer {
+  z-index: 1;
+}
+
+.preview-overlay-layer {
+  z-index: 2;
+}
+
+// The preview is clipped to its aspect frame by the canvases themselves (the
+// `clip-path` written from the viewport and the drawing clip), so the stage paints
+// no letterbox mask on top of the timeline. The old stage-wide mask blacked out the
+// authoring rows outside the frame, which made the ratio clip look like it was
+// cropping the timeline rather than only framing the preview.

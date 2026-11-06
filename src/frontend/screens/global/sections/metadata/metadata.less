@@ -1,0 +1,209 @@
+// Metadata page: descriptive fields above the background and audio resource
+// cards. The inspector page supplies the outer inset; the two sections own their
+// internal rhythm, and both cards share one footer structure.
+
+.metadata-panel-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-6) var(--space-7);
+  padding: 0;
+  min-width: 0;
+}
+
+.metadata-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.metadata-section-heading {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  h2 {
+    position: relative;
+    display: inline-block;
+    margin: 0;
+    padding: 0 0 var(--space-1);
+    color: var(--foreground);
+    font-size: var(--type-heading);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+}
+
+.metadata-resources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.metadata-resource-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+}
+
+.metadata-resource-visual {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.redux-app-root button.metadata-resource-image {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-sunken);
+  color: var(--foreground-muted);
+  aspect-ratio: 16 / 9;
+  cursor: var(--app-cursor-pointer);
+
+  &:hover:not(:disabled) {
+    color: var(--foreground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  &[aria-invalid="true"] {
+    box-shadow: inset 0 0 0 1px var(--danger);
+  }
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0;
+    transition: opacity var(--design-dur-tint) ease;
+  }
+
+  img.is-loaded {
+    opacity: 1;
+  }
+}
+
+.metadata-resource-busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
+}
+
+.metadata-resource-audio {
+  background: var(--surface-muted);
+}
+
+.metadata-resource-audio .metadata-resource-footer {
+  border-top: 0;
+  background: transparent;
+}
+
+.metadata-resource-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-muted);
+}
+
+.metadata-resource-copy {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.metadata-resource-label {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.metadata-resource-copy strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: var(--type-label);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metadata-resource-copy strong.is-empty {
+  color: var(--foreground-muted);
+  font-weight: 400;
+}
+
+.metadata-resource-error {
+  color: var(--danger);
+  font-size: var(--type-caption);
+}
+
+.redux-app-root button.metadata-resource-pick:has(> .redux-icon) {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--foreground-muted);
+  cursor: var(--app-cursor-pointer);
+
+  &:hover:not(:disabled) {
+    border-color: var(--border-strong);
+    color: var(--foreground);
+  }
+
+  .redux-icon {
+    --icon-color: currentColor;
+  }
+}
+
+// The metadata page is a document-wide editor: give both columns the width of
+// the workbench instead of the inspector's usual readable column.
+.global-inspector[data-global-page="metadata"] .global-inspector-content {
+  padding-inline: var(--space-5);
+}
+
+.global-inspector[data-global-page="metadata"] .global-inspector-content > .metadata-panel-form {
+  width: 100%;
+  max-width: 1440px;
+}
+
+@media (max-width: 1050px) {
+  .metadata-panel-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// The inspector column gives metadata one column; the global page's second
+// workspace column is not available here.
+.inspector [data-panel="metadata"] .metadata-panel-form {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}

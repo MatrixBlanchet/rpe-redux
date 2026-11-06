@@ -1,0 +1,72 @@
+name: Source checks
+
+# The source gate runs on every branch and pull request. Interaction smoke
+# journeys stay local because they need a built desktop executable; the release
+# workflow performs the platform packaging.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - name: Check out the revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Run source checks and formatting
+        run: npm run verify
+
+  # Linux packaging depends on the same scripts and Go service, so the source
+  # gate runs once there as well. Desktop interaction smoke journeys remain
+  # Windows-only because the harness drives WebView2 over CDP.
+  linux:
+    name: Source checks (Linux)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Run source checks
+        run: npm run check

@@ -1,0 +1,239 @@
+// Global-mode right navigation, workspace page, and inspector page.
+
+.global-nav,
+.design-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+
+.global-workspace {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface-raised);
+}
+
+.global-page-body,
+.global-inspector-content {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--space-4) var(--space-7);
+  scrollbar-gutter: stable;
+}
+
+// The inspector is a column of a title, the detail body, and sometimes an empty
+// placeholder. The placeholder owns the remaining height so its copy and
+// skeleton sit in the middle of the pane.
+.global-inspector-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.global-inspector-content > * {
+  flex: 0 0 auto;
+}
+
+.global-inspector-content > .inspector-empty-hint {
+  flex: 1 0 auto;
+}
+
+// The global pages share one readable inner column. The gutter and the
+// max-width together keep the workspace from stretching edge to edge on wide
+// windows; each page remains responsible for its own internal layout.
+.global-page-body > *,
+.global-inspector-content > * {
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+.global-workspace .global-page-body {
+  padding: var(--space-3) var(--space-7) var(--space-4);
+}
+
+// The three global workspaces pin their add/delete actions below the scroll
+// region through the shared compact footer arrangement.
+.global-inspector {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.global-inspector .panel-title {
+  padding-top: 0;
+}
+
+// Timing page: the timing-point rows and the selected point's attributes.
+.global-workspace[data-global-page="timing"] .global-page-body,
+.global-workspace[data-global-page="lines"] .global-page-body {
+  overflow: hidden;
+}
+
+// The asset tree is a peer of the line tree: it fills the page body and lets
+// its folder boxes scroll instead of living inside a second framed panel.
+.global-workspace[data-global-page="assets"] .global-page-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.global-workspace[data-global-page="lines"] .line-panel {
+  height: 100%;
+  min-height: 0;
+}
+
+.global-timing-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.global-timing-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+}
+
+.global-timing-offset {
+  width: 100%;
+  text-align: left;
+  cursor: var(--app-cursor-pointer);
+
+  span {
+    color: var(--foreground);
+    font-size: var(--type-body);
+  }
+
+  strong {
+    color: var(--foreground);
+    font-size: var(--type-body);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.global-timing-divider {
+  flex: none;
+  height: 1px;
+  margin: var(--space-1) var(--space-2);
+  background: var(--border-subtle);
+}
+
+.global-timing-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.global-timing-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: var(--space-2);
+}
+
+.global-timing-row-time {
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.global-timing-row-bpm {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--foreground);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+
+  small {
+    color: var(--foreground-muted);
+    font-size: var(--type-micro);
+    letter-spacing: 0.08em;
+  }
+}
+
+.global-timing-footer {
+  margin-top: auto;
+}
+
+.global-timing-error {
+  margin: 0;
+}
+
+// The asset workspace is a management surface, so its tree gets a wider rhythm
+// than the narrow inspector version.
+.global-workspace .asset-library-actions {
+  margin-bottom: var(--space-3);
+}
+
+// The inspector is the image viewer: a large contained preview on a checker
+// background, with the asset's actions and metadata underneath.
+.global-inspector .line-panel {
+  flex: 1 0 auto;
+}
+
+.global-inspector .asset-details {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.global-inspector .asset-details > .asset-image {
+  width: 100%;
+  height: min(42vh, 420px);
+  margin: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(45deg, var(--surface-muted) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--surface-muted) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--surface-muted) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--surface-muted) 75%);
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+  background-size: 16px 16px;
+}
+
+.global-inspector .asset-details .asset-image img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: pixelated;
+}

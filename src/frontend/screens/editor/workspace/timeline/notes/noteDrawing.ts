@@ -1,0 +1,545 @@
+/**
+ * Draws the note field: backdrop grid, note bars and holds, selection state,
+ * lane labels, multi-line panels, and the playhead.
+ *
+ * It owns canvas painting; note filtering, geometry, and hit rules come from core
+ * and the viewport.
+ */
+import { noteIsAbove } from "../../../../../../core/global/chart/chart.ts";
+import { verticalGrid } from "../../../../../../core/global/chart/editing/editGrid.ts";
+import { prepareCanvas } from "../../../canvas/canvas2d.ts";
+import { noteSkewAtHit, noteSkewCurve, noteSkewShear } from "../../../canvas/noteGeometry.ts";
+import {
+  BACKGROUND_GRID,
+  FOREGROUND_GRID,
+  PLAYHEAD_GRID,
+  drawHoverGuides,
+  strokeVerticalGrid,
+} from "../drawing/gridDrawing.ts";
+import { noteColor, readCanvasPalette, selectionHighlightColor } from "../../../canvas/palette.ts";
+import { canvasFont } from "../../../canvas/text.ts";
+import { TimelineLabelCuller } from "../drawing/labelCulling.ts";
+import { multiLineLineOpacity } from "../multiLine/multiLinePresentation.ts";
+import {
+  checkedNote,
+  isTimelineNoteRenderable,
+  timelineRenderRange,
+} from "../../../../../../core/edit/timeline/model.ts";
+import type { TimelineNote } from "../../../../../../core/edit/timeline/types.ts";
+import type {
+  TimelineNoteDrawingReceiver,
+  TimelinePlayheadDrawingReceiver,
+} from "../drawing/timelineReceiver.ts";
+import { drawEventOverlapFilter } from "../events/eventSelectionDrawing.ts";
+import { selectedNoteIndices } from "./noteSelectionDrawing.ts";
+
+interface NotePaintOptions {
+  note: TimelineNote;
+  horizontal: number;
+  vertical: number;
+  endVertical: number;
+  noteWidth: number;
+  height: number;
+  opacityMultiplier?: number;
+  /** Render the note body in the editor's selected-note colour. */
+  selected?: boolean;
+  /** Horizontal shear from the line's sampled skew, matching the preview. */
+  shear?: number;
+}
+
+/** Paint one note for both the normal and multi-line timelines. */
+export function drawNote(
+  this: TimelineNoteDrawingReceiver,
+  context: CanvasRenderingContext2D,
+  options: NotePaintOptions,
+): void {
+  const { note, horizontal, vertical, endVertical, noteWidth, height } = options;
+  const palette = this.cache.palette() ?? readCanvasPalette();
+  const alpha =
+    (note.isFake ? 0.45 : noteIsAbove(note) ? 1 : 0.7) *
+    (this.appearance.noteOpacity ?? 1) *
+    (options.opacityMultiplier ?? 1);
+  const shear = note.type === 2 ? 0 : (options.shear ?? 0);
+  context.globalAlpha = alpha;
+  const selected = options.selected === true;
+  const selectedTint = selected ? selectionHighlightColor(palette) : null;
+  context.fillStyle = selected ? palette.selectionHighlightStroke : noteColor(palette, note.type);
+  const tint = selectedTint ?? note.tint ?? note.color;
+  const noteColorStyle = tint
+    ? { mode: selected ? ("selected" as const) : ("tint" as const), color: tint }
+    : undefined;
+  const batched =
+    note.type === 2
+      ? this.noteBatch.addHold(
+          this.appearance.skin,
+          false,
+          horizontal,
+          vertical,
+          horizontal,
+          endVertical,
+          noteWidth,
+          true,
+          alpha,
+          noteColorStyle,
+          undefined,
+        )
+      : this.noteBatch.addHead(
+          this.appearance.skin,
+          note.type,
+          false,
+          horizontal,
+          vertical,
+          noteWidth,
+          0,
+          shear,
+          alpha,
+          noteColorStyle,
+        );
+  let textured = batched;
+  if (!textured) {
+    if (note.type === 2) {
+      textured =
+        this.appearance.skin?.hold(
+          context,
+          horizontal,
+          vertical,
+          endVertical,
+          noteWidth,
+          false,
+          true,
+          noteColorStyle,
+          undefined,
+        ) ?? false;
+    } else if (shear !== 0) {
+      context.save();
+      context.translate(horizontal, vertical);
+      context.transform(1, 0, shear, 1, 0, 0);
+      textured =
+        this.appearance.skin?.head(context, note.type, 0, 0, noteWidth, false, noteColorStyle) ??
+        false;
+      context.restore();
+    } else {
+      textured =
+        this.appearance.skin?.head(
+          context,
+          note.type,
+          horizontal,
+          vertical,
+          noteWidth,
+          false,
+          noteColorStyle,
+        ) ?? false;
+    }
+  }
+  if (!textured && !this.appearance.skin && note.type === 2) {
+    // The procedural shape is reserved for a timeline with no skin renderer.
+    // A present skin must finish loading or fail visibly rather than silently
+    // replacing its artwork with a different visual language.
+    context.globalAlpha = alpha * 0.45;
+    const top = Math.max(-10, endVertical);
+    context.fillRect(
+      horizontal - noteWidth / 2,
+      top,
+      noteWidth,
+      Math.min(height + 20, vertical - top),
+    );
+    context.globalAlpha = alpha;
+    context.fillRect(horizontal - noteWidth / 2, endVertical - 3, noteWidth, 6);
+  }
+  if (!textured && !this.appearance.skin) {
+    if (note.type !== 2 && shear !== 0) {
+      context.save();
+      context.translate(horizontal, vertical);
+      context.transform(1, 0, shear, 1, 0, 0);
+      context.fillRect(-noteWidth / 2, -4, noteWidth, 8);
+      context.restore();
+    } else {
+      context.fillRect(horizontal - noteWidth / 2, vertical - 4, noteWidth, 8);
+    }
+  }
+  context.globalAlpha = 1;
+}
+
+/** Draw the note field for the current mode: grid, notes, ghosts, and multi-line chrome. */
+export function draw(this: TimelineNoteDrawingReceiver, playBeat: number): void {
+  const session = this.getSession();
+  const palette = this.cache.palette() ?? readCanvasPalette();
+  const { context, width, height } = prepareCanvas(this.notesCanvas);
+  this.viewport.syncMultiLineChrome("notes", width);
+  // The note backdrop is anchored to the live viewport, so repaint it with the
+  // frame rather than keeping a translated bitmap.
+  const backdrop = prepareCanvas(this.notesBackdrop);
+  this.noteBatch.begin(width, height, this.appearance.skin);
+  const multiNotes = session.notesMode !== "single";
+  const multiplePanels = multiNotes && this.viewport.panelCount("notes") > 1;
+  if (session.multiLineActive && this.viewport.panelCount("notes") > 1) {
+    const panelWidth = this.viewport.panelWidth(width, "notes");
+    const gap = this.viewport.panelGap(width, "notes");
+    const offset = this.viewport.multiLineViewportOffset(width, "notes");
+    context.fillStyle = palette.surface;
+    for (let panel = 0; panel < this.viewport.panelCount("notes") - 1; panel++) {
+      context.fillRect(panel * (panelWidth + gap) + panelWidth - offset, 0, gap, height);
+    }
+  }
+  if (multiplePanels) {
+    this.drawMultiLineGrid(backdrop.context, width, height, playBeat, "notes", BACKGROUND_GRID);
+  } else {
+    this.grid(backdrop.context, width, height, playBeat, BACKGROUND_GRID, "notes");
+  }
+  drawNoteLanes.call(this, backdrop.context, width, height);
+  if (multiplePanels) {
+    const panelWidth = this.viewport.panelWidth(width, "notes");
+    const offset = this.viewport.multiLineViewportOffset(width, "notes");
+    backdrop.context.save();
+    backdrop.context.strokeStyle = palette.outline;
+    backdrop.context.lineWidth = 2;
+    const panelCount = this.viewport.panelCount("notes");
+    const [firstPanel, lastPanel] = this.viewport.visiblePanelRange(width, "notes");
+    const firstSeparator = Math.max(0, firstPanel - 1);
+    const lastSeparator = Math.min(panelCount - 2, lastPanel);
+    for (let panel = firstSeparator; panel <= lastSeparator; panel++) {
+      const separator = panel * this.viewport.panelStride(width, "notes") + panelWidth - offset;
+      const lineIndex = session.targetLineIndices[panel];
+      if (lineIndex !== undefined) {
+        strokeVerticalGrid(backdrop.context, separator, height);
+      }
+    }
+    backdrop.context.restore();
+  }
+  if (this.getSession().multiLineActive && this.getSession().multiLineMode === "notes") {
+    this.drawMultiLineNotes(context, width, height);
+  }
+  this.drawCurveGhost(context);
+  const entries = new Map<number, { item: TimelineNote; index: number }>(
+    this.visible().map((entry) => [entry.index, entry] as const),
+  );
+  const skewCurve = noteSkewCurve(session.line);
+  if (!multiNotes && ["move", "startTime", "endTime"].includes(this.gestures.drag?.kind ?? "")) {
+    for (const index of session.selection) {
+      entries.set(index, { item: checkedNote(session.notes[index]), index });
+    }
+  }
+  for (const entry of multiNotes
+    ? []
+    : [...entries.values()].sort(
+        (left, right) => Number(right.item.type === 2) - Number(left.item.type === 2),
+      )) {
+    const selected = session.selection.has(entry.index);
+    const note = selected ? this.movedNote(entry.item) : entry.item;
+    if (!isTimelineNoteRenderable(note)) {
+      continue;
+    }
+    const range = timelineRenderRange(note.startTime, note.endTime, this.viewport.gridCount);
+    const horizontal = this.viewport.noteHorizontal(note.positionX);
+    const vertical = this.viewport.vertical(range.start);
+    const endVertical = this.viewport.vertical(range.end);
+    const noteWidth =
+      68 * this.viewport.renderNoteScale * Math.min(3, Math.max(0.2, note.size ?? 1));
+    const renderedHorizontal = this.viewport.clampNoteHorizontal(horizontal, noteWidth, width);
+    if (renderedHorizontal == null) {
+      continue;
+    }
+    drawNote.call(this, context, {
+      note,
+      horizontal: renderedHorizontal,
+      vertical,
+      endVertical,
+      noteWidth,
+      height,
+      selected,
+      shear: noteSkewShear(noteSkewAtHit(skewCurve, note)),
+    });
+    if (note.type === 2 && range.invalid) {
+      drawEventOverlapFilter(
+        context,
+        {
+          x: renderedHorizontal - noteWidth / 2,
+          y: Math.min(vertical, endVertical),
+          width: noteWidth,
+          height: Math.max(2, Math.abs(endVertical - vertical)),
+        },
+        palette,
+      );
+    }
+  }
+  if (this.gestures.pendingHold && this.gestures.cursor) {
+    const lineIndex = this.gestures.pendingHold.lineIndex ?? this.getSession().lineIndex;
+    const head = this.viewport.noteVerticalForLine(
+      this.gestures.pendingHold.beat,
+      lineIndex,
+      height,
+      "notes",
+    );
+    const tail = this.viewport.noteVerticalForLine(
+      this.viewport.snappedBeat(this.gestures.cursor.y),
+      lineIndex,
+      height,
+      "notes",
+    );
+    const pendingHorizontal = this.viewport.noteHorizontal(
+      this.gestures.pendingHold.positionX,
+      lineIndex,
+    );
+    context.globalAlpha = 0.65;
+    const rendered = this.appearance.skin?.hold(
+      context,
+      pendingHorizontal,
+      head,
+      tail,
+      68 * this.viewport.renderNoteScale,
+    );
+    if (!rendered && !this.appearance.skin) {
+      context.fillRect(pendingHorizontal - 20, Math.min(head, tail), 40, Math.abs(tail - head));
+    }
+    context.globalAlpha = 1;
+  } else if (this.gestures.cursor && this.gestures.tool) {
+    const lineIndex =
+      this.gestures.cursorLineIndex ??
+      this.viewport.lineIndexAt(this.gestures.cursor.x, width, "notes");
+    const positionX = this.viewport.notePositionAt(this.gestures.cursor.x, lineIndex);
+    context.fillStyle = noteColor(palette, this.gestures.tool);
+    context.globalAlpha = 0.53;
+    const vertical = this.viewport.noteVerticalForLine(
+      this.viewport.snappedBeat(this.gestures.cursor.y),
+      lineIndex,
+      height,
+      "notes",
+    );
+    context.fillRect(this.viewport.noteHorizontal(positionX, lineIndex) - 24, vertical - 3, 48, 6);
+    context.globalAlpha = 1;
+  }
+  context.globalAlpha = 1;
+  if (typeof this.gestures.scaleAxis === "number" && Number.isFinite(this.gestures.scaleAxis)) {
+    context.save();
+    context.strokeStyle = palette.bottomValue;
+    context.lineWidth = 2;
+    context.setLineDash([8, 5]);
+    const lines =
+      session.multiLineActive && session.multiLineMode === "notes"
+        ? session.targetLineIndices
+        : [this.gestures.scaleAxisLine ?? session.lineIndex];
+    for (const lineIndex of lines) {
+      const horizontal = this.viewport.noteHorizontal(this.gestures.scaleAxis, lineIndex);
+      context.beginPath();
+      context.moveTo(horizontal, 0);
+      context.lineTo(horizontal, height);
+      context.stroke();
+    }
+    context.restore();
+  }
+  if (multiplePanels) {
+    this.drawMultiLineGrid(context, width, height, playBeat, "notes", FOREGROUND_GRID);
+    this.drawMultiLinePanelLabels(context, width, height, "notes");
+  } else {
+    this.grid(context, width, height, playBeat, FOREGROUND_GRID, "notes");
+  }
+  drawHoverGuides.call(this, context, width, height, "notes");
+  if (multiNotes) {
+    this.drawMultiLineBeatLabels(context, width, height, "notes");
+  }
+  this.noteBatch.finish();
+  if (!(session.multiLineActive && session.multiLineMode === "notes")) {
+    this.drawEvents(playBeat);
+  }
+}
+
+/** Paint only the moving playhead; note/event geometry remains untouched. */
+export function drawPlayhead(this: TimelinePlayheadDrawingReceiver, playBeat: number): void {
+  const session = this.getSession();
+  const draw = (canvas: HTMLCanvasElement, area: "notes" | "events"): void => {
+    const { context, width, height } = prepareCanvas(canvas);
+    const multiplePanels =
+      session.multiLineActive &&
+      session.multiLineMode === area &&
+      this.viewport.panelCount(area) > 1;
+    if (multiplePanels) {
+      this.drawMultiLineGrid(context, width, height, playBeat, area, PLAYHEAD_GRID);
+    } else {
+      this.grid(context, width, height, playBeat, PLAYHEAD_GRID, area);
+    }
+  };
+  draw(this.notesPlayhead, "notes");
+  draw(this.eventsPlayhead, "events");
+}
+
+/**
+ * The vertical lane lines of the note field.
+ *
+ * They live on the backdrop, with the horizontal grid, because they are
+ * background references: a note drawn on top of one must stay whole.
+ */
+function drawNoteLanes(
+  this: TimelineNoteDrawingReceiver,
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): void {
+  const palette = this.cache.palette() ?? readCanvasPalette();
+  const grid = verticalGrid(this.viewport.gridCount);
+  // Keep the lane grid tied to the actual panel geometry, so it fills the
+  // visible width after a resize and in panels narrower than the canvas.
+  const panelWidth = this.viewport.panelWidth(width, "notes");
+  const inset = this.viewport.noteInset(panelWidth);
+  const contentWidth = Math.max(1, panelWidth - inset * 2);
+  const panelCount = this.viewport.panelCount("notes");
+  const panelStride = this.viewport.panelStride(width, "notes");
+  const panelOffset = this.viewport.multiLineViewportOffset(width, "notes");
+  const targetLines = this.getSession().targetLineIndices;
+  const [firstPanel, lastPanel] = this.viewport.visiblePanelRange(width, "notes");
+  const cameraX = this.viewport.cameraX ?? 0;
+  const chartLeft = cameraX - 675;
+  const chartRight = cameraX + 675;
+  const firstGrid = Math.max(0, Math.ceil(chartLeft / grid.spacing - grid.first));
+  const lastGrid = Math.min(grid.lineCount - 1, Math.floor(chartRight / grid.spacing - grid.first));
+  // Keep dense grids readable: snap still uses the full grid, while the
+  // backdrop skips lanes that would land closer than a few pixels.
+  const maxLines = Math.max(2, Math.floor(contentWidth / 6));
+  const lineStride = Math.max(1, Math.ceil(grid.lineCount / maxLines));
+  const lanes = new Set<number>();
+  // The two outer lines frame the field for a multi-line grid, but a count of
+  // one intentionally shows only the single centre snap line.
+  if (grid.lineCount > 1) {
+    lanes.add(chartLeft);
+    lanes.add(chartRight);
+  }
+  for (let index = firstGrid; index <= lastGrid; index++) {
+    if ((index - firstGrid) % lineStride !== 0 && index !== lastGrid) {
+      continue;
+    }
+    lanes.add((index + grid.first) * grid.spacing);
+  }
+  for (let panel = firstPanel; panel <= Math.min(lastPanel, panelCount - 1); panel++) {
+    const lineIndex = targetLines[panel];
+    if (lineIndex === undefined) {
+      continue;
+    }
+    for (const lane of lanes) {
+      const center = Math.abs(lane - cameraX) < 1e-7;
+      const boundary = Math.abs(lane - chartLeft) < 1e-7 || Math.abs(lane - chartRight) < 1e-7;
+      context.strokeStyle = center
+        ? palette.foreground
+        : boundary
+          ? palette.outline
+          : palette.gridMinor;
+      context.lineWidth = center ? 2 : boundary ? 1.5 : 1;
+      // The two chart boundaries frame the field itself, so they hug the panel
+      // edges instead of the note-safe inset used by snap lanes and note bodies.
+      // Half a stroke inside keeps the full width visible at the canvas edge.
+      const local = boundary
+        ? lane === chartLeft
+          ? Math.min(0.75, panelWidth / 2)
+          : Math.max(panelWidth - 0.75, panelWidth / 2)
+        : inset + ((lane - cameraX + 675) / 1350) * contentWidth;
+      const horizontal =
+        panel * panelStride - panelOffset + Math.max(0, Math.min(panelWidth, local));
+      strokeVerticalGrid(context, horizontal, height);
+    }
+  }
+  context.lineWidth = 1;
+}
+
+/** Draw every visible note into its multi-line panel. */
+export function drawMultiLineNotes(
+  this: TimelineNoteDrawingReceiver,
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): void {
+  const session = this.getSession();
+  const palette = this.cache.palette() ?? readCanvasPalette();
+  const lineLabelCuller = new TimelineLabelCuller();
+  const lineIndices = session.targetLineIndices;
+  const multiplePanels = this.viewport.panelCount("notes") > 1;
+  const [firstPanel, lastPanel] = this.viewport.visiblePanelRange(width, "notes");
+  const startPanel = multiplePanels ? firstPanel : 0;
+  const endPanel = multiplePanels
+    ? Math.min(lastPanel, lineIndices.length - 1)
+    : lineIndices.length - 1;
+  context.save();
+  for (let panel = startPanel; panel <= endPanel; panel++) {
+    const lineIndex = lineIndices[panel];
+    if (lineIndex === undefined) {
+      continue;
+    }
+    const lineOpacity = multiLineLineOpacity(
+      lineIndex,
+      session.lineIndex,
+      this.appearance.multiLineNonCurrentOpacity,
+    );
+    const line = session.chart.judgeLineList?.[lineIndex];
+    const skewCurve = noteSkewCurve(line);
+    const [bottomBeat, topBeat] = this.viewport.noteBeatRangeForLine(lineIndex, height, "notes");
+    this.cache.refreshNotes(lineIndex, line?.notes ?? []);
+    const noteIndex = this.cache.noteIndex(lineIndex);
+    if (!noteIndex) {
+      continue;
+    }
+    const selectedSet = selectedNoteIndices(session, lineIndex);
+    const entries = noteIndex.index
+      .query(bottomBeat, topBeat)
+      .filter((entry) => isTimelineNoteRenderable(entry.item))
+      .sort((left, right) => left.index - right.index);
+    for (const { index, item: sourceNote } of entries) {
+      const note =
+        selectedSet.has(index) &&
+        this.gestures.drag?.lineIndex === lineIndex &&
+        !this.gestures.preview
+          ? this.movedNote(sourceNote)
+          : sourceNote;
+      const range = timelineRenderRange(note.startTime, note.endTime, this.viewport.gridCount);
+      const beat = range.start;
+      const endBeat = range.end;
+      if (Math.max(beat, endBeat) < bottomBeat || Math.min(beat, endBeat) > topBeat) {
+        continue;
+      }
+      const horizontal = this.viewport.noteHorizontal(note.positionX, lineIndex);
+      const noteWidth = this.viewport.noteWidth(note);
+      const rendered = this.viewport.clampNoteHorizontal(horizontal, noteWidth, width, lineIndex);
+      if (rendered == null) {
+        continue;
+      }
+      const vertical = this.viewport.noteVerticalForLine(beat, lineIndex, height, "notes");
+      const endVertical = this.viewport.noteVerticalForLine(endBeat, lineIndex, height, "notes");
+      const selected = selectedSet.has(index);
+      drawNote.call(this, context, {
+        note,
+        horizontal: rendered,
+        vertical,
+        endVertical,
+        noteWidth,
+        height,
+        selected,
+        opacityMultiplier: lineOpacity,
+        shear: noteSkewShear(noteSkewAtHit(skewCurve, note)),
+      });
+      if (note.type === 2 && range.invalid) {
+        drawEventOverlapFilter(
+          context,
+          {
+            x: rendered - noteWidth / 2,
+            y: Math.min(vertical, endVertical),
+            width: noteWidth,
+            height: Math.max(2, Math.abs(endVertical - vertical)),
+          },
+          palette,
+        );
+      }
+      if (
+        session.notesMode === "multi_merged" &&
+        session.targetLineIndices.length > 1 &&
+        lineLabelCuller.tryPlace(
+          { x: rendered, y: vertical },
+          { horizontalGap: 14, verticalGap: 18, force: selected },
+        )
+      ) {
+        context.fillStyle = palette.bottomValue;
+        context.font = canvasFont("body");
+        context.textAlign = "center";
+        context.fillText(String(lineIndex), rendered, vertical + 18);
+        context.textAlign = "left";
+      }
+    }
+  }
+  context.globalAlpha = 1;
+  context.restore();
+}

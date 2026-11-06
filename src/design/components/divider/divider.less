@@ -1,0 +1,19 @@
+/* Divider primitive: a token-coloured hairline in either axis, sized for toolbar
+   separators and stacked inspector content. */
+.redux-divider {
+  display: block;
+  flex: none;
+  background: var(--panel-border);
+}
+
+.redux-divider-y {
+  width: 1px;
+  height: 22px;
+  margin: 0 var(--space-1);
+}
+
+.redux-divider-x {
+  width: calc(100% - var(--space-3));
+  height: 1px;
+  margin: var(--space-1) var(--space-2);
+}

@@ -1,0 +1,247 @@
+// Inspector-wide rhythm and frame. Field-row anatomy and variants stay with the
+// design-system field row; the inspector pins one row geometry for every pane
+// so no feature sheet or pane chooses a different inset.
+.inspector {
+  --inspector-gutter: var(--design-space-5);
+  --inspector-section-gap: var(--design-space-4);
+  --inspector-subtle-border: var(--border-subtle);
+  // The panel is its own width container: a rail-expanded strip or a narrow
+  // theme can leave the form too little room for two columns.
+  container-type: inline-size;
+  container-name: inspector;
+}
+
+// Every ordinary pane row uses the compact geometry established by the
+// curve-note form. This rule is authored at the inspector level and outranks a
+// row's own density/layout variants, so a pane cannot choose a different inset.
+// Block forms and divided card rows keep their explicit layout.
+.inspector .redux-field-row:not([data-layout="block"]):not([data-divided="true"]) {
+  gap: var(--space-1) var(--theme-field-gap, var(--space-3));
+  min-height: var(--control-height-compact);
+  margin: 0 0 var(--space-1-5);
+  padding: 0;
+}
+
+.inspector-content > [data-panel]:not([hidden]),
+.inspector-content > .inspector-panel-stack > [data-panel]:not([hidden]) {
+  padding: var(--space-4) var(--inspector-gutter) var(--inspector-gutter);
+}
+
+// Body-level metadata left over from a pane title, such as a count or a trash
+// action. The pane name itself lives in the inspector status bar.
+.inspector-pane-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-compact);
+  margin: 0 0 var(--inspector-section-gap);
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  line-height: var(--line-label);
+}
+
+.inspector-pane-meta small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspector .panel-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0 0 var(--inspector-section-gap);
+  padding: var(--space-4) 0 var(--space-1);
+  background: transparent;
+  border-bottom: 0;
+  color: var(--foreground);
+  font-size: var(--type-heading);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.inspector .panel-title small {
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  font-weight: 400;
+}
+
+// Inspector section titles share the metadata page's heading size. The
+// metadata page owns its own heading rule; these selectors cover the other
+// inspector-owned section headings without changing field labels or list rows.
+.inspector
+  :is(
+    .bpm-attributes-head,
+    .bpm-tool-title,
+    .line-panel-section-title,
+    .redux-section-heading-title
+  ) {
+  font-size: var(--type-heading);
+}
+
+// Pane-level empty state: one calm sentence centered in the body that is
+// waiting for a subject. The status bar owns the pane name, so the hint only
+// fills the body below it.
+.inspector-empty-hint {
+  display: grid;
+  flex: 1 0 auto;
+  place-items: center;
+  min-height: 120px;
+  margin: 0;
+  padding: var(--space-6) var(--space-3);
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  line-height: var(--line-body);
+  text-align: center;
+}
+
+// Fragment panes stack their title and body; the visible wrapper is a column so
+// a lone empty state can claim the remaining height.
+.inspector-content {
+  display: flex;
+  flex-direction: column;
+}
+
+// The note pane wraps its keyed property view to observe focus; the wrapper
+// must not add a box between the panel and its field rows.
+.notes-panel-properties {
+  display: contents;
+}
+
+.inspector-content > [data-panel]:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+}
+
+.inspector :is(.wide-button, .wide-field) {
+  width: 100%;
+  margin-inline: 0;
+}
+
+.inspector .action-grid {
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
+// Panel actions read as one block of buttons, so every label is centered and
+// the grid sits on the panel gutter instead of carrying its own inset.
+.inspector .action-grid {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+
+  button {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+// Event actions share one compact two-by-two block: sampling, stick, cut, and
+// swap each keep a full cell instead of one wide command plus a three-up row.
+.redux-app-root .inspector .action-grid.event-tool-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.redux-app-root .inspector .action-grid.event-tool-actions button {
+  min-width: 0;
+  padding-inline: var(--space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Raw feature buttons get a control silhouette. Shared buttons, numeric
+// steppers, segmented options, and line-selection rows own their surfaces and
+// dimensions in the design primitives.
+.inspector
+  button:not(.redux-action):not(.redux-button):not(.redux-stepper-button):not(
+    .redux-close-button
+  ):not(.redux-segmented-option):not(.line-texture-trigger):not(.line-selection-row):not(
+    .line-selection-group-name
+  ) {
+  min-height: var(--design-control-height);
+  border: 1px solid var(--outline);
+  background: var(--surface-raised);
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--surface-hover);
+  }
+}
+
+// A reset affordance is an extra strip beside the control. Give the control
+// column that strip back so the input keeps its full width instead of the reset
+// button taking space out of the control itself. The narrow branch below stacks
+// the row and moves the reset out of the control flow.
+.reset-inspector-control-column() {
+  .redux-field-row:not([data-layout="block"]):not([data-divided="true"]):has(
+      .redux-field-reset-slot
+    ) {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(
+        0,
+        calc(var(--field-control-width, 46%) + var(--control-height-compact) + var(--space-2))
+      );
+  }
+}
+
+@container inspector (min-width: 341px) {
+  .reset-inspector-control-column();
+}
+
+@container drawer-properties (min-width: 341px) {
+  .reset-inspector-control-column();
+}
+
+// A narrow inspector stacks each inline label above its control. Splitting the
+// available width into two columns would leave the control too small for a
+// multi-part beat or a readable number. The rail reserves a strip while labels
+// are open, and a theme can set a narrow inspector; both reach this branch.
+.narrow-inspector-field-rows() {
+  .redux-field-row[data-layout="inline"] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-1-5);
+  }
+
+  .redux-field-row[data-layout="inline"] .redux-field-control {
+    justify-content: stretch;
+  }
+
+  // With no second column, the reset takes its space from the control again.
+  // Keep it out of flow at the row's trailing edge and let the stacked control
+  // keep the whole width.
+  .redux-field-row[data-layout="inline"]:has(.redux-field-reset-slot) {
+    .redux-field-control {
+      position: static;
+    }
+
+    .redux-field-reset-slot {
+      position: absolute;
+      top: 0;
+      right: 0;
+      transform: none;
+    }
+
+    .redux-field-label-column {
+      padding-right: var(--control-height-compact);
+    }
+  }
+
+  // The shared row puts an inline error or footer under the control column.
+  // With one column that line must span the whole row instead of creating an
+  // implicit second track.
+  .redux-field-row[data-layout="inline"] :is(.redux-field-error, .redux-field-footer) {
+    grid-column: 1 / -1;
+  }
+}
+
+@container inspector (max-width: 340px) {
+  .narrow-inspector-field-rows();
+}
+
+// The drawer's property column is its own width container because the drawer
+// surface keeps a fixed width while only its right edge moves.
+@container drawer-properties (max-width: 340px) {
+  .narrow-inspector-field-rows();
+}

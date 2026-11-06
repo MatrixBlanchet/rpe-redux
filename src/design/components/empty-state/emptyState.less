@@ -1,0 +1,69 @@
+// Centered placeholder for a workspace whose list has been emptied. The
+// footer owns the recovery actions, so this surface only states the condition.
+.redux-empty-state {
+  display: grid;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 160px;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.redux-empty-state-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-panel);
+  background: var(--surface-muted);
+  color: var(--foreground-muted);
+
+  .redux-icon {
+    --icon-color: var(--foreground-muted);
+  }
+}
+
+.redux-empty-state strong {
+  color: var(--foreground);
+  font-size: var(--type-body);
+  font-weight: 500;
+}
+
+.redux-empty-state p {
+  max-width: 36ch;
+  margin: 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+}
+
+.redux-empty-state-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-1);
+}
+
+.redux-empty-state-inline {
+  display: block;
+  flex: none;
+  width: auto;
+  min-height: 0;
+  padding: var(--space-2) var(--space-3);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  text-align: center;
+
+  strong {
+    color: inherit;
+    font-size: inherit;
+    font-weight: 400;
+  }
+
+  p {
+    max-width: none;
+    font-size: inherit;
+  }
+}

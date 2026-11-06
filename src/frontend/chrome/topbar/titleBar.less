@@ -1,0 +1,507 @@
+// Custom title row: hamburger application menu at the left, save affordance and
+// badges at the right, and the fixed window controls at the frame edge.
+
+// ------------------------------------------- undecorated window resize frame
+
+// Linux window managers add no resize border to an undecorated window. The frame
+// covers the window, but only its edge strips take pointer events, so the content
+// below keeps its hit targets.
+.redux-resize-frame {
+  position: fixed;
+  z-index: var(--z-window-controls);
+  inset: 0;
+  pointer-events: none;
+}
+
+.redux-resize-handle {
+  position: absolute;
+  pointer-events: auto;
+
+  &.is-north {
+    top: 0;
+    right: var(--space-2);
+    left: var(--space-2);
+    height: var(--space-1);
+    cursor: ns-resize;
+  }
+
+  &.is-south {
+    right: var(--space-2);
+    bottom: 0;
+    left: var(--space-2);
+    height: var(--space-1);
+    cursor: ns-resize;
+  }
+
+  &.is-west {
+    top: var(--space-2);
+    bottom: var(--space-2);
+    left: 0;
+    width: var(--space-1);
+    cursor: ew-resize;
+  }
+
+  &.is-east {
+    top: var(--space-2);
+    right: 0;
+    bottom: var(--space-2);
+    width: var(--space-1);
+    cursor: ew-resize;
+  }
+
+  &.is-north-west {
+    top: 0;
+    left: 0;
+    width: var(--space-2);
+    height: var(--space-2);
+    cursor: nwse-resize;
+  }
+
+  &.is-north-east {
+    top: 0;
+    right: 0;
+    width: var(--space-2);
+    height: var(--space-2);
+    cursor: nesw-resize;
+  }
+
+  &.is-south-west {
+    bottom: 0;
+    left: 0;
+    width: var(--space-2);
+    height: var(--space-2);
+    cursor: nesw-resize;
+  }
+
+  &.is-south-east {
+    right: 0;
+    bottom: 0;
+    width: var(--space-2);
+    height: var(--space-2);
+    cursor: nwse-resize;
+  }
+}
+
+.redux-titlebar {
+  position: relative;
+  z-index: var(--z-titlebar);
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 0;
+  height: var(--titlebar-height);
+  // Reserve the fixed window-control strip at the frame's right edge. The
+  // metric and title-bar preset decide the button edge and grouping, so the
+  // gutter follows them instead of assuming the native 3 × 46px strip.
+  padding: 0 calc(var(--window-controls-reserved, 138px) + var(--space-3)) 0 var(--space-3);
+  background: var(--panel-header);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.redux-titlebar-left {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.redux-titlebar-drag {
+  flex: 1;
+  align-self: stretch;
+  min-width: var(--space-4);
+}
+
+.redux-titlebar-right {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+// ------------------------------------------------------- application menu
+
+// The title bar's leading brand mark. It owns a fixed square footprint in front
+// of both menu presentations and stays out of hit testing, so the frame keeps
+// its drag and click targets.
+.redux-titlebar-logo {
+  display: block;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  user-select: none;
+}
+
+// The tall title-bar rhythm carries the matching larger mark.
+:root[data-chrome-titlebar-density="tall"] .redux-titlebar-logo {
+  width: 24px;
+  height: 24px;
+}
+
+.redux-titlebar-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.redux-app-root .redux-titlebar-menu-button {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+
+// A themed trigger may add a label, a dot, or another host primitive. The
+// button still owns the menu action and ARIA, so it only needs a flexible box
+// that grows around the declared anatomy.
+.redux-app-root .theme-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  width: auto;
+  min-width: 32px;
+  padding: 0 var(--space-2);
+}
+
+.redux-app-root .theme-menu-trigger[data-active="true"] {
+  color: var(--accent);
+}
+
+// Expanded application menu: the sections themselves become title-bar
+// triggers. Each one owns its popup, while the commands and ARIA stay shared
+// with the hamburger sheet.
+.redux-titlebar-menubar {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 2px;
+  height: 100%;
+}
+
+.redux-titlebar-menubar-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.redux-app-root .redux-titlebar-menubar-trigger {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-control);
+  color: var(--foreground);
+  font-size: var(--type-label);
+  font-weight: 500;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+  }
+
+  &[data-active="true"] {
+    background: var(--active-accent-fill);
+    color: var(--active-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+.redux-titlebar-menubar-popup {
+  top: calc(100% + var(--space-1));
+  left: 0;
+  min-width: 250px;
+}
+
+.redux-app-menu-sheet {
+  position: absolute;
+  z-index: var(--z-titlebar-popup);
+  top: calc(100% + var(--space-1));
+  left: 0;
+  width: 220px;
+  padding: var(--space-1);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--radius-panel);
+  background: var(--popover-surface);
+  box-shadow: var(--popover-shadow);
+  transform-origin: top left;
+  animation: redux-app-menu-in var(--design-dur-overlay) var(--design-ease-enter) both;
+}
+
+.redux-app-menu-section {
+  position: relative;
+}
+
+.redux-app-menu-section-button {
+  height: 34px;
+  min-height: 34px;
+}
+
+.redux-app-menu-section-button .redux-menu-row-chevron {
+  transition: transform var(--design-dur-disclosure) var(--design-ease-enter);
+}
+
+.redux-app-menu-section-button[aria-expanded="true"] .redux-menu-row-chevron {
+  transform: rotate(90deg);
+}
+
+.redux-app-menu-popup {
+  position: absolute;
+  z-index: calc(var(--z-titlebar-popup) + 1);
+  top: calc(100% + var(--space-1));
+  left: 0;
+  min-width: 250px;
+  padding: var(--space-1);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--radius-panel);
+  background: var(--popover-surface);
+  box-shadow: var(--popover-shadow);
+  transform-origin: top left;
+  animation: redux-app-menu-in var(--design-dur-overlay) var(--design-ease-enter) both;
+}
+
+.redux-app-menu-submenu {
+  top: calc(var(--space-1) * -1);
+  left: calc(100% + var(--space-1-5));
+  width: 280px;
+  min-width: 280px;
+  transform-origin: top left;
+  animation: redux-app-submenu-in var(--design-dur-overlay) var(--design-ease-enter) both;
+}
+
+@keyframes redux-app-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes redux-app-submenu-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-app-menu-sheet,
+  .redux-app-menu-popup,
+  .redux-app-menu-submenu {
+    animation: none;
+  }
+
+  .redux-app-menu-section-button .redux-menu-row-chevron {
+    transition: none;
+  }
+}
+
+// ------------------------------------------------------------- mode tabs
+
+.workspace-mode-tabs {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.workspace-mode-tab {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--foreground);
+  font-size: var(--type-heading);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+  }
+
+  &.is-active {
+    background: var(--active-accent-fill);
+    color: var(--active-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+.workspace-mode-label {
+  display: inline-block;
+}
+
+// A dropdown keeps the same mode destinations but gives them one title-bar
+// footprint. It is the independent switcher used when classic menu sections
+// take the leading space.
+.workspace-mode-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+  height: 100%;
+}
+
+.redux-app-root .workspace-mode-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 32px;
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-control);
+  color: var(--foreground);
+  font-size: var(--type-heading);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+  }
+
+  &[aria-expanded="true"] {
+    background: var(--active-accent-fill);
+    color: var(--active-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+.workspace-mode-menu {
+  top: calc(100% + var(--space-1));
+  left: 0;
+  min-width: 190px;
+}
+
+// ---------------------------------------------------------- title-bar save
+
+// The save affordance exists only while the document differs from its saved
+// baseline, so the title bar stays quiet on a saved chart.
+.redux-app-root .redux-titlebar-save {
+  flex: none;
+  gap: var(--space-1-5);
+  height: 30px;
+  min-height: 30px;
+  padding: 0 var(--space-2);
+  color: var(--foreground);
+  font-size: var(--type-label);
+  line-height: 1;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+  }
+
+  .redux-icon {
+    flex: none;
+  }
+
+  .redux-shortcut-labels {
+    margin-left: var(--space-1);
+    color: var(--foreground-muted);
+  }
+}
+
+.redux-titlebar-save-dot {
+  display: block;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+// ------------------------------------------------------ import compatibility
+
+// The badge appears only for an imported document that recorded differences, so
+// an ordinary chart never carries an empty warning affordance.
+.redux-app-root .redux-import-badge {
+  flex: none;
+  max-width: 180px;
+  height: 30px;
+  color: var(--warning);
+  font-size: var(--type-label);
+  line-height: 1;
+  white-space: nowrap;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .redux-icon {
+    --icon-color: currentColor;
+    flex: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .redux-app-root .redux-titlebar-save .redux-shortcut-labels {
+    display: none;
+  }
+}
+
+@media (max-width: 840px) {
+  .redux-app-root .redux-titlebar-save .redux-button-label {
+    display: none;
+  }
+}
+
+// ---------------------------------------------------------- update badge
+
+.redux-update-badge {
+  flex: none;
+  max-width: 200px;
+  height: 30px;
+  color: var(--foreground);
+  font-size: var(--type-label);
+  line-height: 1;
+  white-space: nowrap;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .redux-icon {
+    flex: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .workspace-mode-tab {
+    padding-inline: var(--space-3);
+  }
+}
+
+@media (max-width: 840px) {
+  .redux-update-badge {
+    display: none;
+  }
+}

@@ -1,0 +1,38 @@
+/* Shared asynchronous-image skeleton, so every image surface waits with the
+   same visual language. */
+.redux-image-skeleton {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    var(--surface-muted) 25%,
+    color-mix(in srgb, var(--surface-hover) 72%, var(--foreground) 8%) 45%,
+    var(--surface-muted) 65%
+  );
+  background-size: 220% 100%;
+  animation: redux-image-shimmer 1.2s linear infinite;
+  pointer-events: none;
+}
+
+// A blank empty state, not a decode. Keep the same footprint without the
+// loading shimmer so an empty slot cannot be mistaken for pending content.
+.redux-image-skeleton.is-plain {
+  background: var(--surface-muted);
+  animation: none;
+}
+
+@keyframes redux-image-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-image-skeleton {
+    animation: none;
+  }
+}

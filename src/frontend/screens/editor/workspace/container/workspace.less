@@ -1,0 +1,14 @@
+// Workspace container chrome: the framed authoring area the shell places beside
+// the inspector. Layout rules only; the stage and its overlays own their surfaces.
+
+.workspace {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+}

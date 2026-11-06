@@ -1,0 +1,143 @@
+/* Silent video primitive: the frame, the custom transport row, and the
+   play overlay. Every control is a design primitive; no native media UI is
+   shown, so the same player fits a modal, a panel, or an inline guide. */
+
+.redux-video {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  margin: 0 auto;
+}
+
+.redux-video-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--media-surface);
+}
+
+.redux-video-frame video,
+.redux-video-frame img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+.redux-video-frame video {
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-video[data-controls="hidden"] .redux-video-frame video {
+  cursor: default;
+}
+
+.redux-video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--media-surface) 24%, transparent);
+  cursor: var(--app-cursor-pointer);
+  animation: redux-video-overlay-in var(--design-dur-tint) var(--design-ease-enter);
+}
+
+.redux-video-overlay-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  padding-left: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface-raised) 88%, transparent);
+  color: var(--foreground);
+  box-shadow: 0 8px 24px var(--shadow-color);
+  transform: scale(1);
+  transition: transform var(--design-dur-tint) var(--design-ease-enter);
+}
+
+.redux-video-overlay:hover .redux-video-overlay-icon,
+.redux-video-overlay:focus-visible .redux-video-overlay-icon {
+  transform: scale(1.06);
+}
+
+.redux-video-silent {
+  position: absolute;
+  right: var(--space-2);
+  top: var(--space-2);
+  z-index: 3;
+  padding: 1px var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--media-surface) 55%, transparent);
+  color: color-mix(in srgb, var(--foreground) 82%, transparent);
+  font-size: var(--type-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.redux-video-controls {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  padding: var(--space-2) var(--space-2) var(--space-2-5);
+  background: linear-gradient(
+    transparent,
+    color-mix(in srgb, var(--media-surface) 86%, transparent) 55%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition:
+    opacity var(--design-dur-tint) var(--design-ease-enter),
+    transform var(--design-dur-tint) var(--design-ease-enter);
+}
+
+.redux-video-frame:hover .redux-video-controls,
+.redux-video-frame:focus-within .redux-video-controls,
+.redux-video-controls[data-dragging="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.redux-video-error {
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-1);
+  color: var(--danger);
+  font-size: var(--type-caption);
+}
+
+@keyframes redux-video-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-video-overlay,
+  .redux-video-overlay-icon,
+  .redux-video-controls {
+    animation: none;
+    transition: none;
+  }
+}

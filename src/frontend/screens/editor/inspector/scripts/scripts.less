@@ -1,0 +1,128 @@
+/*
+ * The inspector status bar owns the pane name, and the pane frame owns the
+ * inspector gutter, so this sheet only spaces the script list.
+ */
+.redux-scripts-panel {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+.redux-scripts-empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.redux-script-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.redux-script-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  padding: var(--space-2-5);
+}
+
+.redux-script-card-heading {
+  align-items: start;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.redux-script-card h3 {
+  font-size: var(--type-body);
+  margin: 0;
+}
+
+.redux-script-card small {
+  color: var(--foreground-muted);
+  display: block;
+  font-size: var(--type-caption);
+  margin-top: 3px;
+}
+
+.redux-script-card p {
+  font-size: var(--type-caption);
+  line-height: 1.4;
+  margin: var(--space-2) 0 0;
+}
+
+.redux-parameter-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.redux-parameter-fields {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+}
+
+.redux-parameter-line-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  width: 100%;
+  min-width: 0;
+}
+
+.redux-parameter-line-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  width: 100%;
+  min-width: 0;
+}
+
+.redux-parameter-line-row .redux-select,
+.redux-parameter-line-row .redux-schema-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.redux-parameter-line-row .redux-icon-button {
+  flex: 0 0 auto;
+}
+
+.redux-parameter-line-hint {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+}
+
+.redux-parameter-legend small {
+  color: var(--foreground-muted);
+  line-height: var(--line-body);
+}
+
+.redux-parameter-legend {
+  display: grid;
+  gap: 2px;
+  margin-top: 0;
+}
+
+.redux-parameter-actions {
+  position: sticky;
+  bottom: calc(-1 * var(--space-5));
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3) 0 var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+}
+
+.redux-parameter-actions-spacer {
+  flex: 1 1 auto;
+}

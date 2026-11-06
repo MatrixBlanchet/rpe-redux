@@ -1,0 +1,12 @@
+# Build output and vendored code are never formatted.
+dist/
+release/
+node_modules/
+.local-tools/
+src-tauri/
+src/backend/
+src/public/assets/
+collaboration-src/backend/
+docs/
+*.lock
+package-lock.json

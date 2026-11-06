@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "smoke",
+      "role": "generated-smoke",
+      "chart": "../smoke.json",
+      "package": "../smoke.pez",
+      "resources": ["../smoke.png", "../smoke.wav"],
+      "formats": ["json", "pez"],
+      "coverage": [
+        "tap",
+        "hold",
+        "flick",
+        "drag",
+        "event-layers",
+        "bpm-change",
+        "packaged-resources"
+      ],
+      "source": {
+        "kind": "generated",
+        "generator": "../makeFixtures.mjs",
+        "license": "repository"
+      }
+    }
+  ]
+}

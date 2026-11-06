@@ -1,0 +1,39 @@
+// A single rotating ring, coloured by the theme's `--loading` token. The track
+// is a muted surface so the ring reads as a circle on any panel background.
+.redux-spinner {
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+}
+
+// For spinners laid over the thing they are loading: the caller's box is the
+// positioned ancestor, so this only has to fill it and drop the block padding
+// the standalone form uses to claim vertical space.
+.redux-spinner-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+}
+
+.redux-spinner-ring {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--surface-muted);
+  border-top-color: var(--loading);
+  border-radius: 50%;
+  animation: redux-spinner-rotate 800ms linear infinite;
+}
+
+@keyframes redux-spinner-rotate {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+// The rotation *is* the information here, so slow it down instead of removing
+// it — a frozen ring reads as a broken control rather than a busy one.
+@media (prefers-reduced-motion: reduce) {
+  .redux-spinner-ring {
+    animation-duration: 2400ms;
+  }
+}

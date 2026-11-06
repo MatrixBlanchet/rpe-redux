@@ -1,0 +1,173 @@
+{
+  "defaultLocale": "zh",
+  "locales": {
+    "zh": {
+      "directory": "zh",
+      "label": "简体中文",
+      "htmlLang": "zh-CN",
+      "title": "RPE Redux Extension SDK",
+      "description": "RPE Redux 扩展开发文档：设计系统、声明式 UI、能力、持久化与 API 参考。",
+      "sections": {},
+      "pages": {},
+      "shell": {
+        "skip": "跳到正文",
+        "openMenu": "打开导航",
+        "brand": "扩展开发文档",
+        "searchLabel": "搜索文档",
+        "searchPlaceholder": "搜索文档…",
+        "searchResults": "搜索结果",
+        "sidebar": "文档导航",
+        "closeMenu": "关闭导航",
+        "toc": "本页总览",
+        "pager": "翻页",
+        "language": "语言",
+        "languageMenu": "选择语言",
+        "typeEyebrow": "数据结构",
+        "closeType": "关闭数据结构说明",
+        "typeSource": "实现来源：",
+        "typeReferences": "在哪里使用",
+        "typeNoReferences": "当前没有生成的 API 页面直接引用它。",
+        "notFound": "页面不存在",
+        "notFoundDetail": "没有找到页面：",
+        "returnStart": "返回快速开始",
+        "loading": "正在加载文档…",
+        "loadFailed": "文档加载失败",
+        "copy": "复制",
+        "copied": "已复制",
+        "copyFailed": "复制失败",
+        "previous": "上一页",
+        "next": "下一页",
+        "updated": "最后于 ",
+        "noSearchResults": "没有匹配的页面。"
+      }
+    },
+    "en": {
+      "directory": "en",
+      "label": "English",
+      "htmlLang": "en",
+      "title": "RPE Redux Extension SDK",
+      "description": "RPE Redux Extension development documentation: APIs, capabilities, declarative UI, persistence, and design tokens.",
+      "sections": {
+        "入门": "Getting started",
+        "基础用法": "Core concepts",
+        "API": "API",
+        "枚举": "Reference",
+        "设计系统": "Design system",
+        "场景示例": "Examples"
+      },
+      "pages": {
+        "getting-started": {
+          "title": "Getting started",
+          "file": "en/getting-started.md",
+          "keywords": ["install", "manifest", "activate", "sandbox"]
+        },
+        "place-note": {
+          "title": "Place a note",
+          "file": "en/place-note.md",
+          "keywords": ["placeNote", "Tap", "Hold", "Flick", "Drag"]
+        },
+        "faq": {
+          "title": "FAQ",
+          "file": "en/faq.md",
+          "keywords": ["FAQ", "sandbox", "debugging", "performance"]
+        },
+        "ui-reference": {
+          "title": "Declarative UI",
+          "file": "en/ui-reference.md",
+          "keywords": ["tree", "node", "input", "event"]
+        },
+        "panels-and-menus": {
+          "title": "Panels and menus",
+          "file": "en/panels-and-menus.md",
+          "keywords": ["panel", "sidebar", "toolbar", "context menu", "overlay"]
+        },
+        "persistence": {
+          "title": "Persistence",
+          "file": "en/persistence.md",
+          "keywords": ["storage", "settings", "values", "migration", "JSON"]
+        },
+        "api-reference": {
+          "title": "API conventions",
+          "file": "en/api-reference.md",
+          "keywords": ["API", "result", "errors", "await"]
+        },
+        "context": {
+          "title": "Extension context",
+          "file": "en/context.md",
+          "keywords": ["context", "scripts", "ui", "storage", "timers"]
+        },
+        "hooks": {
+          "title": "Hooks and lifecycle seams",
+          "file": "en/hooks.md",
+          "keywords": [
+            "hooks",
+            "events",
+            "register",
+            "invoke",
+            "schema",
+            "paste",
+            "chart:parse",
+            "session:before-commit",
+            "document:before-save"
+          ]
+        },
+        "types": {
+          "title": "Types and terminology",
+          "file": "en/types.md",
+          "keywords": ["ChartTarget", "ApiResult", "handle", "context"]
+        },
+        "capabilities": {
+          "title": "Capabilities",
+          "file": "en/capabilities.md",
+          "keywords": ["capability", "consent", "risk", "permissions"]
+        },
+        "design-system": {
+          "title": "Design system",
+          "file": "en/design-system.md",
+          "keywords": ["tokens", "color", "spacing", "button", "input"]
+        },
+        "examples": {
+          "title": "Complete examples",
+          "file": "en/examples.md",
+          "keywords": ["examples", "panel", "settings", "transaction", "storage"]
+        },
+        "security": {
+          "title": "Security model",
+          "file": "en/security.md",
+          "keywords": ["sandbox", "capability", "CSP", "trust"]
+        }
+      },
+      "shell": {
+        "skip": "Skip to content",
+        "openMenu": "Open navigation",
+        "brand": "Extension development docs",
+        "searchLabel": "Search documentation",
+        "searchPlaceholder": "Search documentation…",
+        "searchResults": "Search results",
+        "sidebar": "Documentation navigation",
+        "closeMenu": "Close navigation",
+        "toc": "On this page",
+        "pager": "Page navigation",
+        "language": "Language",
+        "languageMenu": "Choose language",
+        "typeEyebrow": "Data structure",
+        "closeType": "Close data structure reference",
+        "typeSource": "Defined in: ",
+        "typeReferences": "Used by",
+        "typeNoReferences": "No generated API page directly references this type.",
+        "notFound": "Page not found",
+        "notFoundDetail": "No page matches: ",
+        "returnStart": "Back to getting started",
+        "loading": "Loading documentation…",
+        "loadFailed": "Documentation failed to load",
+        "copy": "Copy",
+        "copied": "Copied",
+        "copyFailed": "Copy failed",
+        "previous": "Previous",
+        "next": "Next",
+        "updated": "Updated ",
+        "noSearchResults": "No matching pages."
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+/* Audible player primitive: a framed transport row. The play button, seek rail,
+   and time readout come from the shared media transport, so the audio and video
+   players keep one visual and keyboard contract. */
+
+.redux-audio {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.redux-audio-frame {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+}
+
+.redux-audio-row {
+  width: 100%;
+}
+
+.redux-audio-error {
+  margin: 0;
+  padding: 0 var(--space-1);
+  color: var(--danger);
+  font-size: var(--type-caption);
+}
+.redux-audio-spectrum {
+  display: block;
+  width: 100%;
+  height: 44px;
+  color: var(--accent);
+  opacity: 0.8;
+}

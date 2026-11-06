@@ -1,0 +1,241 @@
+// Home screen layout: a quiet header, the floating selected-chart card, and the
+// vertical library column. The page fills the shell content height so the card
+// and library share every pixel the window offers; the selected cover is also
+// supplied to the window-level welcome backdrop by the owning Shell.
+
+.redux-app-root #home {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  // The vertical rhythm compresses with the window so short windows keep a
+  // usable card and library instead of crowding the header.
+  padding-block: clamp(24px, 3.4vh, 48px);
+  padding-inline: clamp(20px, 3.6vw, 56px);
+  background: var(--surface);
+}
+
+// `#home` sets `display` itself, which outranks the shared `[hidden]` rule; the
+// guard keeps the editor/home visibility seam intact.
+.redux-app-root #home:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+}
+
+.redux-welcome {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: clamp(20px, 2.6vh, 36px);
+  width: 100%;
+  max-width: 1280px;
+  min-height: 0;
+  margin: 0 auto;
+}
+
+// ------------------------------------------------------------------ header
+
+.redux-welcome-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-6);
+  min-width: 0;
+  min-height: var(--control-height);
+}
+
+.redux-app-root #home .redux-welcome-settings,
+.redux-app-root #home .redux-welcome-more {
+  color: var(--foreground-muted);
+
+  .redux-icon {
+    --icon-color: currentColor;
+  }
+
+  &:hover:not(:disabled) {
+    color: var(--foreground);
+  }
+}
+
+.redux-app-root #home .redux-welcome-more {
+  flex: none;
+  width: var(--control-height-icon);
+  height: var(--control-height-icon);
+  min-width: var(--control-height-icon);
+  min-height: var(--control-height-icon);
+}
+
+// ----------------------------------------------------------------- columns
+
+// The two columns stay mounted for every read phase, including an empty
+// library. They share one explicit row, so they always end on the same line;
+// the row may shrink to zero and each column owns its own overflow and minimum.
+.redux-welcome-columns {
+  // The detail card keeps one fixed width instead of growing with the window,
+  // so its 16:9 cover and three action buttons stay at a readable size. The
+  // viewport guard is inert above the stacking breakpoint: 40vw only drops
+  // below 380px beneath 950px, where the page already stacks.
+  --welcome-detail-width: min(380px, 40vw);
+  // The selected card and the no-selection prompt share this floor, so the
+  // left column keeps its size instead of shrinking when the selection clears.
+  --welcome-detail-min-height: clamp(420px, 61vh, 540px);
+
+  display: grid;
+  flex: 1;
+  // The library owns every pixel the fixed detail column does not need.
+  grid-template-columns: var(--welcome-detail-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  gap: clamp(20px, 3vw, 56px);
+  min-width: 0;
+  min-height: 0;
+}
+
+.redux-welcome-side {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  min-width: 0;
+  min-height: 0;
+}
+
+// ------------------------------------------------------------ import surfaces
+
+.redux-welcome-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.redux-welcome-more-menu {
+  display: inline-flex;
+  flex: none;
+  min-width: 0;
+}
+
+dialog.redux-welcome-import-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.redux-welcome-import-dropzone {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  padding: var(--space-7);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-muted);
+  text-align: center;
+
+  &[data-active="true"] {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface-muted));
+  }
+
+  strong {
+    color: var(--foreground);
+    font-size: var(--type-title);
+    font-weight: 600;
+  }
+}
+
+.redux-welcome-import-drop-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--foreground-muted);
+
+  .redux-icon {
+    --icon-color: currentColor;
+  }
+}
+
+// ------------------------------------------------------------ drop overlay
+
+.redux-welcome-drop {
+  position: fixed;
+  z-index: var(--z-content-overlay);
+  inset: var(--titlebar-height, 40px) 0 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.redux-welcome-drop-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: min(300px, 80vw);
+  padding: var(--space-7);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-panel);
+  text-align: center;
+
+  strong {
+    font-size: var(--type-title);
+    font-weight: 600;
+  }
+}
+
+.redux-welcome-drop-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-muted);
+  color: var(--foreground-muted);
+
+  .redux-icon {
+    --icon-color: currentColor;
+  }
+}
+
+@media (max-width: 1100px) {
+  .redux-app-root #home {
+    padding-inline: clamp(18px, 3vw, 40px);
+  }
+
+  .redux-welcome {
+    gap: clamp(16px, 2.2vh, 28px);
+  }
+
+  .redux-welcome-columns {
+    // The tighter gap narrows the page, not the detail column.
+    grid-template-columns: var(--welcome-detail-width) minmax(0, 1fr);
+    gap: clamp(18px, 2.4vw, 32px);
+  }
+}
+
+// Below the supported minimum width the page stacks: the selected chart keeps
+// its content height and the library takes the remaining height. The columns
+// become a flex stack so the library always starts below the card instead of
+// overlapping it when the page is shorter than both.
+@media (max-width: 999px) {
+  .redux-welcome-columns {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2.4vh, 28px);
+  }
+
+  .redux-welcome-side {
+    flex: none;
+  }
+
+  .redux-app-root #home .redux-welcome-library {
+    flex: 1 1 auto;
+    min-height: clamp(260px, 36vh, 380px);
+  }
+}

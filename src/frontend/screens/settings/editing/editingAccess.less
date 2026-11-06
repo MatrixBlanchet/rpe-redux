@@ -1,0 +1,53 @@
+// Advanced-editing permission matrix. The settings field row owns the label and
+// control split; this sheet owns the shared column grid so a group heading and
+// every row below it keep the same column edges. Each cell ends on the trailing
+// edge of its column, matching the right-aligned controls in every other row.
+
+.editing-access {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  flex: 1 1 auto;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.editing-access[data-columns="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+// The whole cell is the hit target, so a click anywhere toggles the checkbox.
+// A single display column ends at the row's trailing edge; with two columns the
+// AI column does the same one column earlier.
+.editing-access-cell {
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  min-height: var(--control-height-compact);
+  cursor: var(--app-cursor-pointer);
+}
+
+.editing-access-header {
+  align-items: center;
+}
+
+.editing-access-header > span {
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  min-height: var(--control-height-compact);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  font-weight: 600;
+  line-height: var(--line-label);
+  text-align: right;
+  gap: var(--space-1);
+}
+
+.editing-access-header small {
+  font-size: var(--type-caption);
+  font-weight: 400;
+  line-height: var(--line-body);
+}

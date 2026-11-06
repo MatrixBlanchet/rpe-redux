@@ -1,0 +1,98 @@
+// Window controls: the fixed minimize/maximize/close strip at the frameless
+// frame's top-right. Keeping it body-positioned lets it stay interactive over
+// application modals.
+
+.redux-window-controls {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: var(--z-window-controls);
+  display: flex;
+  align-items: center;
+  gap: var(--window-control-gap, 0);
+  height: var(--titlebar-height);
+  padding: var(--window-control-padding, 0);
+  -webkit-app-region: no-drag;
+}
+
+.redux-app-root .redux-window-controls .redux-icon {
+  --icon-color: currentColor;
+}
+
+// Compact and capsule groups inset the strip inside the title row instead of
+// filling its full height. The reservation in `titleBar.less` follows the same
+// size, gap, and padding tokens.
+:root[data-chrome-window-controls="compact"] .redux-app-root .redux-window-controls,
+:root[data-chrome-window-controls="capsule"] .redux-app-root .redux-window-controls {
+  top: calc(
+    (var(--titlebar-height) - var(--window-control-height) - 2 * var(--window-control-padding)) / 2
+  );
+  right: var(--space-2);
+  height: auto;
+}
+
+:root[data-chrome-window-controls="capsule"] .redux-app-root .redux-window-controls {
+  border-radius: 999px;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-panel);
+}
+
+:root[data-chrome-window-controls="capsule"]
+  .redux-app-root
+  .redux-window-controls
+  button:hover:not(:disabled) {
+  border-radius: 999px;
+}
+
+// A themed caption button keeps the host's 46px cell contract unless the theme
+// supplies a size, and centers whatever anatomy the package declared.
+.redux-app-root .redux-window-controls .theme-window-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-1);
+  color: var(--foreground);
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-app-root .redux-window-controls .theme-window-control[data-active="true"] {
+  color: var(--accent);
+}
+
+.redux-app-root .redux-window-controls button {
+  color: var(--foreground);
+  cursor: var(--app-cursor-pointer);
+  -webkit-app-region: no-drag;
+}
+
+.redux-app-root .redux-window-controls button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--foreground);
+}
+
+.redux-app-root .redux-window-controls button.urgent {
+  align-self: center;
+  width: var(--theme-window-control-size, 46px);
+  height: var(--window-control-height, var(--titlebar-height));
+  margin: 0;
+  border-radius: var(--window-control-radius, 0);
+}
+
+.redux-app-root .redux-window-controls button.urgent:hover:not(:disabled) {
+  background: var(--window-close-hover);
+  color: var(--on-window-close);
+}
+
+.redux-window-error {
+  position: absolute;
+  top: var(--titlebar-height);
+  right: var(--space-1);
+  width: 300px;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--danger);
+  box-shadow: var(--shadow-panel);
+}

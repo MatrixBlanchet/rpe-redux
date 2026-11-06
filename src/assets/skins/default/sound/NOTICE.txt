@@ -1,0 +1,8 @@
+The default hit sounds are from Kenney's Interface Sounds 1.0 pack.
+
+Creator: Kenney (www.kenney.nl)
+License: Creative Commons Zero (CC0)
+Source: https://opengameart.org/content/interface-sounds
+
+The sounds are bundled locally; the application does not fetch them from the
+network at runtime.

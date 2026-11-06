@@ -1,0 +1,420 @@
+// Timeline surface layout: the canvas grid, note and event regions, headers,
+// playhead and backdrop layers, scrollbar, and the single-line and multi-line
+// variants. The sheet owns placement only; canvas painting belongs to the timeline
+// engine.
+
+.editor {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  --timeline-header-height: 0px;
+  --timeline-scroll-height: 0px;
+}
+
+.editor.events-hidden {
+  --timeline-header-height: 0px;
+}
+
+.editor.multi-notes,
+.editor.multi-events {
+  --timeline-header-height: 0px;
+  --timeline-scroll-height: 0px;
+}
+
+.editor.multi-events:not(.events-hidden) {
+  --timeline-header-height: 0px;
+}
+
+// A multi-line note field never shows the event field, and the reverse; the
+// overview strips frame whichever field is active.
+.editor.multi-notes #events,
+.editor.multi-notes #events-backdrop,
+.editor.multi-notes #events-playhead,
+.editor.multi-notes #events-batch,
+.editor.multi-notes #layer {
+  display: none;
+}
+
+.editor.multi-events #notes,
+.editor.multi-events #notes-backdrop,
+.editor.multi-events #notes-playhead,
+.editor.multi-events #notes-batch {
+  display: none;
+}
+
+.stage {
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+#timeline-markers {
+  position: absolute;
+  z-index: 7;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  pointer-events: none;
+}
+
+// A marker is a slim tick in the upper half of the marker band. Its label is
+// revealed on approach (hover) or keyboard focus, so a dense chart still reads
+// as positions rather than a row of permanent captions.
+.timeline-marker {
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--marker-color, var(--warning));
+  font-size: var(--type-caption);
+  line-height: 13px;
+  transform: translateX(-50%);
+  overflow: visible;
+  white-space: nowrap;
+  pointer-events: auto;
+  transition: left var(--design-dur-enter) var(--design-ease-enter);
+}
+
+.timeline-marker-bar {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 8px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--marker-color, var(--warning));
+  transition: opacity var(--design-dur-tint) ease;
+}
+
+.timeline-marker-label {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  max-width: 160px;
+  padding: 1px var(--space-1);
+  overflow: hidden;
+  border: 1px solid var(--marker-color, var(--warning));
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--marker-color, var(--warning));
+  text-overflow: ellipsis;
+  transform: translateX(-50%) scaleX(0.86);
+  transform-origin: center top;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--design-dur-tint) ease,
+    transform var(--design-dur-tint) ease,
+    visibility var(--design-dur-tint);
+}
+
+.timeline-marker:hover,
+.timeline-marker:focus-visible {
+  z-index: 2;
+}
+
+.redux-app-root .timeline-marker:active:not(:disabled) {
+  background: transparent;
+}
+
+.timeline-marker:hover .timeline-marker-label,
+.timeline-marker:focus-visible .timeline-marker-label {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) scaleX(1);
+  pointer-events: auto;
+}
+
+.timeline-marker:hover .timeline-marker-bar,
+.timeline-marker:focus-visible .timeline-marker-bar {
+  opacity: 0;
+}
+
+// A marker is a labelled position, not a ghost action: holding it must keep the
+// marker's own surface instead of replacing it with the shared translucent
+// pressed fill.
+.redux-app-root .timeline-marker:active:not(:disabled) .timeline-marker-label {
+  background: var(--surface-raised);
+  color: var(--marker-color, var(--warning));
+}
+
+.canvases {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  margin: var(--timeline-header-height) 0 var(--timeline-scroll-height);
+  background: var(--timeline-surface);
+  display: grid;
+  grid-template-columns:
+    var(--timeline-strip-width, 24px) minmax(0, 1fr) minmax(0, 1fr)
+    var(--timeline-strip-width, 24px);
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: var(--space-3);
+}
+
+// Hiding the strips also drops their gaps: the note/event field keeps the exact
+// width its layout promises instead of shrinking by two gutters.
+.editor.density-bars-hidden .canvases {
+  grid-template-columns: 0 minmax(0, 1fr) minmax(0, 1fr) 0;
+  column-gap: 0;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  touch-action: none;
+}
+
+// The beat grid and lane separators live on the backdrop, under the content
+// layer, so a note or an event bar is never crossed by a background line. The
+// editing canvas is above both: it carries the header bands, the value labels,
+// the playhead and every selection overlay.
+#notes-backdrop,
+#events-backdrop {
+  grid-row: 1;
+  z-index: 0;
+  pointer-events: none;
+  background: transparent;
+}
+
+#notes-backdrop {
+  grid-column: 2;
+}
+
+#events-backdrop {
+  grid-column: 3;
+}
+
+#notes-playhead,
+#events-playhead {
+  grid-row: 1;
+  z-index: 4;
+  pointer-events: none;
+  background: transparent;
+}
+
+#notes-playhead {
+  grid-column: 2;
+}
+
+#events-playhead {
+  grid-column: 3;
+}
+
+#notes {
+  grid-column: 2;
+  grid-row: 1;
+  border-right: 1px solid var(--border-strong);
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+.timeline-note-batch {
+  grid-column: 2;
+  grid-row: 1;
+  z-index: 1;
+  pointer-events: none;
+  background: transparent;
+}
+
+#events {
+  grid-column: 3;
+  grid-row: 1;
+  border-left: 1px solid var(--border-strong);
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+.timeline-event-batch {
+  grid-column: 3;
+  grid-row: 1;
+  z-index: 1;
+  pointer-events: none;
+  background: transparent;
+}
+
+.timeline-strip {
+  grid-row: 1;
+  width: var(--timeline-strip-width, 24px);
+  opacity: 0.9;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-strong);
+}
+
+#note-density {
+  grid-column: 1;
+}
+
+#history-strip {
+  grid-column: 4;
+}
+
+// The hover preview is a floating snapshot above the authoring field, not a
+// canvas layer of it: the note, playhead, and marker layers order themselves
+// inside the shared stage stacking context, so the preview names the
+// content-overlay rung to stay opaque over them and to keep pointer input on
+// the field.
+.timeline-thumbnail {
+  position: fixed;
+  z-index: var(--z-content-overlay);
+  pointer-events: none;
+  overflow: hidden;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.timeline-thumbnail[hidden] {
+  display: none;
+}
+
+.timeline-thumbnail > canvas:first-child {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.timeline-thumbnail > span {
+  position: absolute;
+  right: var(--space-1);
+  bottom: var(--space-1);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--foreground);
+  font-size: var(--type-caption);
+  line-height: 14px;
+}
+
+.editor .canvases::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--timeline-surface);
+}
+
+.editor.notes-hidden #notes,
+.editor.notes-hidden #notes-backdrop,
+.editor.notes-hidden #notes-batch,
+.editor.notes-hidden #notes-playhead {
+  display: none;
+}
+
+.editor.events-hidden #events,
+.editor.events-hidden #events-backdrop,
+.editor.events-hidden #events-playhead,
+.editor.events-hidden #events-batch,
+.editor.events-hidden #layer {
+  display: none;
+}
+
+// An exclusive timeline (single-line notes or events, or merged multi-line
+// notes) owns the workspace, but a full-bleed field reads as too wide. The
+// overview strips stay pinned to the workspace edges; the drawing area between
+// them keeps the chosen width, so the strips do not eat into it and do not move
+// inward. Split multi-line fields opt out through `.multi-fill` below.
+//
+// The grid must not paint an edge border here: a border would consume one pixel
+// of the content box and push both strips inward, so the edge strips would sit
+// one pixel inside where the split layout puts them. The strips already draw
+// their own border, which is the edge line in every layout.
+.editor:is(.notes-hidden, .events-hidden, .multi-notes, .multi-events) .canvases {
+  --timeline-middle: calc(100% - 2 * var(--timeline-strip-width, 24px) - 4 * var(--space-3));
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  grid-template-columns:
+    var(--timeline-strip-width, 24px)
+    calc(var(--timeline-middle) * (1 - var(--timeline-exclusive-ratio, 0.75)) / 2)
+    calc(var(--timeline-middle) * var(--timeline-exclusive-ratio, 0.75))
+    calc(var(--timeline-middle) * (1 - var(--timeline-exclusive-ratio, 0.75)) / 2)
+    var(--timeline-strip-width, 24px);
+}
+
+// Without the strips the middle is the whole workspace, and the field keeps the
+// chosen share of it, centered.
+.editor:is(.notes-hidden, .events-hidden, .multi-notes, .multi-events).density-bars-hidden
+  .canvases {
+  --timeline-middle: 100%;
+  grid-template-columns:
+    calc(var(--timeline-middle) * (1 - var(--timeline-exclusive-ratio, 0.75)) / 2)
+    calc(var(--timeline-middle) * var(--timeline-exclusive-ratio, 0.75))
+    calc(var(--timeline-middle) * (1 - var(--timeline-exclusive-ratio, 0.75)) / 2);
+  column-gap: 0;
+
+  & #notes,
+  & #notes-backdrop,
+  & #notes-playhead,
+  & #notes-batch,
+  & #events,
+  & #events-backdrop,
+  & #events-playhead,
+  & #events-batch {
+    grid-column: 2;
+  }
+}
+
+// Split multi-line fields fill the workspace instead of keeping the width
+// configured for single-line note-only or event-only layouts. Merged note mode
+// stays on the exclusive width.
+.editor.multi-fill .canvases {
+  --timeline-exclusive-ratio: 1;
+}
+
+// Every field canvas shares the middle cell in a single-region layout; the
+// strips keep their outer cells.
+.editor:is(.notes-hidden, .events-hidden, .multi-notes, .multi-events) {
+  & #notes,
+  & #notes-backdrop,
+  & #notes-playhead,
+  & #notes-batch,
+  & #events,
+  & #events-backdrop,
+  & #events-playhead,
+  & #events-batch {
+    grid-column: 3;
+  }
+
+  & #history-strip {
+    grid-column: 5;
+  }
+}
+
+.editor.notes-hidden:not(.events-hidden) #events {
+  border-left: 0;
+}
+
+.editor.notes-hidden.events-hidden .canvases,
+.editor.notes-hidden.events-hidden #layer {
+  display: none;
+}
+
+// The layer selector is the bottom strip of the event field, so it tracks the
+// event column in every layout instead of floating over a fixed offset.
+.editor.multi-events #layer,
+.editor.notes-hidden:not(.events-hidden) #layer {
+  grid-column: 3;
+  width: calc(50% - 8px);
+  justify-self: center;
+}

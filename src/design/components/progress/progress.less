@@ -1,0 +1,51 @@
+/* Tokenised progress bar. One track and fill serve chart loading, long tasks,
+   and update downloads so height, radius, colour, and motion cannot drift. */
+
+.redux-progress {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--design-radius-micro);
+  background: var(--input-surface);
+}
+
+.redux-progress-compact {
+  height: 4px;
+}
+
+.redux-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width var(--design-dur-overlay) var(--design-ease-move);
+}
+
+.redux-progress[data-indeterminate="true"] .redux-progress-fill {
+  width: 38%;
+  animation: redux-progress-indeterminate 1.15s var(--design-ease-move) infinite;
+}
+
+@keyframes redux-progress-indeterminate {
+  from {
+    transform: translateX(-110%);
+  }
+
+  to {
+    transform: translateX(310%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-progress-fill {
+    transition: none;
+  }
+
+  .redux-progress[data-indeterminate="true"] .redux-progress-fill {
+    width: 100%;
+    animation: none;
+    opacity: 0.45;
+  }
+}

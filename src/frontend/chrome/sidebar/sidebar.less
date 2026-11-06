@@ -1,0 +1,173 @@
+// The right-hand workspace navigation.
+//
+// Every mode uses the same compact rail. It never widens over the inspector:
+// entries keep their icon slot and reveal their names through the shared
+// tooltip layer. The grid track stays at the peek width, so the rail never
+// changes the inspector's own track, width, or content layout.
+//
+// The content keeps the compact width and is aligned to the rail's right edge.
+// The icon slot cannot move because nothing reflows.
+
+.sidebar {
+  --sidebar-peek-width: var(--theme-sidebar-width, 56px);
+  // The collapsed rail clips the content column to its padded inner width: what
+  // the peek state actually shows, and therefore the width the icon slot must
+  // fill to sit on the rail's centre line.
+  --sidebar-peek-content-width: calc(var(--sidebar-peek-width) - 2 * var(--space-1-5));
+
+  position: relative;
+  z-index: var(--z-nav);
+  flex: none;
+  justify-self: end;
+  width: var(--sidebar-peek-width);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-1-5);
+  background: var(--panel-header);
+  overflow: hidden;
+  overscroll-behavior: contain;
+
+  // Draw the leading divider inside the rail. A border sits on the clipped edge
+  // and can lose its top and bottom pixels to the rounded workbench frame.
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    inset-block: 0;
+    left: 0;
+    width: 1px;
+    pointer-events: none;
+    background: var(--border-strong);
+  }
+}
+
+.sidebar-content {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+.sidebar-content > .sidebar-item {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  min-width: 0;
+}
+
+.redux-sidebar-badge {
+  position: absolute;
+  z-index: 2;
+  top: 1px;
+  right: 0;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 var(--space-1);
+  border: 2px solid var(--panel-header);
+  border-radius: 999px;
+  background: var(--danger);
+  color: var(--surface);
+  font-size: var(--type-micro);
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+
+// The compact rail only shows the icon column. Both the active fill and the
+// hover fill are the same rounded layer behind the row: it is exactly the icon
+// slot, so all four corners are rounded.
+.redux-app-root .sidebar .redux-rail-item {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+.redux-app-root .sidebar .redux-rail-item::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  right: 0;
+  width: 41px;
+  border-radius: var(--radius-control);
+  background: transparent;
+  transition: background-color var(--design-dur-tint) ease;
+}
+
+// Vertically the padded inner column is the whole peek surface, so the pill and
+// its icon slot fill that column. A 41px slot right-aligned inside the 44px
+// column would leave a 9px gap on the leading side and 6px on the trailing one,
+// which reads as a pill that is off-centre against the rail. The slot keeps its
+// 41px hit size and centres itself inside the column instead.
+.redux-app-root .sidebar:not(.is-top) .redux-rail-item {
+  grid-template-columns: minmax(0, 1fr) var(--sidebar-peek-content-width);
+}
+
+.redux-app-root .sidebar:not(.is-top) .redux-rail-item::before {
+  width: var(--sidebar-peek-content-width);
+}
+
+.redux-app-root .sidebar:not(.is-top) .redux-rail-item-icon {
+  justify-self: center;
+}
+
+.redux-app-root
+  .sidebar
+  .redux-rail-item:hover:not(:disabled):not(.is-selected):not([aria-pressed="true"]):not(
+    [aria-current="page"]
+  )::before {
+  background: var(--surface-hover);
+}
+
+.redux-app-root
+  .sidebar
+  .redux-rail-item:is(.is-selected, [aria-pressed="true"], [aria-current="page"]) {
+  background: transparent;
+}
+
+.redux-app-root
+  .sidebar
+  .redux-rail-item:is(.is-selected, [aria-pressed="true"], [aria-current="page"])::before {
+  background: var(--active-accent-fill);
+}
+
+.redux-app-root
+  .sidebar
+  .redux-rail-item:is(.is-selected, [aria-pressed="true"], [aria-current="page"]):hover {
+  color: var(--active-accent);
+}
+
+.redux-app-root .sidebar .redux-rail-item-label,
+.redux-app-root .sidebar .redux-rail-item-icon {
+  position: relative;
+  z-index: 1;
+}
+
+// The separator is a direct child of the rail, so it follows the inner width.
+.sidebar-content > .redux-divider {
+  flex: none;
+  width: 100%;
+  margin: 3px 0;
+  opacity: 0.72;
+}
+
+// A divider needs content on both sides. Hidden entries leave no DOM node, so
+// adjacent dividers collapse here instead of stacking at one seam.
+.sidebar-content > .redux-divider:first-child,
+.sidebar-content > .redux-divider:last-child,
+.sidebar-content > .redux-divider + .redux-divider {
+  display: none;
+}

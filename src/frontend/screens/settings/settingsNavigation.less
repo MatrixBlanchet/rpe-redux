@@ -1,0 +1,258 @@
+// The settings rail: category buttons, nested children, and the selection bar
+// that travels between them.
+
+.redux-settings-nav {
+  flex: none;
+  width: 216px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3);
+  background: var(--panel-header);
+  border-right: 1px solid var(--panel-border);
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.redux-settings-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: calc(var(--control-height) + var(--space-1));
+  padding: 0 var(--space-3);
+  background: var(--input-surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-control);
+}
+
+.redux-settings-search .redux-icon {
+  --icon-color: var(--foreground-muted);
+}
+
+.redux-app-root .redux-settings-search input {
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.redux-settings-nav-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+// The current-category rail. It is one absolutely positioned element instead of
+// the old per-button pseudo-element, because a pseudo-element cannot travel to
+// the next button: this one translates along the list and its length collapses
+// mid-flight (see `SettingsNavigation.tsx`).
+.redux-settings-nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 2px;
+  height: 18px;
+  pointer-events: none;
+  opacity: 0;
+
+  &[data-visible="true"] {
+    opacity: 1;
+  }
+
+  &[data-animate="true"] {
+    transition:
+      transform var(--design-dur-disclosure) var(--design-ease-enter),
+      opacity var(--design-dur-tint) ease;
+  }
+
+  &[data-animate="false"] {
+    transition: none;
+  }
+}
+
+.redux-settings-nav-indicator-bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--design-radius-micro);
+  background: var(--accent);
+  transform-origin: center;
+}
+
+.redux-settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 36px;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+}
+
+.redux-settings-nav-item small {
+  margin-left: auto;
+  color: var(--foreground-muted);
+}
+
+.redux-settings-nav-item > span {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redux-settings-nav-item[aria-current="true"] {
+  background: var(--control-on-surface);
+  border-color: var(--control-on-border);
+  color: var(--accent);
+}
+
+@media (max-width: 860px) {
+  .redux-settings-nav {
+    width: 168px;
+  }
+}
+
+.redux-app-root .redux-settings-nav {
+  width: 204px;
+  padding: var(--space-4) var(--space-3) var(--space-4) var(--space-2);
+  gap: var(--space-5);
+  background: var(--panel-header);
+}
+
+.redux-settings-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-1-5);
+  strong {
+    font-size: var(--type-title);
+    font-weight: 500;
+  }
+  .redux-icon {
+    --icon-color: var(--accent);
+  }
+}
+
+.redux-app-root .redux-settings-nav-list {
+  gap: 3px;
+}
+
+.redux-app-root .redux-settings-nav-item {
+  min-height: 44px;
+  font-size: var(--type-body);
+  padding: var(--space-3) var(--space-3);
+  border: 0;
+  gap: var(--space-4);
+  justify-content: flex-start;
+  small {
+    display: none;
+  }
+  &[aria-current="true"] {
+    background: var(--control-on-surface);
+    color: var(--foreground);
+    .redux-icon {
+      --icon-color: var(--accent);
+    }
+  }
+  // The shared glyph/label centring rule must not turn a navigation row into a
+  // centred control. This selector matches that rule's specificity and this
+  // sheet loads after the action primitives.
+  &:has(> .redux-icon) {
+    justify-content: flex-start;
+  }
+  // The root stays marked while its section is folded but its page is still on
+  // screen; otherwise collapsing the current branch would leave the rail with
+  // no owner.
+  &[data-active-ancestor="true"] {
+    color: var(--foreground);
+    .redux-icon {
+      --icon-color: var(--accent);
+    }
+  }
+}
+
+// The shared button glyph rule also sets a 6px gap. Keep the icon and its label
+// apart on navigation roots; the child indent does not use an icon.
+.redux-app-root .redux-settings-nav-list .redux-settings-nav-item:has(> .redux-icon) {
+  gap: var(--space-4);
+}
+
+// Roots are the section landmarks; children are the pages the user actually
+// edits. A little extra space and weight make that hierarchy visible without
+// turning the rail into a tree control.
+.redux-app-root .redux-settings-nav-parent {
+  margin-top: var(--space-2);
+  font-weight: 600;
+}
+
+.redux-app-root .redux-settings-nav-parent:first-child {
+  margin-top: 0;
+}
+
+.redux-app-root .redux-settings-nav-leading-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.redux-app-root .redux-settings-nav-disclosure {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  opacity: 0.7;
+  // A 16px chevron centred in a fixed 16px box. The box keeps the label column
+  // and the glyph's horizontal centre unchanged while the glyph rotates between
+  // down and right.
+  mask-size: 16px 16px;
+  -webkit-mask-size: 16px 16px;
+  transform-origin: center;
+  // One glyph rotates instead of being swapped, so the disclosure can overshoot
+  // the quarter turn: the bounce is what makes expanding read as a spring, and
+  // collapsing retraces the same curve.
+  transition: transform var(--design-dur-disclosure) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.redux-app-root .redux-settings-nav-item[aria-expanded="false"] .redux-settings-nav-disclosure {
+  transform: rotate(-90deg);
+}
+
+.redux-app-root .redux-settings-nav-child {
+  min-height: 32px;
+  padding: var(--space-2) var(--space-3) var(--space-2) calc(var(--space-2) + 28px);
+  font-size: var(--type-label);
+  gap: 0;
+  animation: redux-settings-child-in var(--design-dur-tint) ease both;
+}
+
+@keyframes redux-settings-child-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1100px) {
+  .redux-app-root .redux-settings-nav {
+    width: 180px;
+    padding: var(--space-4) var(--space-3) var(--space-4) var(--space-2);
+  }
+}
+
+.redux-app-root .redux-settings-search {
+  align-self: stretch;
+  width: 100%;
+  padding: 0 var(--space-2);
+  // Balance the stable scrollbar gutter so the search field is centred in the rail.
+  transform: translateX(var(--space-1-5));
+}

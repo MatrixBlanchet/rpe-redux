@@ -1,0 +1,200 @@
+// Workspace sampler layer: whole-viewport XY guides, the scalar ruler, the two
+// draft anchors, and the floating easing editor. The overlay only paints;
+// interaction state belongs to `SamplingOverlay.tsx` and the sampling session.
+
+// The free-camera dock would sit under the sampler overlay; sampling keeps the
+// camera controls out of the pointer path while the sampler stays centered.
+.stage.sampling-active > .free-camera-layer .free-camera-dock {
+  display: none;
+}
+
+.sampling-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.sampling-overlay[data-interaction="drag"] {
+  cursor: grabbing;
+}
+
+.sampling-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+// ---------------------------------------------------------------- guides
+
+.sampling-guide-line {
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.24;
+  shape-rendering: crispEdges;
+}
+
+.sampling-guide-line.is-major {
+  opacity: 0.38;
+}
+
+.sampling-guide-line[data-active="true"] {
+  stroke: var(--accent-hover);
+  stroke-width: 1.75;
+  opacity: 1;
+}
+
+// ---------------------------------------------------------------- ruler
+
+.sampling-ruler-band {
+  fill: color-mix(in srgb, var(--surface-raised) 68%, transparent);
+  stroke: none;
+}
+
+.sampling-ruler-spine {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.sampling-ruler-tick {
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.42;
+}
+
+.sampling-ruler-tick.is-major {
+  opacity: 0.7;
+}
+
+.sampling-ruler-tick[data-active="true"] {
+  stroke: var(--accent-hover);
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.sampling-ruler-label {
+  fill: var(--foreground-muted);
+  font-size: var(--type-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.sampling-ruler-label[data-active="true"] {
+  fill: var(--foreground);
+}
+
+// ---------------------------------------------------------------- anchors
+
+.sampling-anchor-guide {
+  stroke: var(--warning);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  opacity: 0.85;
+}
+
+.sampling-anchor-guide[data-anchor="end"] {
+  stroke: var(--danger);
+}
+
+.sampling-anchor-point {
+  fill: var(--warning);
+  stroke: var(--surface-raised);
+  stroke-width: 2;
+}
+
+.sampling-anchor-point[data-anchor="end"] {
+  fill: var(--danger);
+}
+
+.sampling-path-line {
+  stroke: var(--foreground-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  opacity: 0.8;
+}
+
+// ---------------------------------------------------------------- rotation
+
+.sampling-rotation-ray {
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0.72;
+}
+
+.sampling-rotation-hub {
+  fill: var(--accent);
+  stroke: var(--surface-raised);
+  stroke-width: 2;
+}
+
+// ---------------------------------------------------------------- floating panel
+
+.sampling-float {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-height: 70vh;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: var(--shadow-panel);
+  cursor: default;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.sampling-float-header {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sampling-float-title {
+  font-size: var(--type-label);
+  font-weight: 600;
+  line-height: var(--line-label);
+}
+
+.sampling-float-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  padding: var(--space-2) var(--space-3);
+  overflow-y: auto;
+}
+
+// Keep every curve control at its natural height; the body scrolls instead of
+// squeezing canvases or inputs when the viewport is short.
+.sampling-float-body > * {
+  flex: none;
+}
+
+.sampling-float-mode {
+  flex: none;
+}
+
+.sampling-float-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+}
+
+.sampling-float-footer {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+}

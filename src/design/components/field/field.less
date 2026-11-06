@@ -1,0 +1,315 @@
+// Shared labelled field rows (`FieldRow.tsx`). Features supply the label and
+// control; this sheet owns the label/control split, density, disabled state,
+// dividers, and hides. Panels do not restyle these internals.
+
+.redux-field-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--field-control-width, 46%));
+  align-items: center;
+  gap: var(--space-1) var(--field-row-gap-inline, var(--theme-field-gap, var(--space-4)));
+  min-height: var(--field-row-min-height, var(--control-height));
+  margin: 0 0 var(--field-row-margin-block, var(--space-2));
+  padding: var(--field-row-padding-block, var(--space-1))
+    var(--field-row-padding-inline, var(--space-3));
+  border-radius: var(--radius-control);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+
+  &[hidden] {
+    display: none;
+  }
+
+  &[data-layout="inline"],
+  &[data-density="compact"] {
+    --field-row-padding-block: 0;
+    --field-row-padding-inline: 0;
+    --field-row-gap-inline: var(--theme-field-gap, var(--space-3));
+    --field-row-min-height: var(--control-height-compact);
+    --field-row-margin-block: var(--space-1-5);
+  }
+
+  &[data-layout="block"] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2) 0;
+    padding: var(--space-2) var(--space-3);
+
+    .redux-field-control {
+      justify-content: stretch;
+    }
+  }
+
+  &[data-align="start"] {
+    align-items: start;
+  }
+
+  &[data-divided="true"] {
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: 0;
+  }
+
+  &[data-divided="true"]:last-child {
+    border-bottom: 0;
+  }
+
+  &[data-striped="true"] {
+    background: color-mix(in srgb, var(--surface-raised) 70%, transparent);
+  }
+
+  &[data-hoverable="true"]:not([data-disabled="true"]) {
+    transition: background-color var(--design-dur-tint) ease;
+  }
+
+  &[data-hoverable="true"]:not([data-disabled="true"]):hover {
+    background: var(--surface-hover);
+  }
+
+  &[data-disabled="true"],
+  &:has(:is(input, select, textarea, button):disabled) {
+    .redux-field-label {
+      color: var(--foreground-muted);
+      cursor: var(--app-cursor-disabled);
+    }
+
+    .redux-field-description {
+      opacity: 0.72;
+    }
+
+    .redux-field-control {
+      opacity: 0.55;
+    }
+
+    .redux-field-reset-slot {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+  }
+
+  &[data-disabled="true"] .redux-field-control {
+    pointer-events: none;
+  }
+}
+
+.redux-field-label-column {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--space-1);
+  min-width: 0;
+  text-align: left;
+}
+
+.redux-field-label {
+  cursor: var(--app-cursor-pointer);
+  color: var(--foreground);
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+  text-align: left;
+}
+
+.redux-field-description {
+  display: block;
+  max-width: 72ch;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+  overflow-wrap: anywhere;
+}
+
+.redux-field-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  min-width: 0;
+  font-family: inherit;
+}
+
+.redux-field-reset-slot {
+  position: relative;
+  display: grid;
+  flex: 0 0 var(--control-height-compact);
+  place-items: center;
+  width: var(--control-height-compact);
+  height: var(--control-height-compact);
+}
+
+.redux-field-reset {
+  position: absolute;
+  inset: 0;
+  width: var(--control-height-compact);
+  height: var(--control-height-compact);
+  min-width: var(--control-height-compact);
+  min-height: var(--control-height-compact);
+  opacity: 0.55;
+  transition: opacity var(--design-dur-tint) ease;
+}
+
+// IconButton's normal `md` preset is intentionally larger than a compact field
+// row. The reset slot owns the compact geometry, so make the nested button use
+// that same box instead of letting the global icon preset stretch it.
+.redux-app-root .redux-field-row .redux-icon-button.redux-field-reset {
+  width: var(--control-height-compact);
+  height: var(--control-height-compact);
+  min-width: var(--control-height-compact);
+  min-height: var(--control-height-compact);
+  padding: 0;
+}
+
+.redux-field-row:hover .redux-field-reset,
+.redux-field-row:focus-within .redux-field-reset {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .redux-field-reset {
+    opacity: 1;
+  }
+}
+
+.redux-field-error {
+  grid-column: 1 / -1;
+  color: var(--danger);
+  font-size: var(--type-caption);
+  line-height: var(--line-label);
+  overflow-wrap: anywhere;
+}
+
+.redux-field-footer {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.redux-field-row[data-layout="inline"] .redux-field-error,
+.redux-field-row[data-layout="inline"] .redux-field-footer {
+  grid-column: 2;
+}
+
+.redux-field-control > :is(.redux-input, .redux-select, textarea) {
+  width: 100%;
+  min-width: 0;
+}
+
+// The controls sheet sets `flex: none` on every range input after this sheet
+// loads. A range that is a direct field control must still follow the field
+// row's width contract, including shrinking beside a reserved reset slot.
+.redux-app-root .redux-field-control > input[type="range"] {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.redux-field-control > input[type="checkbox"],
+.redux-field-control > input[type="radio"] {
+  flex: none;
+  width: auto;
+}
+
+.redux-schema-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.redux-schema-control > :is(.redux-input, .redux-select) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.redux-setting-range {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.redux-app-root .redux-setting-range > input[type="range"] {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.redux-setting-range > .redux-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.redux-setting-value {
+  min-width: 54px;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.redux-setting-range > .redux-setting-value {
+  flex: none;
+  white-space: nowrap;
+}
+
+.redux-field-textarea {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  width: min(420px, 100%);
+  min-height: 76px;
+  padding: var(--space-2) var(--space-3);
+  resize: vertical;
+  font-family: inherit;
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+}
+
+// A checkbox with a compact permission-chip surface. The native input remains
+// the control; the chip is a larger click target and a labelled companion.
+.redux-checkbox-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: var(--control-height-compact);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: var(--type-label);
+  white-space: nowrap;
+  cursor: var(--app-cursor-pointer);
+  transition:
+    background-color var(--design-dur-tint) ease,
+    border-color var(--design-dur-tint) ease;
+
+  &[data-tone="accent"] {
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--border-subtle));
+  }
+
+  &:not(:has(input:disabled)):hover {
+    background: var(--surface-hover);
+  }
+
+  &:has(input:checked) {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border-subtle));
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  }
+
+  &:has(input:disabled) {
+    opacity: 0.55;
+    cursor: var(--app-cursor-default);
+  }
+}
+
+.redux-checkbox-chip-label {
+  line-height: var(--line-label);
+}

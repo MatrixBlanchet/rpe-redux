@@ -1,0 +1,326 @@
+// Shortcut editor styles: the reset action, recording state, and the key chips
+// each binding renders.
+
+.redux-shortcut-hint,
+.redux-shortcut-recording,
+.redux-shortcut-message {
+  margin: 0 0 var(--space-3);
+  color: var(--foreground-muted);
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+}
+
+.redux-shortcut-recording,
+.redux-shortcut-message {
+  color: var(--accent);
+}
+
+.redux-shortcut-category {
+  margin-bottom: var(--space-5);
+}
+
+// ------------------------------------------------------ RPE migration report
+
+.redux-shortcut-rpe {
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-muted);
+}
+
+.redux-shortcut-rpe-summary {
+  margin: 0 0 var(--space-3);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-shortcut-rpe-group + .redux-shortcut-rpe-group {
+  margin-top: var(--space-3);
+}
+
+.redux-shortcut-rpe-group h4 {
+  margin: 0 0 var(--space-2);
+  color: var(--foreground);
+  font-size: var(--type-caption);
+  font-weight: 600;
+}
+
+.redux-shortcut-rpe-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.redux-app-root .redux-shortcut-rpe-chip {
+  height: auto;
+  min-height: var(--control-height-compact);
+  padding: var(--space-1) var(--space-2);
+}
+
+.redux-shortcut-rpe-keys {
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.redux-shortcut-rpe-action {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-shortcut-rpe-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.redux-shortcut-rpe-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  font-size: var(--type-caption);
+  overflow-wrap: anywhere;
+}
+
+.redux-shortcut-rpe-reason {
+  color: var(--warning);
+}
+
+// Jumped-to command: the row flashes so the eye lands on the right entry.
+.redux-shortcut-row[data-flash="true"] {
+  background: var(--active-accent-fill);
+  color: var(--active-accent);
+}
+
+.redux-shortcut-category h3 {
+  position: relative;
+  margin: 0 0 var(--space-3);
+  padding: 0 var(--space-3) var(--space-1);
+  color: var(--foreground);
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+// The accent bar follows the heading text inset instead of starting at the
+// section edge; the heading and shortcut rows then share one leading line.
+// This selector outranks the shared compact-heading rule, which otherwise
+// places the bar at the category box edge instead of under the heading text.
+.redux-shortcuts .redux-shortcut-category h3::after {
+  left: var(--space-3);
+}
+
+// The shortcut editor follows the settings form grid: the command label starts
+// at the leading edge and its binding chips end on the shared control line.
+.redux-shortcut-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--settings-control-width, 320px));
+  align-items: center;
+  gap: var(--space-2) var(--space-5);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+}
+
+.redux-shortcut-row + .redux-shortcut-row {
+  margin-top: 2px;
+}
+
+.redux-shortcut-row:hover {
+  background: var(--surface-hover);
+}
+
+.redux-shortcut-label {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redux-shortcut-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.redux-shortcut-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin-inline-end: var(--space-1);
+  padding: 3px var(--space-2);
+  border: 1px solid var(--control-on-border);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+}
+
+.redux-shortcut-chip[data-conflict="true"] {
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
+.redux-app-root .redux-shortcut-capture {
+  min-height: 26px;
+  padding: 2px var(--space-1);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 500;
+  line-height: 18px;
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-app-root .redux-shortcut-capture:hover {
+  background: transparent;
+}
+
+// The chip is the control; a focused capture or remove action rings the whole
+// rounded shell rather than the text inside it.
+.redux-shortcut-chip:has(:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.redux-app-root
+  .redux-shortcut-chip
+  :is(.redux-shortcut-capture, .redux-shortcut-remove):focus-visible {
+  outline: none;
+}
+
+.redux-shortcut-add {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: var(--space-1);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--design-dur-tint) ease,
+    visibility var(--design-dur-tint) ease;
+}
+
+.redux-shortcut-reset {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: var(--space-1);
+  opacity: 0.55;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity var(--design-dur-tint) ease;
+}
+
+.redux-shortcut-row:hover .redux-shortcut-add,
+.redux-shortcut-row:focus-within .redux-shortcut-add {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.redux-shortcut-row:hover .redux-shortcut-reset,
+.redux-shortcut-row:focus-within .redux-shortcut-reset {
+  opacity: 1;
+}
+
+.redux-app-root .redux-shortcut-remove {
+  --shortcut-remove-size: 18px;
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--shortcut-remove-size);
+  width: var(--shortcut-remove-size);
+  min-height: var(--shortcut-remove-size);
+  height: var(--shortcut-remove-size);
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: var(--design-radius-chip);
+  background: transparent;
+  color: var(--foreground-muted);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition:
+    opacity var(--design-dur-tint) ease,
+    visibility var(--design-dur-tint) ease,
+    color var(--design-dur-tint) ease,
+    background var(--design-dur-tint) ease;
+}
+
+.redux-app-root .redux-shortcut-chip:hover .redux-shortcut-remove,
+.redux-app-root .redux-shortcut-chip:focus-within .redux-shortcut-remove,
+.redux-app-root .redux-shortcut-remove:focus-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.redux-app-root .redux-shortcut-remove:hover:not(:disabled),
+.redux-app-root .redux-shortcut-remove:active:not(:disabled) {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+.redux-shortcut-recording-current {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+}
+
+.redux-shortcut-recording-bindings {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.redux-shortcut-recording-bindings kbd {
+  min-width: 36px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--control-on-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.redux-shortcut-recording-modifiers,
+.redux-shortcut-recording-message {
+  margin: 0;
+}
+
+.redux-shortcut-recording-modifiers {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.redux-shortcut-recording-message {
+  color: var(--accent);
+}

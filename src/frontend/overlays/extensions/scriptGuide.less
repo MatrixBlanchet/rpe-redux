@@ -1,0 +1,93 @@
+// Script guide cards stacked in the top-right corner. They sit under notices
+// (`--z-guide` below `--z-toast`) and only the cards themselves take pointer input.
+
+.redux-script-guides {
+  position: fixed;
+  z-index: var(--z-guide);
+  top: var(--space-5);
+  right: var(--space-5);
+  width: min(440px, calc(100vw - 2 * var(--space-5)));
+  pointer-events: none;
+}
+
+.redux-script-guide {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: var(--shadow-panel);
+  pointer-events: auto;
+}
+
+.redux-script-guide-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-3);
+
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    margin-top: var(--space-1);
+    font-size: var(--type-title);
+    line-height: 1.2;
+  }
+}
+
+.redux-script-guide-source {
+  color: var(--accent);
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.redux-script-guide-description {
+  color: var(--foreground-muted);
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.redux-script-guide-progress {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--outline);
+
+  span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width var(--design-dur-disclosure) ease-out;
+  }
+}
+
+.redux-script-guide-count {
+  color: var(--foreground-muted);
+}
+
+.redux-script-guide-content {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 46vh;
+  overflow: auto;
+
+  h3 {
+    margin: 0;
+    font-size: var(--type-heading);
+  }
+}
+
+.redux-script-guide-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}

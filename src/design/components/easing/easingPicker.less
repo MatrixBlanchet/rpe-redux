@@ -1,0 +1,80 @@
+﻿// Easing row layout: the compact inline FieldRow and the three-column
+// id/family/direction control.
+
+// The easing row uses the shared compact inline FieldRow, so its label, row
+// height, padding, and value column follow the fields above and below. The
+// three controls divide that one value column: the id keeps a compact column,
+// the family list takes five tenths, and the direction list three tenths — one
+// quarter shorter than the family list so a longer family name still fits.
+.easing-field {
+  &.is-disabled {
+    opacity: 0.55;
+  }
+}
+
+.easing-field-controls {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(2.5em, 2fr) minmax(0, 5fr) minmax(0, 3fr);
+  gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+}
+
+// The settings field row gives a lone input a 120px floor. Three controls share
+// one column here, so that floor would make them overlap instead of dividing
+// the row; the extra class keeps the shared field-row defaults elsewhere.
+.redux-field-row.easing-field .easing-field-controls :is(input, select) {
+  width: 100%;
+  min-width: 0;
+}
+
+.easing-field-id {
+  padding-inline: var(--space-1);
+}
+
+// A rejected id keeps the text the author typed and turns the box red instead of
+// being clamped, so the chart keeps its old value while the mistake stays visible.
+.easing-field-id[aria-invalid="true"] {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+// The drawn easing curve. It is the replacement for the 29 shipped pictures: the
+// same picture is produced from the chart's own easing functions.
+.easing-preview {
+  display: block;
+  width: 100%;
+  height: 100px;
+  margin: 0 0 var(--space-2);
+  background: var(--input-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+}
+
+// The Bézier editor belongs to this picker, not to a dialog. Its coordinates
+// use ordinary FieldRows and the canvas keeps the intrinsic curve aspect ratio.
+.bezier-editor {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2.6;
+  margin: var(--space-1) 0;
+  cursor: var(--app-cursor-pointer);
+  touch-action: none;
+  user-select: none;
+}
+
+.bezier-editor-fields {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.bezier-point-fields {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.bezier-point-input {
+  width: 100%;
+}

@@ -1,0 +1,63 @@
+Required Notice: Copyright 2026 cmdysj.
+Required Notice: Re:PhiEdit Next is reconstructed from the original Re:PhiEdit (RPE) project using AI (GPT).
+
+作者：cmdysj。本项目基于原 Re:PhiEdit（RPE）项目，使用 AI（GPT）进行重构。
+原项目及独立第三方内容的权利归相应权利人所有；保留其适用的许可及来源声明。
+本项目采用 PolyForm Noncommercial License 1.0.0，商业用途需另行取得授权。
+界面图标来自 Lucide（ISC License，Copyright (c) 2026 Lucide Icons and Contributors），源文件位于 `scripts/icon-sources/`。
+The interface icons come from Lucide (ISC License, Copyright (c) 2026 Lucide Icons and Contributors); the source SVGs live in `scripts/icon-sources/`.
+
+Lucide ISC License
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Window caption glyphs come from Microsoft Fluent UI System Icons (MIT License,
+Copyright (c) 2020 Microsoft Corporation); the source SVGs live in
+`scripts/icon-sources/fluent/`.
+窗口标题栏按钮图标来自 Microsoft Fluent UI System Icons（MIT License，
+Copyright (c) 2020 Microsoft Corporation），源文件位于
+`scripts/icon-sources/fluent/`。
+
+Fluent UI System Icons MIT License
+Copyright (c) 2020 Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+NoiseField shaders and textures are from RPE-Next's NoiseField skin, authored by Stellate.
+噪域 NoiseField 着色器与纹理来自 RPE-Next 的 NoiseField 皮肤，作者为 Stellate。
+
+Video export bundles FFmpeg 8.1.2 (gyan.dev essentials build) for x64 and
+FFmpeg n8.1.3 (defisym/FFmpeg-Builds-Win32 GPL build) for 32-bit Windows, both
+licensed under GPL version 3. Each binary's LICENSE and build README, including
+its source and component versions, are distributed in resources/ffmpeg/.
+视频导出在 x64 上内置 FFmpeg 8.1.2（gyan.dev essentials 构建），在 32 位
+Windows 上内置 FFmpeg n8.1.3（defisym/FFmpeg-Builds-Win32 GPL 构建），均采用
+GPL v3 许可；各自的 LICENSE 与构建 README（含源码及组件版本）随二进制放在
+resources/ffmpeg/。

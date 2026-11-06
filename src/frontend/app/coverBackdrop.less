@@ -1,0 +1,117 @@
+// Blurred page backdrop shared by the home page and the editor frame.
+//
+// Each layer paints behind its own owner's content. Both layers are app-frame
+// children so the artwork can reach behind the title bar; `:has()` drops the
+// owner's opaque surface only while the layer is actually mounted, so turning
+// the setting off restores the normal theme surface without a second state
+// attribute.
+
+.cover-backdrop {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--surface);
+}
+
+.cover-backdrop-image {
+  position: absolute;
+  inset: -10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(var(--cover-backdrop-blur, 24px)) brightness(var(--cover-backdrop-brightness, 0.55));
+  transition: filter var(--design-dur-search) ease;
+  transform: scale(1.03);
+}
+
+.cover-backdrop-image.is-entering {
+  animation: cover-backdrop-enter var(--design-dur-search) ease both;
+}
+
+.cover-backdrop-image.is-leaving {
+  animation: cover-backdrop-exit var(--design-dur-search) ease both;
+}
+
+@keyframes cover-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cover-backdrop-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+// Keep the page copy readable over bright artwork. The brightness setting still
+// controls the image itself; this is the shared contrast floor.
+.cover-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+}
+
+// The frame becomes the isolated stacking context that keeps the negative
+// layer above the window background but below every shell surface.
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome),
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) {
+  position: relative;
+  isolation: isolate;
+}
+
+// The artwork supplies the surface while either window-level backdrop is
+// mounted. The chrome shares one continuous image: bars keep a light tint for
+// contrast, and the content panels let more of the artwork through.
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome) .shell-content,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome) #home,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .shell-content,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .workbench {
+  background: transparent;
+}
+
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome) .redux-titlebar,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .redux-titlebar,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome) .redux-toolbar,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .redux-toolbar {
+  background: color-mix(in srgb, var(--panel-header) 55%, transparent);
+}
+
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome) .shell-body > footer,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .shell-body > footer {
+  background: color-mix(in srgb, var(--status-bar) 55%, transparent);
+}
+
+// Let the artwork read through the editor's main panels without turning every
+// control into a translucent surface.
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .workbench-workspace > .workspace,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .workbench-inspector > .inspector {
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+}
+
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .workbench-body > .sidebar,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .workbench > .sidebar.is-top {
+  background: color-mix(in srgb, var(--panel-header) 55%, transparent);
+}
+
+// The inspector header and summary rows sit over the same image instead of
+// breaking it with an opaque strip.
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .inspector-status,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .inspector summary {
+  background: color-mix(in srgb, var(--panel-header) 55%, transparent);
+}
+
+// The editor image carries the chrome, so its contrast floor stays lighter than
+// the home page's.
+.cover-backdrop-editor::after {
+  background: color-mix(in srgb, var(--surface) 18%, transparent);
+}

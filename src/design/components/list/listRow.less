@@ -1,0 +1,38 @@
+// Shared list-row feedback. Layout belongs to the feature; this sheet only owns
+// the transparent border, radius, hover, selected, current, dragging, and focus
+// answer so rows read the same in the timeline, timing list, and pickers.
+
+.redux-list-row {
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--foreground);
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-list-row:hover:not(.is-selected):not([aria-selected="true"]) {
+  background: var(--surface-hover);
+}
+
+.redux-list-row.is-selected,
+.redux-list-row[aria-selected="true"] {
+  background: var(--active-accent-fill);
+}
+
+.redux-list-row.is-selected:hover,
+.redux-list-row[aria-selected="true"]:hover {
+  background: color-mix(in srgb, var(--accent) 28%, var(--surface-raised));
+}
+
+.redux-list-row.is-current {
+  color: var(--accent);
+}
+
+.redux-list-row.is-dragging,
+.redux-list-row[data-dragging="true"] {
+  opacity: 0.52;
+}
+
+.redux-list-row:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}

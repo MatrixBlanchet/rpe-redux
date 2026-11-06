@@ -1,0 +1,157 @@
+/**
+ * Serializes a save or recovery snapshot off the UI thread, falling back
+ * in-process for custom serializers or hosts without workers. The save service
+ * owns snapshot timing; this module only returns the chart text.
+ */
+import { serializeChart } from "../../../../../../core/global/chart/chart.ts";
+import { extensionRegistry } from "../../../../../../core/extensions/runtime.ts";
+import { yieldToHost } from "../../../../../../core/utils/yieldToHost.ts";
+
+interface SerializeResponse {
+  id: number;
+  text: string;
+}
+
+interface PendingSerialize {
+  chart: unknown;
+  resolve(text: string): void;
+  reject(error: unknown): void;
+}
+
+/**
+ * One worker per editor lifetime. Requests are matched by id; the posted chart
+ * is retained only for the duration of one message.
+ */
+const serializer = {
+  worker: null as Worker | null,
+  pending: new Map<number, PendingSerialize>(),
+  nextRequestId: 1,
+};
+
+/** Serializes a chart on the main thread. */
+function inProcess(chart: unknown): string {
+  return serializeChart(chart);
+}
+
+/** Completes one pending request through the main-thread serializer. */
+function fallback(request: PendingSerialize): void {
+  try {
+    request.resolve(inProcess(request.chart));
+  } catch (error) {
+    request.reject(error);
+  }
+}
+
+/** Returns the shared serializer worker, or null when workers are unavailable. */
+function workerInstance(): Worker | null {
+  if (serializer.worker) {
+    return serializer.worker;
+  }
+  if (typeof Worker === "undefined") {
+    return null;
+  }
+  try {
+    const worker = new Worker(new URL("./chartSerializeWorker.ts", import.meta.url), {
+      type: "module",
+    });
+    worker.onmessage = (event: MessageEvent<SerializeResponse>) => {
+      const request = serializer.pending.get(event.data.id);
+      if (!request) {
+        return;
+      }
+      serializer.pending.delete(event.data.id);
+      request.resolve(event.data.text);
+    };
+    worker.onerror = () => {
+      // A failed module worker is retried by the next save; this request still
+      // has to complete through the in-process path.
+      const pending = [...serializer.pending.values()];
+      serializer.pending.clear();
+      worker.terminate();
+      if (serializer.worker === worker) {
+        serializer.worker = null;
+      }
+      pending.forEach(fallback);
+    };
+    serializer.worker = worker;
+    return worker;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Serializes the save snapshot away from the UI thread.
+ *
+ * The worker receives the immutable snapshot and returns the exact
+ * `serializeChart` text; hosts without workers, and charts with custom
+ * serializers, fall back to the main-thread path.
+ */
+export async function serializeChartOffThread(chart: unknown): Promise<string> {
+  const hasCustomSerializer =
+    extensionRegistry.hasHook("chart:serialize") || extensionRegistry.hasHook("chart:validate");
+  if (hasCustomSerializer) {
+    return inProcess(chart);
+  }
+  const worker = workerInstance();
+  if (!worker) {
+    return inProcess(chart);
+  }
+  const id = serializer.nextRequestId++;
+  return new Promise<string>((resolve, reject) => {
+    serializer.pending.set(id, { chart, resolve, reject });
+    const fail = (error: unknown): void => {
+      serializer.pending.delete(id);
+      worker.terminate();
+      if (serializer.worker === worker) {
+        serializer.worker = null;
+      }
+      try {
+        resolve(inProcess(chart));
+      } catch {
+        reject(error);
+      }
+    };
+    void (async () => {
+      try {
+        const record =
+          chart && typeof chart === "object" && !Array.isArray(chart)
+            ? (chart as Record<string, unknown>)
+            : null;
+        const lines = Array.isArray(record?.judgeLineList) ? record.judgeLineList : null;
+        if (!record || !lines) {
+          worker.postMessage({ id, kind: "whole", chart });
+          return;
+        }
+        // Send the header once and each judge line separately so no single
+        // message clones the whole chart; yielding keeps this loop off the
+        // long-task path.
+        const { judgeLineList: _lines, ...header } = record;
+        worker.postMessage({
+          id,
+          kind: "start",
+          chart: header,
+          lineCount: lines.length,
+        });
+        let lastYield = performance.now();
+        for (let index = 0; index < lines.length; index++) {
+          if (!serializer.pending.has(id)) {
+            return;
+          }
+          worker.postMessage({ id, kind: "line", index, line: lines[index] });
+          // A line can be small enough that the time budget never trips, yet a
+          // series of them still adds up; bound the task by line count too.
+          if (index % 2 === 1 || performance.now() - lastYield >= 4) {
+            await yieldToHost();
+            lastYield = performance.now();
+          }
+        }
+        if (serializer.pending.has(id)) {
+          worker.postMessage({ id, kind: "end" });
+        }
+      } catch (error) {
+        fail(error);
+      }
+    })();
+  });
+}

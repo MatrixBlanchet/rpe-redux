@@ -1,0 +1,14 @@
+{
+  "en": {
+    "name": "Example recipe",
+    "description": "Scales the selected notes by one factor.",
+    "script.scale.label": "Scale selected notes",
+    "script.scale.description": "Scales every selected note by one factor."
+  },
+  "zh": {
+    "name": "示例配方",
+    "description": "按一个系数缩放选中的音符。",
+    "script.scale.label": "缩放选中音符",
+    "script.scale.description": "按一个系数缩放每个选中音符。"
+  }
+}

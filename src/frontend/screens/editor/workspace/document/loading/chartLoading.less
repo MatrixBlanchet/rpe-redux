@@ -1,0 +1,49 @@
+// Chart-loading modal chrome, including the progress bar and the load error.
+// Presentation only; the core loading task publishes the state it shows.
+
+.redux-app-root dialog.redux-chart-loading {
+  width: min(420px, calc(100vw - 48px));
+  padding: 0;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-panel);
+
+  .modal-content {
+    padding: var(--space-5);
+  }
+
+  .redux-loading-stage,
+  .redux-loading-percent {
+    text-align: center;
+  }
+
+  .redux-loading-stage {
+    margin: 0 0 var(--space-5);
+    color: var(--muted);
+    font-size: var(--type-label);
+  }
+
+  .redux-loading-percent {
+    margin: var(--space-3) 0 0;
+    color: var(--muted);
+    font-size: var(--type-label);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .redux-loading-error {
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--type-label);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    max-height: 32vh;
+    overflow: auto;
+  }
+
+  // The shared action row already spaces its buttons from the divider and the
+  // dialog edge; this dialog only needs to keep the content's horizontal inset.
+  .modal-actions {
+    padding-inline: var(--space-5);
+  }
+}

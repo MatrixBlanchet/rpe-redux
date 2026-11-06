@@ -1,0 +1,34 @@
+// Multi-line pane styling: the judge-line list and the mode row. Selection
+// itself is stored on the session; this pane only edits that list. Two or more
+// selected lines render automatically. The list mirrors the toolbar picker's
+// grouped rows at the inspector's full width.
+
+.multi-line-line-list {
+  position: relative;
+  width: 100%;
+  max-height: 240px;
+  margin: var(--space-2) 0;
+  padding: var(--space-2) 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+
+  // The toolbar picker defines these on its popover; the embedded list paints
+  // the same group and row states, so it carries the same selection palette.
+  --line-selection-tint: color-mix(in srgb, var(--accent) 14%, transparent);
+  --line-selection-tint-hover: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+// Selected rows already use the shared accent fill. The current line is the
+// timeline's focus, so its number and text take the accent without adding the
+// boxed border the embedded list used to draw around every row.
+.multi-line-line-row.is-current,
+.multi-line-line-row.is-current .line-selection-index {
+  color: var(--accent);
+}
+
+.multi-line-mode-field {
+  margin: var(--space-2) 0;
+}

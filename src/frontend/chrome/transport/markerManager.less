@@ -1,0 +1,71 @@
+/* Marker manager dialog: the marker list grid, its rows, and row errors. */
+
+.redux-app-root dialog.marker-manager-dialog {
+  width: min(720px, calc(100vw - 2 * var(--space-4)));
+}
+
+.marker-manager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.marker-manager-toolbar {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.marker-manager-head,
+.marker-manager-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 120px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.marker-manager-head {
+  padding: 0 var(--space-2);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.marker-manager-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-height: min(48vh, 420px);
+  overflow: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.marker-manager-row {
+  flex: none;
+  padding: var(--space-1) var(--space-2);
+}
+
+.marker-manager-color {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.marker-manager-row-error {
+  grid-column: 1 / -1;
+  color: var(--danger);
+  font-size: var(--type-caption);
+}
+
+.marker-manager-empty,
+.marker-manager-hint {
+  margin: 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.marker-manager-empty {
+  padding: var(--space-5) var(--space-3);
+  text-align: center;
+}

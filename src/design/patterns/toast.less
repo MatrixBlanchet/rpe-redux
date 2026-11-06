@@ -1,0 +1,233 @@
+// Transient notices (`ToastHost.tsx`). The host is one column; the rows are a
+// compact message line with a visible close control. Long tasks fill the row
+// background from left to right; ordinary rows keep their lifetime rail.
+
+.toast-host {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: max-content;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+// The one application-level stack. It starts at the lower-left edge and grows
+// upward: the newest row sits at the bottom, and older rows move up as it
+// arrives. A notice raised in settings, the editor, or the welcome page lands in
+// the same visible list.
+.app-toasts {
+  position: fixed;
+  // Notices are app-level feedback and sit above every in-window surface,
+  // including the modal scrim and its blur. The host is mounted as a sibling of
+  // the app shell so no shell stacking context or inert state can capture it.
+  z-index: var(--z-toast);
+  left: var(--space-5);
+  // Clear the status bar in the editor; the home screen has no footer there.
+  bottom: calc(var(--control-height) + var(--space-2));
+  align-items: flex-start;
+  width: min(360px, calc(100vw - 2 * var(--space-5)));
+  max-width: min(360px, calc(100vw - 2 * var(--space-5)));
+}
+
+.app-toasts.is-home {
+  bottom: var(--space-5);
+}
+
+.toast-source {
+  color: var(--toast-accent);
+  font-size: var(--type-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.toast-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  font-size: var(--type-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.toast-step-track {
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--outline);
+
+  > span {
+    display: block;
+    height: 100%;
+    background: var(--toast-accent);
+    transition: width var(--design-dur-disclosure) ease-out;
+  }
+}
+
+.toast-step-label {
+  flex: none;
+  color: var(--foreground-muted);
+}
+
+.toast-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.toast.with-actions {
+  width: min(420px, 100%);
+}
+
+.toast {
+  --toast-accent: var(--accent);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  max-width: min(420px, 100%);
+  min-height: 38px;
+  padding: 7px var(--space-3) var(--space-2);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--toast-accent);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  font-size: var(--type-label);
+  line-height: var(--line-label);
+  box-shadow: 0 8px 20px color-mix(in oklab, var(--shadow-color) 72%, transparent);
+  opacity: 0;
+  transform: translateY(8px) scale(0.985);
+  transform-origin: left bottom;
+  transition:
+    opacity var(--design-dur-exit) ease,
+    transform var(--design-dur-disclosure) var(--design-ease-enter);
+  pointer-events: auto;
+  cursor: var(--app-cursor-pointer);
+}
+
+.toast-close {
+  align-self: start;
+  justify-self: end;
+}
+
+.toast:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.toast.leaving {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.985);
+  pointer-events: none;
+}
+
+.toast.success {
+  --toast-accent: var(--playing-indicator);
+}
+
+.toast.warning {
+  --toast-accent: var(--warning);
+}
+
+.toast.error {
+  --toast-accent: var(--danger);
+}
+
+.toast.with-media {
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  column-gap: var(--space-2);
+  width: fit-content;
+  max-width: min(440px, 100%);
+}
+
+.toast-media {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 56px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: var(--design-radius-chip);
+  background: var(--surface-sunken);
+}
+
+.toast-media.is-empty {
+  border: 1px solid var(--border-subtle);
+}
+
+.toast-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+}
+
+.toast-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  width: calc(var(--toast-progress, 0) * 100%);
+  background: color-mix(in srgb, var(--toast-accent) 24%, transparent);
+  transition: width var(--design-dur-tint) linear;
+  pointer-events: none;
+}
+
+.toast-message {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.toast-progress {
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--toast-accent) 22%, transparent);
+}
+
+.toast-progress::after {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--toast-accent);
+  content: "";
+  transform-origin: left;
+  animation: toast-progress var(--toast-duration, 3200ms) linear forwards;
+}
+
+.toast:not(.visible):not(.leaving) .toast-progress::after,
+.toast.paused .toast-progress::after {
+  animation-play-state: paused;
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-progress {
+    display: none;
+  }
+}

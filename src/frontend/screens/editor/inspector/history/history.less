@@ -1,0 +1,102 @@
+/*
+ * The inspector status bar owns the pane name, so this sheet only spaces the
+ * rows below it. Every adjacent pair is separated by the shared divider; the
+ * frame owns the inspector gutter.
+ */
+.redux-history-panel {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+.redux-history-body {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: var(--space-2-5);
+}
+
+.redux-history-sections {
+  display: grid;
+}
+
+// The shared divider defaults to the stronger panel border; history rows use
+// the subtler hairline so separators stay quiet beside hover fills.
+.redux-history-sections > .redux-divider {
+  background: var(--border-subtle);
+}
+
+// Each row is a quiet surface until the pointer enters it; the revert action
+// then appears on the right without shifting the label.
+.redux-history-row-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-control);
+  transition: background-color var(--design-dur-tint) ease;
+}
+
+.redux-history-row-container:hover {
+  background: var(--surface-hover);
+}
+
+.redux-history-row {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  text-align: left;
+}
+
+.redux-history-row-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.redux-history-row-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redux-history-row small {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-history-discarded {
+  color: var(--danger);
+}
+
+.redux-history-origin {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--foreground-muted);
+  flex: none;
+  padding: 0 var(--space-1);
+}
+
+// The action is reserved in layout but transparent until the row is hovered or
+// focused. Opacity (not visibility) keeps it reachable from the keyboard: tabbing
+// to it makes the container's focus-within rule reveal it. This class also
+// replaces the shared button transition, so the fill keeps its own tint timing
+// beside the reveal.
+.redux-history-revert {
+  flex: none;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--design-dur-tint) ease,
+    background-color var(--design-dur-tint) ease;
+}
+
+.redux-history-row-container:hover .redux-history-revert,
+.redux-history-row-container:focus-within .redux-history-revert {
+  opacity: 1;
+  pointer-events: auto;
+}

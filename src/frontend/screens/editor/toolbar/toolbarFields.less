@@ -1,0 +1,25 @@
+// The editor toolbar's value fields (`ToolbarFields.tsx`), and how their clusters
+// sit in the row the toolbar lays out.
+//
+// Widths are not stated here: the row's controls claim whole button-width cells
+// in `toolbarGrid.less`, so what is left is the cluster.
+
+// A cluster never shrinks — the row scrolls instead. An icon + field unit stays
+// whole, because a squeezed CJK label wraps one character per line and grows the
+// row it was supposed to fit in.
+.editor-grid {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  flex: none;
+}
+
+.editor-grid label {
+  flex: none;
+  white-space: nowrap;
+  font-size: var(--type-label);
+  // No gap of its own: the glyph's cell in `toolbarGrid.less` is the space
+  // between the glyph and the box, so a second gap would push the box out of the
+  // label's declared cells.
+  gap: 0;
+}

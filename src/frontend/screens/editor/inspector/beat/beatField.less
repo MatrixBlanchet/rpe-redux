@@ -1,0 +1,38 @@
+// The beat boxes: three integers joined by the format's own `:` and `/`.
+//
+// They are one control, so they share a row and a single hover surface; the
+// separators are static text and take no focus. The group fills the same
+// control column as every other field; the whole part still leads, while the
+// two fractional boxes keep enough room for a multi-digit value.
+.beat-field {
+  position: relative;
+  display: grid;
+  // The fractional tracks are 50% wider than they were at 1fr each; the whole
+  // track gives up exactly that share, so the three still fit the column.
+  grid-template-columns: minmax(0, 2.75fr) auto minmax(0, 1.5fr) auto minmax(0, 1.5fr);
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+// Each input fills the grid track assigned to its part; the tracks keep the
+// whole : numerator : denominator ratio as the group narrows.
+.redux-app-root .beat-field .beat-field-part {
+  width: 100%;
+  min-width: 0;
+  padding-inline: var(--space-1);
+}
+
+// Invalid text is the design system's own state: each box carries
+// `aria-invalid`, and the shared control rule paints the invalid surface. A
+// local border rule here would lose to the base control rule's specificity, so
+// the beat field deliberately has no error styling of its own.
+
+.beat-field-separator {
+  flex: none;
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  line-height: 1;
+  user-select: none;
+}

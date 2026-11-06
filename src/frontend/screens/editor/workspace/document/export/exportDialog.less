@@ -1,0 +1,22 @@
+// Export is one confirmation, so it uses a compact modal instead of the wide
+// default document surface. The description shares the modal gutter rather than
+// the inspector field rhythm, which carries its own horizontal inset.
+dialog.redux-export-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.redux-export-format {
+  display: grid;
+  gap: var(--space-2);
+
+  > span:first-child {
+    color: var(--foreground);
+    font-size: var(--type-label);
+  }
+}
+
+.redux-export-format-hint {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+}

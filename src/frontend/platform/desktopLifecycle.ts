@@ -1,0 +1,95 @@
+/**
+ * Binds the editor session to the desktop window.
+ *
+ * Window titles, file-open events, drag-and-drop, and the close guard all arrive
+ * here, so the packaged app drives the same document flow as the browser build.
+ */
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import type { TauriDocumentStore } from "../../core/platform/desktop/documentStore.ts";
+import { FILE_DRAG_EVENT } from "../../core/shell/shellEventNames.ts";
+import { bindWindowTitle } from "../chrome/topbar/windowControls/windowTitle.ts";
+
+export interface DesktopLifecycleBindings {
+  documents: TauriDocumentStore | null;
+  addCleanup(cleanup: () => void): void;
+  /** Open paths requested by the file association or the open-file event. */
+  openPaths(paths: string[]): Promise<void>;
+  /** Handle paths dropped on the window; the active surface decides the action. */
+  dropPaths(paths: string[]): Promise<void>;
+  /** Reopen the last document and restore its view/panel state. */
+  restoreLastSession(): Promise<void>;
+  /** Persist the last workspace state and flush durable preferences before exit. */
+  persistSession(): Promise<void>;
+  pendingSave(): Promise<void> | null;
+  isDirty(): boolean;
+  confirmExit(): Promise<boolean>;
+  /** Confirm leaving any active or connecting collaboration session. */
+  confirmCollaborationExit(): Promise<boolean>;
+  dispose(): void;
+  reportError(error: unknown): void;
+  notifyUnsupported(): void;
+}
+
+/** Connects the editor session to Tauri window, file, and shutdown events. */
+export function bindDesktopLifecycle(bindings: DesktopLifecycleBindings): void {
+  const { documents } = bindings;
+  if (!documents) {
+    document.body.dataset.environment = "unsupported";
+    bindings.notifyUnsupported();
+    return;
+  }
+
+  document.body.dataset.environment = "desktop";
+  Promise.resolve()
+    .then(async () => {
+      const window = getCurrentWindow();
+      // The webview title is not the window title on Windows, so hand the
+      // frame the same string `document.title` carries.
+      bindings.addCleanup(bindWindowTitle(window));
+
+      bindings.addCleanup(
+        await listen("redux-open-files", (event) => bindings.openPaths(event.payload as string[])),
+      );
+      bindings.addCleanup(
+        await window.onDragDropEvent((event) => {
+          globalThis.window.dispatchEvent(
+            new CustomEvent(FILE_DRAG_EVENT, { detail: event.payload.type }),
+          );
+          if (event.payload.type === "drop") {
+            void bindings.dropPaths(event.payload.paths);
+          }
+        }),
+      );
+      bindings.addCleanup(
+        await window.onCloseRequested(async (event) => {
+          event.preventDefault();
+          if (!(await bindings.confirmCollaborationExit())) {
+            return;
+          }
+          const pending = bindings.pendingSave();
+          if (pending) {
+            await pending;
+          }
+          if (bindings.isDirty() && !(await bindings.confirmExit())) {
+            return;
+          }
+          try {
+            await bindings.persistSession();
+          } catch (error) {
+            bindings.reportError(error);
+          }
+          bindings.dispose();
+          await window.destroy();
+        }),
+      );
+      const paths = await invoke<string[]>("startup_files");
+      if (paths.length) {
+        await bindings.openPaths(paths);
+      } else {
+        await bindings.restoreLastSession();
+      }
+    })
+    .catch(bindings.reportError);
+}

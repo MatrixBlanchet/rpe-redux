@@ -1,0 +1,152 @@
+// The document drawer as an inspector content mode.
+//
+// Drawer mode widens the inspector itself: the panel grows toward the stage by
+// the list column while its anchored edge stays on the grid track, so the stage
+// never reflows. The list is part of the fixed-width inner surface and collapses
+// behind the inspector's own clip; it is not a separate floating layer. The
+// expanded panel casts its elevation toward the stage it covers, while both
+// columns paint the inspector material so the whole mode reads as one panel.
+// The sidebar keeps the higher navigation layer.
+
+.inspector.is-drawer {
+  // The drawer grows toward `data-chrome-drawer-side`. A leftward reveal is the
+  // resting contract, so the base rules below also cover the frame before the
+  // theme surface writes the attribute.
+  --drawer-edge-shadow: var(--shadow-drawer-edge);
+
+  // Stay above the stage's local layers but below the sidebar rail, which owns
+  // the window's navigation surface and may expand over the inspector.
+  position: relative;
+  z-index: calc(var(--z-nav) - 1);
+  // The panel is a flex item in the inspector column. The direction block below
+  // pins its anchored edge while an explicit width grows it toward the stage.
+  align-self: flex-end;
+  width: 100%;
+  overflow: hidden;
+  transition:
+    width var(--design-dur-enter) var(--design-ease-move),
+    box-shadow var(--design-dur-enter) var(--design-ease-move);
+}
+
+.inspector.is-drawer:has(.inspector-drawer.is-expanded) {
+  width: calc(100% + var(--drawer-list-width));
+}
+
+// Outrank the material recipes that paint the resting inspector surface so the
+// expanded drawer keeps its overlay elevation in every theme.
+.redux-app-root .workbench-inspector > .inspector.is-drawer:has(.inspector-drawer.is-expanded) {
+  box-shadow: var(--drawer-edge-shadow);
+}
+
+.inspector.is-drawer .inspector-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+
+// The inner surface keeps the resting inspector width plus the list column at
+// every animation frame. The direction block anchors its edge to the content so
+// a width change reveals the list toward the stage instead of reflowing the
+// properties.
+.inspector-drawer {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  display: flex;
+  width: calc(var(--inspector-width) + var(--drawer-list-width));
+  min-width: calc(var(--inspector-width) + var(--drawer-list-width));
+  min-height: 0;
+}
+
+.inspector-drawer > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+// Both columns paint the inspector's own material surface. They are siblings in
+// one panel, so only the optional seam separates them.
+.drawer-split {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.drawer-split-list,
+.drawer-split-properties {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3);
+  background: var(--chrome-panel-surface);
+}
+
+// The list column is the part the inspector exposes when it grows. Its fixed
+// width is what the panel adds, so the property column never narrows.
+.drawer-split-list {
+  display: flex;
+  flex-direction: column;
+  width: var(--drawer-list-width);
+  border-right: 1px solid var(--border-subtle);
+}
+
+// The property column always occupies the inspector's resting width.
+.drawer-split-properties {
+  width: var(--inspector-width);
+  // Its width stays fixed while the drawer grows, so the field rows measure
+  // this column rather than the whole drawer surface.
+  container-type: inline-size;
+  container-name: drawer-properties;
+}
+
+// A leftward reveal keeps the inspector's right edge on its grid track and
+// exposes the list column on the left, toward the stage.
+:root[data-chrome-drawer-side="left"] .inspector.is-drawer {
+  --drawer-edge-shadow: var(--shadow-drawer-edge);
+  align-self: flex-end;
+}
+
+:root[data-chrome-drawer-side="left"] .inspector.is-drawer .inspector-drawer {
+  right: 0;
+  left: auto;
+}
+
+:root[data-chrome-drawer-side="left"] .inspector.is-drawer .drawer-split {
+  flex-direction: row;
+}
+
+:root[data-chrome-drawer-side="left"] .inspector.is-drawer .drawer-split-list {
+  border-right: 1px solid var(--border-subtle);
+  border-left: 0;
+}
+
+// A rightward reveal mirrors the contract: it keeps the left edge on the grid
+// track and exposes the list column on the right, toward the stage.
+:root[data-chrome-drawer-side="right"] .inspector.is-drawer {
+  --drawer-edge-shadow: var(--shadow-drawer-edge-inline);
+  align-self: flex-start;
+}
+
+:root[data-chrome-drawer-side="right"] .inspector.is-drawer .inspector-drawer {
+  right: auto;
+  left: 0;
+}
+
+:root[data-chrome-drawer-side="right"] .inspector.is-drawer .drawer-split {
+  flex-direction: row-reverse;
+}
+
+:root[data-chrome-drawer-side="right"] .inspector.is-drawer .drawer-split-list {
+  border-right: 0;
+  border-left: 1px solid var(--border-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inspector.is-drawer {
+    transition: none;
+  }
+}

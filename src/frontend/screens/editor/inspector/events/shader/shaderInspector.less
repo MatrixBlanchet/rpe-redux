@@ -1,0 +1,17 @@
+// Rules split out of the pre-refactor monolithic sheets (base.less, theme.less,
+// shell.less, settings.less — all four are gone). They keep their original
+// relative order; cascade position is fixed by src/design/styles/index.less.
+
+.shader-segment {
+  margin: var(--space-3) var(--space-5);
+  padding: var(--space-3);
+  min-width: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+}
+
+.shader-segment > strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--accent);
+}

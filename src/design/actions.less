@@ -1,0 +1,575 @@
+// Actions: the one button surface and the tooltip it owns.
+//
+// Everything in this sheet is framework-agnostic CSS for the button and action
+// primitives in `src/design/components/button/`. Two rules matter more than the rest:
+//
+//   1. A label never wraps. Dense chrome (top bar, editor toolbar, inspector
+//      rail) is sized by its rows; a control whose text folds onto a second
+//      line makes the whole bar grow and reads as a bug. Overflow is answered
+//      by the row scrolling, never by the label breaking.
+//   2. Buttons carry no border, resting or hovered. The pointer is answered by
+//      a fill (`--design-fill-hover`, then `--design-fill-pressed` while it is
+//      held), so a dense row of controls stays flat until one of them is
+//      actually used.
+
+@import "design.less";
+
+// ------------------------------------------------------------ action surface
+//
+// The surface owns its fill; the shared button baseline supplies its transition.
+// One rule keeps every action variant borderless.
+.redux-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  .action-surface();
+
+  &:disabled {
+    cursor: var(--app-cursor-disabled);
+  }
+
+  &.primary {
+    color: var(--action-foreground-resting, var(--on-accent));
+    background: var(--accent);
+
+    &:hover:not(:disabled) {
+      background: var(--accent-hover);
+      color: var(--action-foreground-hover, var(--on-accent-hover, var(--on-accent)));
+    }
+
+    &:active:not(:disabled) {
+      background: var(--accent-pressed);
+      color: var(--action-foreground-pressed, var(--on-accent-pressed, var(--on-accent)));
+    }
+
+    &:focus-visible:not(:active) {
+      color: var(--action-foreground-focus, var(--on-accent));
+    }
+
+    &[data-emphasized="true"] {
+      color: var(--action-foreground-emphasized, var(--on-accent));
+    }
+
+    &:disabled {
+      color: var(--action-foreground-disabled, var(--foreground-muted));
+    }
+
+    .redux-button-label {
+      color: inherit;
+    }
+  }
+}
+
+// A glyph action answers its active state by re-inking the PNG and adding the
+// same faint fill used by text actions. Active keeps its own token so a toggled
+// control uses the same blue family as the rest of the interface.
+.redux-action:has(.redux-icon):not(.primary):not(.urgent) {
+  &:active:not(:disabled),
+  &[aria-pressed="true"]:not(:disabled),
+  &.active:not(:disabled) {
+    background: var(--active-accent-fill);
+    color: var(--active-accent);
+  }
+
+  &:active:not(:disabled) .redux-icon,
+  &[aria-pressed="true"]:not(:disabled) .redux-icon,
+  &.active:not(:disabled) .redux-icon {
+    --icon-color: var(--active-accent);
+  }
+
+  &:disabled .redux-icon {
+    --icon-color: var(--foreground-muted);
+  }
+}
+
+// The glyph on a solid or primary surface follows the resolved action ink, not
+// the page foreground. This is the same contrast decision the label uses.
+.redux-button-solid .redux-icon,
+.redux-action.primary .redux-icon,
+.redux-app-root button.primary:not(.redux-action) .redux-icon {
+  --icon-color: var(--action-foreground-resting);
+}
+
+.redux-button-solid[data-emphasized="true"] .redux-icon,
+.redux-action.primary[data-emphasized="true"] .redux-icon,
+.redux-app-root button.primary:not(.redux-action)[data-emphasized="true"] .redux-icon {
+  --icon-color: var(--action-foreground-emphasized);
+}
+
+.redux-button-solid:hover:not(:disabled) .redux-icon,
+.redux-action.primary:hover:not(:disabled) .redux-icon,
+.redux-app-root button.primary:not(.redux-action):hover:not(:disabled) .redux-icon {
+  --icon-color: var(--action-foreground-hover);
+}
+
+.redux-button-solid:active:not(:disabled) .redux-icon,
+.redux-action.primary:active:not(:disabled) .redux-icon,
+.redux-app-root button.primary:not(.redux-action):active:not(:disabled) .redux-icon {
+  --icon-color: var(--action-foreground-pressed);
+}
+
+.redux-button-solid:focus-visible:not(:active) .redux-icon,
+.redux-action.primary:focus-visible:not(:active) .redux-icon,
+.redux-app-root button.primary:not(.redux-action):focus-visible:not(:active) .redux-icon {
+  --icon-color: var(--action-foreground-focus);
+}
+
+.redux-button-solid:disabled .redux-icon,
+.redux-action.primary:disabled .redux-icon,
+.redux-app-root button.primary:not(.redux-action):disabled .redux-icon {
+  --icon-color: var(--action-foreground-disabled);
+}
+
+// Destructive actions keep their semantic ink on the glyph as well as the label.
+.redux-button-danger .redux-icon {
+  --icon-color: var(--danger);
+}
+
+.redux-action.urgent:hover:not(:disabled) .redux-icon,
+.redux-action.urgent:active:not(:disabled) .redux-icon {
+  --icon-color: var(--on-danger);
+}
+
+// Destructive actions stay quiet until hovered, then use the shared danger
+// token. Window close and other urgent actions opt into this semantic variant.
+.redux-action.urgent {
+  &:hover:not(:disabled) {
+    background: var(--design-fill-urgent);
+    color: var(--on-danger);
+  }
+
+  &:active:not(:disabled) {
+    background: color-mix(in oklab, var(--design-fill-urgent) 78%, var(--on-danger));
+    color: var(--on-danger);
+  }
+}
+
+// Explicitly edged actions are reserved for secondary choices and error
+// recovery. Keeping this opt-in prevents dense toolbars from turning into a
+// wall of labels while still giving standalone actions a real button silhouette.
+.redux-button-outlined {
+  min-height: var(--design-control-height);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--outline);
+  background: var(--surface-raised);
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--surface-hover);
+  }
+
+  &:active:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--surface-hover);
+    color: var(--foreground);
+  }
+
+  &[aria-pressed="true"]:not(:disabled),
+  &.active:not(:disabled) {
+    border-color: var(--accent);
+  }
+
+  &:disabled {
+    border-color: var(--border-subtle);
+    background: transparent;
+  }
+}
+
+.redux-button-solid {
+  min-height: var(--design-control-height);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--action-foreground-resting, var(--on-accent));
+  font-weight: 500;
+
+  &[data-emphasized="true"] {
+    color: var(--action-foreground-emphasized, var(--on-accent));
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--accent-hover);
+    color: var(--action-foreground-hover, var(--on-accent-hover, var(--on-accent)));
+  }
+
+  &:active:not(:disabled) {
+    background: var(--accent-pressed);
+    color: var(--action-foreground-pressed, var(--on-accent-pressed, var(--on-accent)));
+  }
+
+  &:focus-visible:not(:active) {
+    color: var(--action-foreground-focus, var(--on-accent));
+  }
+
+  &:disabled {
+    border-color: transparent;
+    background: var(--surface-muted);
+    color: var(--action-foreground-disabled, var(--foreground-muted));
+  }
+}
+
+// Destructive actions that must read as destructive *before* the pointer
+// arrives: a resting tinted surface and a matching edge, so a delete control is
+// never mistaken for an ordinary one. `urgent` above stays for controls that
+// only need the danger answer on hover.
+.redux-button-danger {
+  min-height: var(--design-control-height);
+  padding-inline: var(--space-3);
+  border: 1px solid color-mix(in oklab, var(--danger) 62%, var(--outline));
+  border-radius: var(--radius-control);
+  background: color-mix(in oklab, var(--danger) 16%, var(--surface-raised));
+  color: var(--danger);
+
+  &:hover:not(:disabled) {
+    border-color: var(--danger);
+    background: color-mix(in oklab, var(--danger) 28%, var(--surface-raised));
+    color: var(--danger);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--danger);
+    color: var(--on-danger);
+  }
+
+  &:disabled {
+    border-color: transparent;
+    background: transparent;
+    color: var(--foreground-muted);
+  }
+}
+
+.redux-button-danger:disabled .redux-icon {
+  --icon-color: var(--foreground-muted);
+}
+
+// Size and layout presets. The feature sheet may still override a dimension
+// when the control lives in a fixed chrome cell, but it no longer has to invent
+// the padding, height, width, or icon gap.
+:where(.redux-button).redux-button-sm {
+  min-height: 28px;
+  padding-inline: var(--space-2);
+  font-size: var(--type-caption);
+}
+
+:where(.redux-button).redux-button-lg {
+  min-height: var(--control-height-lg);
+  padding-inline: var(--space-4);
+  font-size: var(--type-body);
+}
+
+:where(.redux-button).redux-button-dense {
+  min-height: 24px;
+  padding-block: 0;
+  font-size: var(--type-label);
+}
+
+:where(.redux-button).redux-button-block {
+  width: 100%;
+}
+
+:where(.redux-button).redux-button-icon-text {
+  gap: var(--space-1-5);
+}
+
+// A true text/link action: no surface, no padding, and an underline only when
+// the pointer or keyboard focus arrives. Page content can use this instead of
+// reaching for `plain`, which is a row/card reset.
+:where(.redux-button).redux-button-link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+  text-align: left;
+  text-decoration: none;
+
+  &:hover:not(:disabled),
+  &:focus-visible:not(:active) {
+    color: var(--accent-hover);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+}
+
+// `plain` is the reset for menu, list, card, and window chrome rows whose owner
+// paints the surface. It is intentionally not a page-level link.
+:where(.redux-button).redux-button-plain {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+}
+
+// A button that carries a visible label keeps the label on one line and lets
+// the glyph shrink first; `flex: none` stops the pair from being squeezed.
+.redux-action,
+.redux-menu-popup button,
+.redux-command-option {
+  white-space: nowrap;
+}
+
+// Shared label wrapper. `.redux-button-text` is the pre-design name the
+// editor's own tool buttons still emit, so both stay supported.
+.redux-button-label,
+.redux-button-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+// Glyph-and-label actions share one optical centre, gap, and line height, so CJK
+// text stays centred against its icon.
+.redux-app-root .redux-button:has(> .redux-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  line-height: var(--line-label);
+}
+
+// A glyph keeps its drawn size; only the label may ellipsize.
+.redux-app-root .redux-button:has(> .redux-icon) > .redux-icon {
+  flex: none;
+}
+
+// Font ink is not symmetric inside its line box: the glyph tops sit slightly
+// higher than the bottoms. A subpixel nudge on the design-owned text cell
+// centres the visible ink without moving the glyph; page footers must not add
+// their own offset.
+.redux-app-root .redux-button:has(> .redux-icon) > .redux-button-label {
+  transform: translateY(0.06em);
+}
+
+// -------------------------------------------------------------------- chips
+// Inline grey bubble used for shortcuts. It is metadata, not a control, so it
+// has no border and no hover state of its own.
+.redux-kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  padding: 1px var(--space-2);
+  border: 0;
+  border-radius: var(--design-radius-chip);
+  background: var(--design-chip-surface);
+  color: var(--design-ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--type-micro);
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.redux-kbd-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.redux-kbd-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.redux-kbd-plus {
+  color: var(--design-ink-faint);
+  font-size: var(--type-micro);
+  line-height: 1;
+}
+
+// ------------------------------------------------------------------ tooltip
+// The rich tooltip is the only tooltip: one top-layer broker (see
+// `design/patterns/TooltipHost.tsx`) renders it for every annotated control.
+.redux-rich-tooltip {
+  box-sizing: border-box;
+  position: fixed;
+  // The popover lives in the top layer; this z-index is the fallback for hosts
+  // that paint it as a normal fixed element, and keeps a tip above every modal
+  // stack layer without inventing a second tooltip surface.
+  z-index: var(--z-popover);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--tooltip-border);
+  border-radius: var(--radius-panel);
+  background: var(--tooltip-surface);
+  color: var(--tooltip-ink);
+  box-shadow: 0 10px 30px var(--shadow-color);
+  transform-origin: var(--tooltip-origin, 50%) 0%;
+  animation: redux-tooltip-in var(--design-dur-tint) var(--design-ease-enter);
+  // It hangs below the button, which in a vertical rail means it covers the next
+  // control. A tooltip is a description, never a target, so it must not take the
+  // pointer: without this the neighbouring button becomes unclickable while the
+  // tip is showing.
+  pointer-events: none;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  // Chromium gives popovers an `overflow: auto` UA rule. The overflow was not
+  // caused by the arrow; it came from the head's non-shrinking shortcut group
+  // forcing a min-content width. Let the head wrap first, then keep the arrow
+  // visible outside the panel without introducing a scrollbar.
+  overflow: visible;
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  > .redux-tip-head {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    text-align: center;
+  }
+
+  strong {
+    font-size: var(--type-label);
+    font-weight: 500;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .redux-kbd-group {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  p {
+    margin: 0;
+    width: 100%;
+    max-width: 260px;
+    color: var(--tooltip-muted);
+    font-size: var(--type-caption);
+    line-height: var(--line-label);
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+}
+
+// The arrow points at the control the tip belongs to. Its offset is computed
+// against the control's centre, so a tip pushed back inside the window still
+// points at its button instead of at the middle of its own edge.
+.redux-rich-tooltip::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--tooltip-surface);
+  border: 1px solid var(--tooltip-border);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.redux-rich-tooltip[data-arrow="none"]::before {
+  display: none;
+}
+
+.redux-rich-tooltip[data-arrow="top"]::before {
+  top: -5px;
+  left: var(--tip-arrow-offset, 50%);
+  margin-left: calc(-1 * var(--space-1));
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.redux-rich-tooltip[data-arrow="bottom"]::before {
+  bottom: -5px;
+  left: var(--tip-arrow-offset, 50%);
+  margin-left: calc(-1 * var(--space-1));
+  border-left: 0;
+  border-top: 0;
+}
+
+.redux-rich-tooltip[data-arrow="left"]::before {
+  left: -5px;
+  top: var(--tip-arrow-offset, 50%);
+  margin-top: calc(-1 * var(--space-1));
+  border-right: 0;
+  border-top: 0;
+}
+
+.redux-rich-tooltip[data-arrow="right"]::before {
+  right: -5px;
+  top: var(--tip-arrow-offset, 50%);
+  margin-top: calc(-1 * var(--space-1));
+  border-left: 0;
+  border-bottom: 0;
+}
+
+// A tip lives in the top layer so no toolbar can clip it. Full-window overlays
+// must still own the screen: while one is present, the tip is not part of the
+// composition. A dialog or its scrim is deliberately not in that list: the
+// scrim already intercepts pointers outside the dialog, and the dialog's own
+// controls need tips. Opening a dialog moves focus, which dismisses any tip
+// that belonged to the surface underneath. The tip is itself a popover, so the
+// first rule excludes it when checking for another open popover (menus,
+// selects, pickers).
+:root:has(:popover-open:not(#redux-rich-tooltip)) .redux-rich-tooltip,
+:root:has(.redux-app-menu-sheet, .redux-welcome-drop, .asset-drop-overlay) .redux-rich-tooltip {
+  display: none;
+}
+
+// Shortcut chips inherit the tip's ink instead of the dark chip surface.
+.redux-rich-tooltip .redux-kbd {
+  // Keep the chip visibly below the dark tooltip surface while preserving the
+  // tooltip's ink colour for readable shortcuts.
+  background: color-mix(in oklab, var(--tooltip-surface) 84%, var(--surface) 16%);
+  color: inherit;
+}
+
+.redux-rich-tooltip .redux-kbd-plus {
+  color: var(--tooltip-ink);
+  opacity: 0.72;
+}
+
+// An annotation can carry a short silent clip. It is decorative: the tooltip
+// never takes the pointer, so the clip loops without native controls.
+.redux-tip-video {
+  display: block;
+  width: min(260px, calc(100vw - 32px));
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--tooltip-border);
+  border-radius: var(--radius-control);
+  background: var(--media-surface);
+  object-fit: contain;
+}
+
+@keyframes redux-tooltip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-rich-tooltip {
+    animation: none;
+  }
+}
+
+.redux-rich-tooltip:not(:popover-open) {
+  display: none;
+}

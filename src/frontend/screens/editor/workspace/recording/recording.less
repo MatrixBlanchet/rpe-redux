@@ -1,0 +1,58 @@
+/* Recording options live in the inspector: one aligned field column, then the
+   export controls at the end of the pane. */
+.recording-panel {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.recording-panel .hint {
+  margin: 0;
+}
+
+.recording-options {
+  display: grid;
+  gap: var(--space-1);
+}
+
+// Both range modes share the control column; each choice takes half of it so
+// switching input mode reads like the start/end pair below it.
+.recording-range-mode {
+  flex: 1 1 auto;
+}
+
+.recording-range-mode .redux-segmented-options {
+  width: 100%;
+}
+
+.recording-range-mode .redux-segmented-option {
+  flex: 1 1 0;
+  justify-content: center;
+}
+
+// The estimate answers "how big will this be?" before the export starts. It is
+// secondary text inside the pane, not another bordered form field.
+.recording-estimate {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.recording-estimate-size {
+  flex: none;
+  color: var(--foreground-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.recording-error {
+  margin: 0;
+}
+
+.recording-actions {
+  flex: none;
+}

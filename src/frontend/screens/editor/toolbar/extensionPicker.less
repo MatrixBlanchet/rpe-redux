@@ -1,0 +1,166 @@
+// Toolbar Extension picker styles: the split button and its parameter popup.
+
+.redux-app-root .redux-toolbar-line .redux-extension-picker {
+  flex: none;
+  width: calc(var(--tool-cell) * 6);
+  height: var(--control-height);
+}
+
+// The toolbar's generic field rule uses an :is(... input:not(...)) argument,
+// which raises its specificity to three classes. These ids keep the split
+// control's own run/chevron geometry ahead of that shared sizing rule.
+.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-run,
+.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-toggle {
+  min-height: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--type-body);
+}
+
+.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-run {
+  display: inline-flex;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  padding: 2px var(--space-2);
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-1);
+  text-align: left;
+}
+
+.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-run:disabled {
+  opacity: 0.5;
+}
+
+// The chevron is a compact pill inset in the split frame, matching the line
+// picker's dropdown: the shared frame keeps its border on every side and the
+// hover fill carries the control radius instead of the frame's corners.
+.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-toggle {
+  display: inline-flex;
+  flex: none;
+  align-self: center;
+  width: 28px;
+  min-width: 28px;
+  height: calc(100% - 4px);
+  margin-inline-end: 2px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  color: var(--foreground-muted);
+}
+
+// The shared split-action hover is transparent by default here; the toolbar's
+// id rule above must not erase it from either half.
+.redux-app-root
+  .redux-toolbar-line
+  .redux-extension-picker
+  #extension-picker-run:hover:not(:disabled),
+.redux-app-root
+  .redux-toolbar-line
+  .redux-extension-picker
+  #extension-picker-toggle:hover:not(:disabled),
+.redux-app-root
+  .redux-toolbar-line
+  .redux-extension-picker
+  #extension-picker-toggle[aria-expanded="true"] {
+  background: var(--surface-hover);
+  color: var(--foreground);
+}
+
+.redux-extension-picker-popup {
+  position: fixed;
+  z-index: var(--z-menu);
+  min-height: 150px;
+  max-height: min(440px, calc(100vh - 24px));
+  padding: var(--space-1);
+  overflow: auto;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-panel);
+  transform-origin: var(--popover-origin-x, 50%) var(--popover-origin-y, 0%);
+  animation: redux-control-in var(--design-dur-tint) var(--design-ease-enter);
+}
+
+.redux-extension-picker-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 30px;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--type-label);
+  text-align: left;
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-extension-picker-option:hover:not(:disabled),
+.redux-extension-picker-option[aria-selected="true"]:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.redux-extension-picker-option[aria-selected="true"]:not(:disabled) {
+  color: var(--accent);
+}
+
+.redux-extension-picker-option:disabled {
+  opacity: 0.4;
+  cursor: var(--app-cursor-default);
+}
+
+.redux-extension-picker-required {
+  flex: none;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.redux-extension-picker-name {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.redux-extension-picker-name > span {
+  display: inline-block;
+  padding-inline-end: var(--space-2);
+}
+
+.redux-extension-picker-name.is-overflowing > span {
+  animation: redux-extension-picker-marquee var(--extension-marquee-duration, 4s) ease-in-out
+    infinite alternate;
+}
+
+.redux-extension-picker-empty {
+  margin: 0;
+  padding: var(--space-2);
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+}
+
+@keyframes redux-extension-picker-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-1 * var(--extension-marquee-distance)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-extension-picker-popup {
+    animation: none;
+  }
+}

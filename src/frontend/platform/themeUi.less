@@ -1,0 +1,330 @@
+// Theme declarative UI primitives: the host-owned vocabulary a package tree can
+// use. A tree never supplies classes, styles, HTML tags, or URLs; these selectors
+// map its validated enums onto theme tokens.
+
+.theme-ui-node {
+  min-width: 0;
+}
+
+.theme-ui-stack,
+.theme-ui-surface,
+.theme-ui-repeat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.theme-ui-stack[data-direction="row"],
+.theme-ui-surface[data-direction="row"],
+.theme-ui-repeat[data-direction="row"] {
+  flex-direction: row;
+}
+
+.theme-ui-stack[data-wrap="true"],
+.theme-ui-surface[data-wrap="true"],
+.theme-ui-repeat[data-wrap="true"] {
+  flex-wrap: wrap;
+}
+
+.theme-ui-stack[data-gap="xs"],
+.theme-ui-surface[data-gap="xs"],
+.theme-ui-repeat[data-gap="xs"] {
+  gap: var(--space-1);
+}
+
+.theme-ui-stack[data-gap="sm"],
+.theme-ui-surface[data-gap="sm"],
+.theme-ui-repeat[data-gap="sm"] {
+  gap: var(--space-2);
+}
+
+.theme-ui-stack[data-gap="md"],
+.theme-ui-surface[data-gap="md"],
+.theme-ui-repeat[data-gap="md"] {
+  gap: var(--space-3);
+}
+
+.theme-ui-stack[data-gap="lg"],
+.theme-ui-surface[data-gap="lg"],
+.theme-ui-repeat[data-gap="lg"] {
+  gap: var(--space-4);
+}
+
+.theme-ui-stack[data-align="start"],
+.theme-ui-surface[data-align="start"],
+.theme-ui-repeat[data-align="start"] {
+  align-items: flex-start;
+}
+
+.theme-ui-stack[data-align="center"],
+.theme-ui-surface[data-align="center"],
+.theme-ui-repeat[data-align="center"] {
+  align-items: center;
+}
+
+.theme-ui-stack[data-align="end"],
+.theme-ui-surface[data-align="end"],
+.theme-ui-repeat[data-align="end"] {
+  align-items: flex-end;
+}
+
+.theme-ui-stack[data-align="stretch"],
+.theme-ui-surface[data-align="stretch"],
+.theme-ui-repeat[data-align="stretch"] {
+  align-items: stretch;
+}
+
+.theme-ui-stack[data-justify="center"],
+.theme-ui-surface[data-justify="center"],
+.theme-ui-repeat[data-justify="center"] {
+  justify-content: center;
+}
+
+.theme-ui-stack[data-justify="end"],
+.theme-ui-surface[data-justify="end"],
+.theme-ui-repeat[data-justify="end"] {
+  justify-content: flex-end;
+}
+
+.theme-ui-stack[data-justify="between"],
+.theme-ui-surface[data-justify="between"],
+.theme-ui-repeat[data-justify="between"] {
+  justify-content: space-between;
+}
+
+.theme-ui-stack[data-padding="sm"],
+.theme-ui-surface[data-padding="sm"],
+.theme-ui-repeat[data-padding="sm"] {
+  padding: var(--space-2);
+}
+
+.theme-ui-stack[data-padding="md"],
+.theme-ui-surface[data-padding="md"],
+.theme-ui-repeat[data-padding="md"] {
+  padding: var(--space-3);
+}
+
+.theme-ui-stack[data-padding="lg"],
+.theme-ui-surface[data-padding="lg"],
+.theme-ui-repeat[data-padding="lg"] {
+  padding: var(--space-4);
+}
+
+.theme-ui-stack[data-columns="2"],
+.theme-ui-surface[data-columns="2"],
+.theme-ui-repeat[data-columns="2"] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.theme-ui-stack[data-columns="3"],
+.theme-ui-surface[data-columns="3"],
+.theme-ui-repeat[data-columns="3"] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.theme-ui-stack[data-columns="4"],
+.theme-ui-surface[data-columns="4"],
+.theme-ui-repeat[data-columns="4"] {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.theme-ui-stack[data-columns] > [data-span="2"],
+.theme-ui-surface[data-columns] > [data-span="2"],
+.theme-ui-repeat[data-columns] > [data-span="2"] {
+  grid-column: span 2;
+}
+
+.theme-ui-stack[data-columns] > [data-span="3"],
+.theme-ui-surface[data-columns] > [data-span="3"],
+.theme-ui-repeat[data-columns] > [data-span="3"] {
+  grid-column: span 3;
+}
+
+.theme-ui-stack[data-columns] > [data-span="4"],
+.theme-ui-surface[data-columns] > [data-span="4"],
+.theme-ui-repeat[data-columns] > [data-span="4"] {
+  grid-column: span 4;
+}
+
+.theme-ui-surface[data-variant="outlined"] {
+  border: 1px solid var(--panel-border);
+  background: var(--surface-raised);
+}
+
+.theme-ui-surface[data-variant="solid"] {
+  background: var(--surface-muted);
+}
+
+.theme-ui-surface[data-variant="raised"] {
+  border: 1px solid var(--panel-border);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-panel);
+}
+
+.theme-ui-surface[data-variant="glass"] {
+  border: 1px solid var(--panel-border);
+  background: color-mix(in srgb, var(--surface-raised) 84%, transparent);
+  backdrop-filter: blur(var(--theme-backdrop-blur, 0px));
+}
+
+.theme-ui-surface[data-shape="square"] {
+  border-radius: 0;
+}
+
+.theme-ui-surface[data-shape="soft"] {
+  border-radius: var(--radius-control);
+}
+
+.theme-ui-surface[data-shape="round"] {
+  border-radius: var(--radius-panel);
+}
+
+.theme-ui-surface[data-shape="pill"] {
+  border-radius: 999px;
+}
+
+.theme-ui-text {
+  min-width: 0;
+  color: var(--foreground);
+  line-height: var(--line-body);
+}
+
+.theme-ui-text[data-size="caption"] {
+  font-size: var(--type-caption);
+}
+
+.theme-ui-text[data-size="label"] {
+  font-size: var(--type-label);
+}
+
+.theme-ui-text[data-size="body"] {
+  font-size: var(--type-body);
+}
+
+.theme-ui-text[data-size="heading"] {
+  font-size: var(--type-heading);
+}
+
+.theme-ui-text[data-tone="muted"] {
+  color: var(--foreground-muted);
+}
+
+.theme-ui-text[data-tone="accent"] {
+  color: var(--accent);
+}
+
+.theme-ui-text[data-tone="danger"] {
+  color: var(--danger);
+}
+
+.theme-ui-text[data-weight="strong"] {
+  font-weight: 600;
+}
+
+.theme-ui-icon {
+  flex: none;
+}
+
+.theme-ui-dot {
+  flex: none;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.theme-ui-dot[data-tone="muted"] {
+  background: var(--foreground-muted);
+}
+
+.theme-ui-dot[data-tone="danger"] {
+  background: var(--danger);
+}
+
+.theme-ui-spacer {
+  flex: 1;
+}
+
+.theme-ui-action {
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: var(--control-height);
+  white-space: normal;
+}
+
+.theme-ui-action[data-shape="square"] {
+  border-radius: 0;
+}
+
+.theme-ui-action[data-shape="soft"] {
+  border-radius: var(--radius-control);
+}
+
+.theme-ui-action[data-shape="round"] {
+  border-radius: var(--radius-panel);
+}
+
+.theme-ui-action[data-shape="pill"] {
+  border-radius: 999px;
+}
+
+.theme-ui-action-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+// A themed rail item keeps the host button semantics and only replaces the
+// content anatomy. Active/hover ink still comes from the shell.
+.redux-app-root .theme-rail-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-height: var(--control-height);
+  padding: 0;
+  overflow: visible;
+  white-space: normal;
+  --icon-color: currentColor;
+}
+
+.redux-app-root .theme-rail-item::before {
+  display: none;
+}
+
+.redux-app-root .theme-rail-item:is(.is-selected, [aria-pressed="true"], [aria-current="page"]) {
+  background: transparent;
+  color: var(--active-accent);
+  --icon-color: var(--active-accent);
+}
+
+.redux-app-root .theme-rail-item > .theme-ui-node {
+  flex: 1;
+  min-width: 0;
+}
+
+// The rail clips to its peek width and the content column is right-aligned. A
+// themed item therefore occupies only the visible cell; the top rail sizes to
+// its content and keeps the label visible.
+.redux-app-root .sidebar:not(.is-top) .sidebar-item {
+  justify-content: flex-end;
+}
+
+.redux-app-root .sidebar:not(.is-top) .theme-rail-item {
+  width: var(--sidebar-peek-width);
+}
+
+.redux-app-root .sidebar.is-top .theme-rail-item {
+  width: auto;
+  padding: 0 var(--space-1);
+}
+
+.redux-app-root .sidebar.is-top .theme-rail-item > .theme-ui-node {
+  justify-content: flex-start;
+}

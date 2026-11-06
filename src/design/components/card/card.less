@@ -1,0 +1,23 @@
+// One card surface for settings previews, extension cards, and skin assets.
+// Tone changes the fill; the border, radius, and padding stay constant.
+
+.redux-card {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+.redux-card[data-tone="raised"] {
+  background: var(--surface-raised);
+}
+
+.redux-card[data-tone="muted"] {
+  background: var(--surface-muted);
+}
+
+.redux-card[data-tone="control"] {
+  background: var(--control-on-surface);
+}

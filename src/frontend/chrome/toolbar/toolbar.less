@@ -1,0 +1,199 @@
+// Toolbar frame styles: the rows, their scrolling behaviour, and the shared
+// tokens the other toolbar sheets build on.
+
+.redux-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  flex: none;
+}
+
+// The toolbar frame keeps one height in every mode. Global and design only fill
+// one row, but the frame stays put so switching modes never resizes the shell.
+.redux-toolbar {
+  --tool-gap: var(--theme-toolbar-gap, var(--space-1));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(312px, 36vw, 480px);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  flex: none;
+  min-width: 0;
+  height: 106px;
+  min-height: 106px;
+  padding: var(--space-1-5) var(--space-3);
+  background: var(--panel-header);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.redux-toolbar > .redux-toolrows {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  align-content: stretch;
+  height: 100%;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.redux-app-root .redux-toolbar .transport-host .redux-status-card {
+  grid-column: 2;
+  grid-row: 1;
+  margin: var(--space-1) var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  grid-template-rows: minmax(48px, 1fr) auto;
+  gap: 1px;
+  border-radius: var(--radius-panel);
+}
+
+.redux-app-root .redux-toolbar .redux-status-card .scrubber-wrap {
+  min-height: 48px;
+  padding-top: 0;
+}
+
+.redux-toolrows {
+  min-width: 0;
+  width: 100%;
+}
+.redux-toolbar-line {
+  display: flex;
+  align-items: center;
+  // Both rows share one gap and one quarter-cell divider rail. The line picker
+  // compensates for the three extra gaps inside the four-button stage cluster,
+  // so the next divider still lands on the same column.
+  gap: var(--tool-gap);
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  white-space: nowrap;
+  // A row is a fixed rail: hover fills, tooltips and value changes must never
+  // grow it, or the bar twitches under the pointer.
+  contain: layout style;
+}
+
+.redux-toolbar-line::-webkit-scrollbar {
+  display: none;
+}
+
+.redux-toolbar-slot {
+  display: inline-block;
+  width: calc(var(--tool-cell) * var(--slot-cells, 5.2));
+  height: 28px;
+  flex: none;
+}
+
+// A divider owns one quarter of a button cell. Keeping it inside the same rail
+// as the fields is what makes a divider after three buttons land on the same
+// column in both rows.
+.redux-app-root .redux-toolbar-line > .redux-divider-y {
+  width: calc(var(--tool-cell) / 4);
+  min-width: calc(var(--tool-cell) / 4);
+  height: 22px;
+  margin: 0;
+  background: transparent;
+}
+
+.redux-app-root .redux-toolbar-line > .redux-divider-y::before {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 22px;
+  margin: 0 auto;
+  background: var(--panel-border);
+}
+.redux-toolbar-line > :is(.redux-button, .redux-icon-button, .redux-group, .redux-field) {
+  align-self: center;
+}
+// Toolbar actions are square cells. Text/iconText fields and the extension
+// cluster keep their own widths.
+.redux-app-root .redux-toolbar-line > :is(.redux-button, .redux-icon-button) {
+  width: calc(var(--tool-cell) * var(--toolbar-action-cells, 1));
+  min-width: calc(var(--tool-cell) * var(--toolbar-action-cells, 1));
+  height: var(--tool-cell);
+  min-height: var(--tool-cell);
+  padding: 0;
+}
+
+// IconButton's shared size presets are overridden here so every toolbar action
+// fills one square cell instead of the 32px compact control box.
+.redux-app-root .redux-toolbar-line > .redux-icon-button.redux-icon-button-md {
+  width: var(--tool-cell);
+  min-width: var(--tool-cell);
+  height: var(--tool-cell);
+  min-height: var(--tool-cell);
+  padding: 0;
+}
+.redux-toolbar-line .redux-field {
+  min-height: 34px;
+}
+.redux-toolbar-line .redux-group {
+  flex: none;
+}
+.redux-toolbar-line .rate-field {
+  margin: 0;
+}
+.redux-action-bindings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.redux-app-root .redux-app-shell[data-at-home="true"] .redux-toolbar,
+.redux-app-root .redux-app-shell[data-at-home="true"] .redux-status-card,
+.redux-app-root .redux-status-card[hidden] {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .redux-app-root .redux-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(252px, 38vw);
+  }
+}
+
+// The transport button swaps its two glyphs on the playing flag instead of the
+// editor painting the button from its frame loop.
+#play .redux-icon-pause {
+  display: none;
+}
+#play[data-playing="true"] .redux-icon-play {
+  display: none;
+}
+#play[data-playing="true"] .redux-icon-pause {
+  display: block;
+}
+
+// The transport is one square cell like every other toolbar action.
+.redux-app-root .redux-toolbar-line #play {
+  flex: none;
+  width: var(--tool-cell);
+  min-width: var(--tool-cell);
+  height: var(--tool-cell);
+  min-height: var(--tool-cell);
+  padding: 0;
+  justify-content: center;
+}
+
+.redux-app-root .redux-toolbar-line #play[data-playing="true"] {
+  background: var(--active-accent-fill);
+}
+
+.redux-app-root .redux-toolbar-line #play[data-playing="true"] .redux-icon {
+  --icon-color: var(--active-accent);
+}
+
+.redux-app-root .redux-toolbar-line #play:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+// Global mode has one visible row (the file actions), but the frame keeps the
+// editor's height so the workbench never jumps when modes change. All modes use
+// the same two-column toolbar so the transport card keeps one width.
+.redux-toolbar[data-rows="1"] > .redux-toolrows {
+  grid-template-rows: 1fr;
+  padding-block: 0;
+}

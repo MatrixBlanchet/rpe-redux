@@ -1,0 +1,117 @@
+// Floating line-switcher overlay styling: host, scrollable card grid, card states,
+// thumbnail canvas, and empty message. Card geometry comes from lineSwitcher.ts, so
+// this sheet owns only the surface styling.
+
+.line-switcher {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 88%;
+  max-width: 1060px;
+  padding: var(--space-1);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.line-switcher-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: var(--type-label);
+}
+
+// The switcher body is the viewport directly; it carries its own scroll state.
+
+.line-switcher-viewport {
+  position: relative;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
+}
+
+.line-switcher-content {
+  position: relative;
+}
+
+.line-switcher-grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-auto-rows: calc(var(--thumbnail-height) + 22px);
+  gap: var(--space-1);
+}
+
+.line-switcher-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: calc(var(--thumbnail-height) + 22px);
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+  text-align: left;
+  overflow: hidden;
+}
+
+.line-switcher-card:hover {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.line-switcher-card.is-selected {
+  border-color: var(--accent);
+  background: var(--active-accent-fill);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.line-switcher-card strong,
+.line-switcher-card small {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.line-switcher-card strong {
+  color: var(--foreground);
+  font-size: var(--type-caption);
+  line-height: var(--line-label);
+  margin: 0 var(--space-1) var(--space-1);
+}
+
+.line-switcher-line-group {
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.line-switcher-card.is-selected strong {
+  color: var(--accent);
+}
+
+.line-switcher-card small {
+  position: absolute;
+  right: var(--space-1);
+  bottom: var(--space-1);
+  padding: 0 var(--space-1);
+  font-size: var(--type-caption);
+  line-height: var(--line-label);
+  color: var(--foreground-muted);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+
+.line-switcher-card canvas {
+  display: block;
+  width: 100%;
+  height: var(--thumbnail-height, 64px);
+}

@@ -1,0 +1,103 @@
+/* Timing detection: the drawer entry, the result dialog, and the manual
+   controls. */
+
+.redux-app-root dialog.timing-detection-dialog {
+  width: min(980px, calc(100vw - 32px));
+}
+
+/* Four short answers share one footer row; the wider prompt keeps the primary
+   action from wrapping onto a second line. */
+.redux-app-root dialog.redux-new-chart-detection {
+  width: min(620px, calc(100vw - 32px));
+}
+
+.timing-detection-dialog .modal-content {
+  max-height: 68vh;
+}
+
+.timing-detection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.timing-detection-manual {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.timing-detection-nudge {
+  display: grid;
+  grid-template-columns: var(--design-control-height) minmax(0, 1fr) var(--design-control-height);
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.timing-detection-nudge input {
+  width: 100%;
+  min-width: 0;
+}
+
+.timing-detection-confidence {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.timing-detection-confidence strong {
+  color: var(--foreground);
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.timing-detection-loading,
+.timing-detection-empty {
+  display: grid;
+  place-items: center;
+  gap: var(--space-3);
+  padding: var(--space-7) var(--space-5);
+  text-align: center;
+}
+
+.timing-detection-loading {
+  color: var(--foreground-muted);
+}
+
+.timing-detection-loading strong {
+  color: var(--foreground);
+  font-size: var(--type-heading);
+  font-weight: 600;
+}
+
+.timing-detection-loading span {
+  max-width: 460px;
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+}
+
+.timing-detection-empty .redux-inline-alert {
+  width: 100%;
+  max-width: 620px;
+  text-align: left;
+}
+
+.timing-detection-empty-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 720px) {
+  .timing-detection-manual {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,190 @@
+// Shared command-search presentations: a title-bar dropdown and a centered modal.
+
+.redux-overlay {
+  position: fixed;
+  inset: var(--titlebar-height, 40px) 0 0;
+  z-index: var(--z-search);
+  background: var(--scrim);
+  backdrop-filter: blur(3px) saturate(0.85);
+  -webkit-backdrop-filter: blur(3px) saturate(0.85);
+  animation: redux-overlay-in var(--design-dur-overlay) ease-out both;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+// The title-bar presentation is a dropdown, not a modal scrim. It leaves the
+// rest of the editor visible and lets outside pointer events reach their target.
+.redux-overlay-dropdown {
+  inset: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+
+  .redux-search {
+    pointer-events: auto;
+  }
+}
+
+.redux-overlay-modal {
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+@keyframes redux-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.redux-search {
+  position: fixed;
+  z-index: calc(var(--z-search) + 1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: min(60vh, 460px);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: 0 18px 48px var(--shadow-color);
+  overflow: hidden;
+  box-sizing: border-box;
+  animation: redux-search-in var(--design-dur-search) ease-out both;
+}
+
+.redux-search[data-mode="dropdown"] {
+  top: var(--search-panel-top, 42px);
+  left: var(--search-panel-left, 50%);
+  width: min(var(--search-panel-width, 380px), calc(100vw - 16px));
+  padding: 0;
+  border: 0;
+  transform: translateX(-50%);
+}
+
+.redux-search[data-mode="modal"] {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: min(460px, calc(100vw - 32px));
+  max-height: min(60vh, 460px);
+}
+
+@keyframes redux-search-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.redux-search-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+  border: 0;
+  box-shadow: none;
+
+  .redux-icon {
+    --icon-color: var(--foreground-muted);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    min-height: 32px;
+    padding-block: 0;
+    padding: 0;
+    font-size: var(--type-body);
+  }
+}
+
+.redux-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.redux-command-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  height: 29px;
+  min-height: 29px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-command-option-label {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--type-label);
+}
+
+.redux-app-root .redux-search-results .redux-command-option {
+  &[aria-selected="true"] {
+    background: var(--control-on-surface);
+    color: var(--foreground);
+  }
+}
+
+.redux-search-empty {
+  margin: 0;
+  padding: var(--space-3) var(--space-2);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-app-root #redux-search-modal-input,
+.redux-app-root #redux-search-modal-input:hover {
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  font-size: var(--type-body);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.redux-overlay[data-closing="true"] {
+  animation: redux-overlay-out var(--design-dur-overlay) ease-in both;
+}
+.redux-overlay[data-closing="true"] .redux-search {
+  animation: redux-search-out var(--design-dur-overlay) ease-in both;
+}
+@keyframes redux-overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes redux-search-out {
+  to {
+    opacity: 0;
+  }
+}

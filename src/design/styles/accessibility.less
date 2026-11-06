@@ -1,0 +1,27 @@
+/* Accessibility and narrow-window adjustments: the visually-hidden utility,
+   the small-window type scale, and light-theme label contrast fixes. */
+.redux-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 1250px) {
+  :root {
+    font-size: var(--type-label);
+  }
+}
+
+:root[data-theme="light"] label {
+  color: var(--foreground);
+}
+
+:root[data-theme="light"] .panel-title {
+  color: var(--foreground);
+}

@@ -1,0 +1,324 @@
+// Asset library page: the scrolling tree, selection details, the asset editor
+// dialog, and the shared drop overlay.
+
+// The workspace is one column: a view toolbar, the scrolling tree, and a fixed
+// footer with the same add/delete rhythm as judge lines and timing.
+.asset-tree-shell {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  width: 100%;
+}
+
+.asset-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  border: 2px dashed color-mix(in srgb, var(--accent) 58%, var(--border-strong));
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--surface-raised) 82%, transparent);
+  pointer-events: none;
+}
+
+.asset-drop-card {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-panel);
+  text-align: center;
+
+  strong {
+    color: var(--foreground);
+    font-size: var(--type-body);
+  }
+
+  small {
+    color: var(--foreground-muted);
+  }
+}
+
+.asset-drop-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--active-accent-fill);
+  color: var(--accent);
+
+  .redux-icon {
+    --icon-color: var(--accent);
+  }
+}
+
+// The shared inline alert supplies the surface; the tree only adds page gutter.
+.asset-library-error {
+  margin: var(--space-3) var(--space-5);
+}
+
+.asset-tree {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
+
+// The asset tree follows the judge-line tree: one folder box per group, then
+// full-width rows under it. The root images use a synthetic Default folder.
+.asset-folder.is-selected > .asset-folder-header {
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel-header));
+}
+
+.asset-folder-rows {
+  gap: var(--space-1);
+}
+
+.asset-folder-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  margin-left: 18px;
+  padding: 2px 2px 2px var(--space-2);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.asset-folder-empty {
+  margin: var(--space-2) var(--space-3);
+  text-align: center;
+}
+
+.asset-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  text-align: left;
+  background: transparent;
+}
+
+.asset-row:hover {
+  background: var(--surface-hover);
+}
+
+.asset-row.is-selected {
+  border-color: var(--accent);
+  background: var(--active-accent-fill);
+}
+
+// Thumbnail box: the positioned ancestor for the loading spinner, and the grid
+// cell the row reserves for the picture.
+.asset-image {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--surface-muted);
+}
+
+.asset-row .asset-image {
+  width: 28px;
+  height: 28px;
+}
+
+.asset-image img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.asset-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-audio {
+  color: var(--accent);
+
+  .redux-icon {
+    --icon-color: var(--accent);
+  }
+}
+
+.asset-tree[data-layout="grid"] .asset-folder-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(144px, 1fr));
+  gap: var(--space-2);
+  margin-left: 0;
+  padding: var(--space-2);
+  border-left: 0;
+}
+
+.asset-tree[data-layout="grid"] .asset-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 96px auto;
+  align-items: stretch;
+  gap: var(--space-1-5);
+  min-height: 0;
+  padding: var(--space-2);
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+}
+
+.asset-tree[data-layout="grid"] .asset-row:hover:not(.is-selected) {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.asset-tree[data-layout="grid"] .asset-row .asset-image {
+  width: 100%;
+  height: 96px;
+  border-radius: calc(var(--radius-control) - 2px);
+}
+
+.asset-tree[data-layout="grid"] .asset-row-name {
+  padding-inline: var(--space-1);
+  font-size: var(--type-caption);
+}
+
+.asset-details {
+  margin: var(--space-3) var(--space-5) var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.asset-details strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--accent);
+}
+
+.asset-details-kind {
+  color: var(--foreground-muted);
+  font-size: var(--type-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.asset-details > .asset-image {
+  width: 100%;
+  height: 180px;
+  margin: var(--space-2) 0;
+}
+
+.asset-details > .redux-audio {
+  margin: var(--space-2) 0;
+}
+
+// The details pane with nothing selected keeps the real detail frame and its
+// rhythm as muted blocks, so a selection swaps content into an existing layout
+// instead of replacing a line of copy. The blocks stay static: an empty pane is
+// not loading, so they must not pulse or shimmer.
+.asset-details-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.asset-skeleton-block {
+  display: block;
+  height: var(--control-height);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--surface-hover) 72%, var(--foreground) 8%);
+}
+
+.asset-skeleton-name {
+  width: 46%;
+  height: 14px;
+}
+
+.asset-skeleton-preview {
+  width: 100%;
+  height: 180px;
+  margin: var(--space-2) 0;
+}
+
+.asset-skeleton-kind {
+  width: 22%;
+  height: 9px;
+}
+
+.asset-skeleton-actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+
+  .asset-skeleton-block {
+    flex: 1;
+  }
+}
+
+.asset-detail-actions,
+.asset-editor-controls {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.asset-detail-actions button {
+  flex: 1;
+}
+
+.asset-editor-canvas {
+  display: block;
+  width: 100%;
+  max-height: 58vh;
+  object-fit: contain;
+  background: var(--surface-muted);
+  margin: var(--space-1) 0 var(--space-3);
+}
+
+.asset-editor-controls select {
+  flex: 1;
+  min-width: 0;
+}
+
+.asset-editor-controls > label {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.asset-editor-controls > label > select,
+.asset-editor-controls > label > input[type="range"] {
+  width: 100%;
+}
+
+.asset-editor-controls input[type="range"] {
+  flex: 1;
+}
+
+// Asset dialogs are a name field or a crop editor, not a document workspace.
+dialog.redux-asset-dialog {
+  width: min(560px, calc(100vw - 32px));
+}

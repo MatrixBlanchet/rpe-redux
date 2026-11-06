@@ -1,0 +1,165 @@
+// Root tokens: the document surface, typography faces, repeated borders, spacing,
+// radii, motion, and state fills that every sheet reads. Cascade position is fixed
+// by src/design/styles/index.less.
+
+:root {
+  color-scheme: dark;
+  font-family: Saira, "Source Han Sans CN", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  font-size: var(--type-body);
+  color: var(--foreground);
+  background: var(--surface);
+}
+
+// repeated borders / radii / spacing
+
+// Two separate faces: Saira carries the Latin UI text and Source Han Sans CN
+// covers CJK, kana, and full-width punctuation. Font licences (both SIL OFL 1.1)
+// live beside the files under src/public/assets/fonts/. The root-absolute URLs
+// keep Vite from emitting a second hashed copy beside the public directory.
+@font-face {
+  font-family: Saira;
+  src: url("/assets/fonts/Saira-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Han Sans CN";
+  src: url("/assets/fonts/SourceHanSansCN-Regular.otf") format("opentype");
+  font-display: swap;
+}
+
+// Every colour token is supplied by the active theme package. The first frame
+// uses the same package: Vite injects the dark package's colours into the
+// document head, so there is no hand-maintained bootstrap palette here.
+
+:root {
+  --inspector-width: 400px;
+  // The document drawer adds this list column beyond the resting inspector
+  // width. The property column keeps `--inspector-width`; both are theme
+  // metrics (`inspectorWidth`, `drawerListWidth`) and fall back to these values.
+  --drawer-list-width: 240px;
+  // Dense desktop-editor type roles. Pick the role the text plays, never a px
+  // value: this block is the only place a CSS font size is written, and
+  // `scripts/checkStyleRules.mjs` rejects raw sizes elsewhere. Canvas text
+  // resolves the same roles through `src/frontend/screens/editor/canvas/text.ts`.
+  //
+  // There are two reading sizes — body and caption — and label shares the
+  // caption step. Micro is chrome that is never prose. Heading, title, hero,
+  // and display mark surface level, not emphasis; use weight and colour for
+  // emphasis inside a surface.
+  --type-micro: 11px; // keycaps, counts, ticks, all-caps eyebrows
+  --type-caption: 13px; // hints, metadata, descriptions, code, status lines
+  --type-label: 13px; // control labels, menu rows, dense list names
+  --type-body: 14px; // default copy, inputs, primary list rows
+  --type-heading: 16px; // section heading inside a surface
+  --type-title: 20px; // panel, dialog, and welcome-section title
+  --type-hero: 28px; // settings page title
+  --type-display: 34px; // startup splash
+  // One monospace stack for code, equations, and shortcut glyphs. Feature
+  // sheets name the role; they must not repeat a family list.
+  --font-mono: Consolas, "Cascadia Mono", "Courier New", monospace;
+  // Text glyphs are icons, not typography: they scale with the surface that
+  // draws them, not with the reading hierarchy.
+  --glyph-size-sm: 20px;
+  --glyph-size-lg: 40px;
+  --line-body: 1.5;
+  --line-label: 1.25;
+  --space-1: 4px;
+  --space-1-5: 6px; // dense row rhythm between the 4 and 8 steps
+  --space-2: 8px;
+  --space-2-5: 10px; // compact padding between the 8 and 12 steps
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --control-height: 34px;
+  --control-height-compact: 28px;
+  --control-height-icon: 34px;
+  // Page-level primary and secondary actions: taller than a form control so a
+  // pair of home-screen actions reads as deliberate rather than incidental.
+  --control-height-lg: 40px;
+  // The shared label/control split for every labelled row. Labels start on the
+  // left and controls end on the right at this one width; feature sheets do not
+  // override it.
+  --field-control-width: 56%;
+  // --------------------------------------------------------------- z-index
+  // One ordered paint ladder for surfaces that leave normal flow, bottom to top.
+  // A floating surface names the rung it paints on; it never writes a number.
+  // Rungs are 100 apart so a surface can offset its own children by a few steps
+  // (`calc(var(--z-…) + 1)`) without colliding with the next rung.
+  //
+  // Child ordering inside one component's own stacking context stays a plain
+  // integer in -1…9: those values never leave the parent box, so they do not
+  // join the shared ladder. `scripts/checkStyleRules.mjs` rejects every other
+  // raw z-index value, every name that is not defined here, and inline styles.
+  --z-nav: 100; // navigation rail and the drawer it opens
+  --z-content-overlay: 200; // drag target, hover preview, toolbar dropdown
+  --z-floating: 300; // floating inspector, property panel, transport card
+  --z-menu: 400; // popup menus and pickers
+  --z-search: 500; // command-search scrim; the search panel is +1
+  --z-collab: 600; // collaborator cursors and playheads
+  --z-extension: 700; // window-scoped Extension overlays, below the modal scrim
+  // The title row shares the modal rank: the document-level scrim is a later
+  // portal at the same number, so it covers the title row, while the window
+  // controls below stay above both.
+  --z-titlebar: 800;
+  --z-modal: 800; // dialog and scrim; the modal stack adds its own offset
+  --z-guide: 900; // onboarding spotlight; the coach card is +1
+  --z-popover: 1000; // tooltips and inline confirmations
+  --z-debug: 1100; // developer overlays
+  --z-window-controls: 1200; // undecorated-window caption and resize frame
+  --z-toast: 1300; // app notices: the topmost in-window surface
+  --z-performance-hud: 1400; // diagnostics HUD and its input overlays
+  // Title-row popups order themselves inside the title row's own stacking
+  // context, so their rank is a local ordinal rather than a rung.
+  --z-titlebar-popup: 1;
+  // Windows' standard caption bar is 32px; this frame uses a taller row so the
+  // 32px menu and mode buttons keep clear space above and below. Caption buttons
+  // still reserve 138px in total (three 46px controls).
+  --titlebar-height: 40px;
+  --window-close-hover: rgb(232, 17, 35);
+  --on-window-close: #ffffff;
+  // Media letterboxing and key-press chips are intentionally black in every
+  // theme; these are presentation constants, not theme colours.
+  --media-surface: #000000;
+  --media-ink: #ffffff;
+  --border-subtle: color-mix(in oklab, var(--panel-border) 72%, transparent);
+  --border-strong: var(--outline);
+  --shadow-panel: 0 20px 64px var(--shadow-color);
+  // Overlay surfaces cast their shadow toward the content they cover, so a
+  // sidebar or drawer reads as a removable layer instead of a wider grid track.
+  // A left-side inspector mirrors the drawer edge token.
+  --shadow-overlay-panel: -16px 0 40px var(--shadow-color);
+  --shadow-overlay-popover: var(--shadow-panel);
+  --shadow-drawer-edge: -16px 0 40px var(--shadow-color);
+  --shadow-drawer-edge-inline: 16px 0 40px var(--shadow-color);
+  // A tooltip stays close to its anchor: same overlay family, tighter lift.
+  --shadow-overlay-tooltip: 0 10px 30px var(--shadow-color);
+  // Popover surfaces share one edge, fill, elevation, and divider so a context
+  // menu, an application menu, and an overflow menu read as the same layer.
+  --popover-surface: var(--surface-raised);
+  --popover-border: var(--border-strong);
+  --popover-shadow: var(--shadow-overlay-popover);
+  --popover-divider: var(--border-strong);
+  --muted: var(--foreground-muted);
+  // The resting surface a text field takes while its owner refuses the text it
+  // holds. The danger colour is mixed into the same surface both themes already
+  // use, so the box reads as wrong without turning into a raw alert swatch.
+  --input-surface-invalid: color-mix(in srgb, var(--danger) 25%, var(--input-surface));
+  // Overridden by the skin / appearance settings.
+  --radius-panel: 8px;
+  --radius-control: 6px;
+  font-family: Saira, "Source Han Sans CN", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  font-size: var(--type-body);
+  color: var(--foreground);
+  background: var(--surface);
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --foreground-muted: color-mix(in oklab, var(--foreground) 78%, transparent);
+    --panel-border: color-mix(in oklab, var(--foreground) 38%, transparent);
+    --input-border: color-mix(in oklab, var(--foreground) 48%, transparent);
+  }
+}

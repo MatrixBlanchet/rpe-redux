@@ -1,0 +1,114 @@
+// Design tokens.
+//
+// This is the single vocabulary the UI is built from. It deliberately does NOT
+// redeclare the colour/radius/typography tokens that already exist in
+// `src/design/styles/tokens.less` — those stay authoritative, and this sheet only adds
+// the scales and motion knobs that belong to components:
+//
+//   * rhythm      — spacing and radii shared by every control
+//   * motion      — durations and easings (tint, overlay, search)
+//
+// Cascade position is fixed by `src/design/styles/index.less`, which imports this sheet
+// right after `tokens.less`/`reset.less` and before any component sheet.
+
+// ------------------------------------------------------------------- rhythm
+// Control rhythm. `--radius-control` / `--radius-panel` (tokens.less) stay the
+// semantic radii; these add the intermediate steps components need.
+:root {
+  --design-space-0: var(--space-1);
+  --design-space-1: var(--space-1);
+  --design-space-2: var(--space-2);
+  --design-space-3: var(--space-2);
+  --design-space-4: var(--space-3);
+  --design-space-5: var(--space-4);
+  --design-space-6: var(--space-6);
+  --design-space-7: var(--space-7);
+
+  --design-radius-micro: 2px;
+  --design-radius-chip: 4px;
+  --design-radius-inline: 5px;
+  --design-radius-overlay: 10px;
+
+  --design-control-height: var(--control-height);
+  --design-control-height-compact: var(--control-height-compact);
+  --design-control-height-icon: var(--control-height-icon);
+
+  --design-ink-quiet: var(--foreground-muted);
+  --design-ink-faint: color-mix(in oklab, var(--foreground-muted) 62%, transparent);
+  --design-hairline-soft: color-mix(in oklab, var(--panel-border) 72%, transparent);
+  --design-fill-hover: var(--surface-hover);
+  --design-fill-pressed: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --design-fill-urgent: var(--danger);
+  --design-chip-surface: color-mix(in oklab, var(--foreground) 9%, transparent);
+  --design-overlay-scrim: var(--scrim);
+  --design-shadow-panel: var(--shadow-panel);
+  --design-focus-ring: var(--focus-ring);
+
+  // --------------------------------------------------------------- motion
+  // The duration tokens are scaled by the active theme's chrome recipe. The
+  // multipliers are authored here, not in a package: a package can choose a
+  // speed preset, but it cannot write an arbitrary duration.
+  --design-dur-tint: calc(140ms * var(--chrome-motion-speed, 1) * var(--chrome-motion-level, 1));
+  --design-dur-overlay: calc(180ms * var(--chrome-motion-speed, 1) * var(--chrome-motion-level, 1));
+  --design-dur-search: calc(260ms * var(--chrome-motion-speed, 1) * var(--chrome-motion-level, 1));
+  // Entering surfaces may take a little longer than leaving them. The exit is
+  // shorter so a dismissed modal feels out of the way immediately.
+  --design-dur-enter: calc(220ms * var(--chrome-motion-speed, 1) * var(--chrome-motion-level, 1));
+  --design-dur-exit: calc(140ms * var(--chrome-motion-speed, 1) * var(--chrome-motion-level, 1));
+  --design-dur-disclosure: calc(
+    170ms * var(--chrome-motion-speed, 1) * var(--chrome-motion-level, 1)
+  );
+  --design-ease-move: cubic-bezier(0.22, 0.8, 0.28, 1);
+  --design-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --design-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --design-ease-bounce: cubic-bezier(0.2, 1.6, 0.4, 1);
+  --design-action-transition:
+    background-color var(--design-dur-tint) ease, border-color var(--design-dur-tint) ease,
+    color var(--design-dur-tint) ease, box-shadow var(--design-dur-tint) ease,
+    transform var(--design-dur-tint) ease;
+}
+
+// ---------------------------------------------------------------- mixins
+// One action surface: no border, and a fill that only appears while the pointer
+// is on the control (or it is held, or toggled on).
+.action-surface() {
+  position: relative;
+  min-height: var(--design-control-height);
+  padding-inline: var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  border-radius: var(--radius-control);
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    background: var(--design-fill-hover);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--design-fill-pressed);
+  }
+
+  &[aria-pressed="true"],
+  &.active {
+    color: var(--active-accent);
+    background: var(--active-accent-fill);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --design-dur-tint: 1ms;
+    --design-dur-overlay: 1ms;
+    --design-dur-search: 1ms;
+    --design-dur-enter: 1ms;
+    --design-dur-exit: 1ms;
+    --design-dur-disclosure: 1ms;
+  }
+}

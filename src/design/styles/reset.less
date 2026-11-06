@@ -1,0 +1,167 @@
+// Global reset: box model, selection policy, and the hidden-attribute contract.
+// Cascade position is fixed by src/design/styles/index.less.
+
+* {
+  box-sizing: border-box;
+}
+
+* {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+:is(input, textarea, [contenteditable="true"], [role="textbox"]) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+// The `hidden` attribute is the shell's visibility seam. Component sheets that
+// set `display` on the same element would otherwise win by source order, so the
+// app root carries a stronger rule; the bare selector still covers portalled
+// nodes outside `.redux-app-root`.
+[hidden] {
+  display: none;
+}
+
+.redux-app-root [hidden] {
+  display: none;
+}
+
+body {
+  margin: 0;
+  min-width: 1000px;
+  min-height: 680px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+.redux-app-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// Native and React buttons share the same baseline. Visual variants live in
+// the design action primitives; neither pointer hover nor focus adds a border.
+button {
+  font-family: inherit;
+  font-size: var(--type-body);
+  color: var(--foreground);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-3);
+  cursor: var(--app-cursor-pointer);
+  box-shadow: none;
+  white-space: nowrap;
+  transition: var(--design-action-transition);
+}
+
+button:active:not(:disabled) {
+  background: var(--control-on-surface);
+  color: var(--accent);
+}
+
+button.active,
+button[aria-pressed="true"] {
+  background: var(--active-accent-fill);
+  color: var(--active-accent);
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--action-foreground-resting, var(--on-accent));
+}
+
+button:disabled {
+  color: var(--foreground-muted);
+  opacity: 0.38;
+  filter: grayscale(1);
+  cursor: var(--app-cursor-disabled);
+}
+
+kbd {
+  font: var(--type-caption) monospace;
+  opacity: 0.6;
+}
+
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--foreground-muted);
+}
+
+small {
+  font-size: var(--type-caption);
+  color: var(--foreground-muted);
+  font-weight: 400;
+}
+
+details {
+  border-top: 1px solid var(--border-subtle);
+  margin: var(--space-3) var(--space-2);
+}
+
+summary {
+  cursor: var(--app-cursor-pointer);
+  padding: var(--space-3);
+  color: var(--foreground-muted);
+  border-radius: var(--radius-control);
+  transition:
+    color var(--design-dur-tint) ease,
+    background-color var(--design-dur-tint) ease;
+}
+
+summary:hover {
+  color: var(--foreground);
+  background: var(--surface-hover);
+}
+
+summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+// Native details already handles keyboard and accessibility semantics. Recent
+// Chromium exposes the content slot, so the same disclosure can grow and shrink
+// smoothly instead of snapping the panel below it. Older WebViews keep the
+// instant native behavior.
+@supports selector(details::details-content) {
+  details {
+    interpolate-size: allow-keywords;
+  }
+  details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    content-visibility: hidden;
+    transition:
+      block-size var(--design-dur-disclosure) var(--design-ease-enter),
+      content-visibility var(--design-dur-disclosure) allow-discrete;
+  }
+  details[open]::details-content {
+    block-size: auto;
+    content-visibility: visible;
+  }
+}
+
+h2 {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-app-root *,
+  .redux-app-root *::before,
+  .redux-app-root *::after {
+    transition: none;
+    animation: none;
+  }
+}

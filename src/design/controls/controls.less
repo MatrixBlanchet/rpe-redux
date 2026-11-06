@@ -1,0 +1,794 @@
+// Custom surfaces for every native form control in the app.
+//
+// Why this sheet exists: `reset.less`, `theme.less`, `components.less`,
+// `settings.less` and several panel sheets each painted part of the same native
+// control, so one element was styled in five places and the last one silently
+// won. This is now the only place that decides *how a control looks*; the other
+// sheets keep placing and sizing their own controls.
+//
+// Every rule paints a native element we deliberately keep in the DOM
+// (`appearance: none`). That is not laziness: the imperative editor holds
+// references to those elements and drives them through `.value` / `.checked` /
+// `addEventListener("input")`, and Playwright drives them through
+// `fill` / `check` / `selectOption`. Replacing the elements would break both.
+// So the shared React controls keep the native element contract and replace
+// only the drawing.
+//
+// Two decorations cannot be done in CSS because a replaced element renders
+// neither `::before` nor `::after`: the slider's readout bar and a checkbox's
+// tick. `Input.tsx` renders those as sibling nodes, never as the native control
+// itself. The slider readout is measured against the control's box; the
+// checkbox tick lives in a same-size wrapper and is placed by CSS alone.
+//
+// Cascade: imported after `theme.less`, and every rule is `.redux-app-root`-qualified so it
+// outranks the theme sheet's id selectors.
+
+// --------------------------------------------------------------- text fields
+// One 28px box for every text-ish input, `select` and `textarea`. The resting
+// state is a hairline; only the edge reacts to hover and focus, so a hovered
+// row reads as one control instead of a tinted patch.
+
+.redux-app-root
+  input:where(
+    :not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(
+        [type="file"]
+      ):not([type="button"]):not([type="submit"]):not([type="reset"])
+  ),
+.redux-app-root select,
+.redux-app-root textarea {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--foreground);
+  background: var(--input-surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-control, 6px);
+  padding: 0 var(--space-2);
+  // A field that draws something inside its right edge asks for the room by
+  // setting the variable; matching the base rule's own specificity would mean
+  // repeating eight `:not()` guards.
+  padding-right: var(--redux-field-inset, var(--space-2));
+  min-height: var(--control-height);
+  transition:
+    border-color var(--design-dur-tint),
+    background-color var(--design-dur-tint);
+}
+
+// A single-line field reads at its trailing edge, beside the reset action or
+// step buttons. The `Input` primitive carries the same default and lets a caller
+// name another edge; the attribute rules below are that explicit request.
+.redux-app-root
+  input:where(
+    :not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(
+        [type="file"]
+      ):not([type="button"]):not([type="submit"]):not([type="reset"])
+  ) {
+  text-align: right;
+}
+
+.redux-app-root input[data-text-align="left"],
+.redux-app-root select[data-text-align="left"] {
+  text-align: left;
+}
+
+.redux-app-root input[data-text-align="center"] {
+  text-align: center;
+}
+
+.redux-app-root select[data-text-align="center"] {
+  text-align: center;
+  text-align-last: center;
+}
+
+.redux-app-root input[data-text-align="right"],
+.redux-app-root select[data-text-align="right"] {
+  text-align: right;
+}
+
+.redux-app-root
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+    [type="color"]
+  ):hover:not(:disabled),
+.redux-app-root select:hover:not(:disabled),
+.redux-app-root textarea:hover:not(:disabled) {
+  border-color: var(--input-border-hover);
+}
+
+.redux-app-root input::placeholder,
+.redux-app-root textarea::placeholder {
+  color: var(--placeholder-text);
+}
+
+.redux-app-root :is(.redux-slider-value, .redux-slider-value-clip > span) {
+  font-family: inherit;
+}
+
+.redux-app-root input:disabled,
+.redux-app-root select:disabled,
+.redux-app-root textarea:disabled {
+  background: var(--input-surface-disabled);
+  opacity: 0.6;
+}
+
+// A field whose owner refused the text it holds. `aria-invalid` is the state;
+// the surface is asked for through the same variable the resting rule reads, so
+// this does not have to repeat the base rule's `:not()` guards to win. The text
+// itself is never rewritten: a rejecting field keeps what was typed so the user
+// can correct it, and only the owner's value stays untouched.
+.redux-app-root :is(input, select, textarea)[aria-invalid="true"] {
+  --input-surface: var(--input-surface-invalid);
+}
+
+// The browser's number spinners are OS chrome and cannot follow the theme; the
+// wheel/arrow stepping is owned by React `Input`, which respects Shift (x10)
+// and Ctrl (x5).
+.redux-app-root input[type="number"]::-webkit-inner-spin-button,
+.redux-app-root input[type="number"]::-webkit-outer-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+// The same stepping, drawn: a field with `redux-stepper` gets the buttons the
+// browser's spinners were, pinned inside its right edge. `Input.tsx` measures the
+// native control and renders them as siblings, so the column follows the field
+// wherever a panel puts it. A press steps at once, then repeats while held.
+.redux-app-root input[type="number"].redux-stepper {
+  --redux-field-inset: 18px;
+}
+
+.redux-stepper-buttons {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.redux-stepper-button {
+  display: flex;
+  flex: 1 1 50%;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0 var(--radius-control, 6px) var(--radius-control, 6px) 0;
+  background: transparent;
+  color: var(--foreground-muted);
+  cursor: var(--app-cursor-pointer);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.redux-stepper-button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+.redux-stepper-button:disabled {
+  cursor: var(--app-cursor-default);
+  opacity: 0.4;
+}
+
+// One glyph, two directions: the asset is a chevron that points down.
+.redux-stepper-up .redux-icon {
+  transform: rotate(180deg);
+}
+
+// --------------------------------------------------------------- select
+// The closed state is ours; the open list is `SelectPopup.tsx`, because the
+// native popup cannot be styled at all. The React `Select` opens the panel for
+// direct interaction; the compatibility listener handles associated-label
+// activation, so the native element remains the value and accessibility anchor.
+
+.redux-app-root select {
+  cursor: var(--app-cursor-pointer);
+  padding-right: var(--space-6);
+  color: var(--foreground);
+  // The chevron is two gradients rather than an image so it can be tinted by a
+  // token; a data-URI SVG could not read `--foreground-muted`.
+  background-image:
+    linear-gradient(
+      45deg,
+      transparent 46%,
+      var(--foreground-muted) 46%,
+      var(--foreground-muted) 60%,
+      transparent 60%
+    ),
+    linear-gradient(
+      135deg,
+      transparent 46%,
+      var(--foreground-muted) 46%,
+      var(--foreground-muted) 60%,
+      transparent 60%
+    );
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-position:
+    right 13px center,
+    right 9px center;
+  background-repeat: no-repeat;
+}
+
+.redux-app-root select[aria-expanded="true"] {
+  border-color: var(--input-border-hover);
+}
+
+// --------------------------------------------------------------- checkbox
+// A squared tick box. The tick itself is the sibling decoration (see the sheet
+// header); the box, its two states and the disabled state are all CSS.
+
+.redux-app-root input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-block;
+  vertical-align: middle;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  aspect-ratio: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--input-border);
+  border-radius: var(--design-radius-micro);
+  background: var(--input-surface);
+  cursor: var(--app-cursor-pointer);
+  transition:
+    border-color var(--design-dur-tint),
+    background-color var(--design-dur-tint);
+}
+
+.redux-app-root input[type="checkbox"]:hover:not(:disabled) {
+  border-color: var(--input-border);
+}
+
+.redux-app-root input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.redux-app-root input[type="checkbox"]:disabled {
+  cursor: var(--app-cursor-default);
+  opacity: 0.5;
+}
+
+// The tick. The mask carries the shape and `background-color` carries the ink,
+// so the mark follows `--on-accent` (and therefore every skin) instead of being
+// baked into an image. `input:checked + .redux-check` is what shows it, so no
+// JavaScript state is involved.
+//
+// The wrapper is exactly the native control's box, so `inset: 0` plus a centred
+// mask puts the ink in the middle at any size and DPI. Do not reintroduce pixel
+// offsets here: they can only hide an off-centre measurement or asset, and they
+// break again the moment either changes.
+.redux-checkbox {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  // The wrapper must occupy exactly the native control's box. A definite size
+  // is what keeps a flex/grid row from stretching it (a row can be taller than
+  // the 20px box), while leaving the row's own `align-items` in charge of where
+  // the control aligns, exactly as it did when the input was the direct child.
+  inline-size: max-content;
+  block-size: max-content;
+  vertical-align: middle;
+}
+
+.redux-check {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  pointer-events: none;
+  opacity: 0;
+  --icon-color: var(--on-accent);
+  transition: opacity var(--design-dur-tint);
+}
+
+input[type="checkbox"]:checked:not(:indeterminate) ~ .redux-check-tick {
+  opacity: 1;
+}
+
+// A partial folder swaps the tick for the design's minus; the box stays the
+// same, which is what makes the tri-state read as one control.
+input[type="checkbox"]:indeterminate ~ .redux-check-minus {
+  opacity: 1;
+}
+
+// A disabled control fades itself; the glyph is a sibling and must fade with it,
+// or a checked-but-disabled row shows full-strength ink on a washed box.
+input[type="checkbox"]:disabled:checked ~ .redux-check-tick,
+input[type="checkbox"]:disabled:indeterminate ~ .redux-check-minus {
+  opacity: 0.5;
+}
+
+// --------------------------------------------------------------- colour
+// The swatch is the native colour control's own pseudo-element, which is the
+// one place the platform lets us paint the value; `--redux-swatch` is the
+// fallback for engines that strip the pseudo with `appearance: none`.
+
+.redux-app-root input[type="color"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 30px;
+  height: 26px;
+  min-height: 0;
+  padding: 2px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-control, 6px);
+  background: var(--redux-swatch, var(--input-surface));
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-app-root input[type="color"]:hover:not(:disabled) {
+  border-color: var(--input-border-hover);
+}
+
+.redux-app-root input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.redux-app-root input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: var(--design-radius-micro);
+}
+
+// --------------------------------------------------------------- sliders
+//
+// Two modes, both painted here:
+//
+//   data-redux-slider="level"  PCE's readout bar. A thick track with the fill
+//                             and the value printed inside it, drawn twice so
+//                             the part the fill covers flips to the contrasting
+//                             ink instead of disappearing into it. No thumb.
+//   data-redux-slider="range"  A thin rail with a visible thumb, for values that
+//                             belong in a field beside them, when explicitly
+//                             requested by the caller.
+//
+// Input defaults to the filled level; `data-slider` can explicitly request a rail.
+
+.redux-app-root input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  flex: none;
+  height: var(--control-height-compact);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-control, 6px);
+  background: var(--input-surface-disabled);
+  cursor: var(--app-cursor-pointer);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.redux-app-root input[type="range"]:disabled,
+.redux-app-root input[type="range"][data-redux-slider]:disabled {
+  cursor: var(--app-cursor-default);
+  opacity: 1;
+  border-color: var(--border-subtle);
+  // The disabled state changes the two regions of the track, not only its
+  // outline: the unfilled rail and the filled portion both lose the accent.
+  background: var(--surface-hover);
+}
+
+.redux-app-root input[type="range"]:disabled + .redux-slider .redux-slider-fill {
+  background: color-mix(in srgb, var(--foreground) 16%, var(--surface-hover));
+}
+
+.redux-app-root input[type="range"]:disabled + .redux-slider .redux-slider-value,
+.redux-app-root input[type="range"]:disabled + .redux-slider .redux-slider-value-clip > span {
+  color: var(--foreground-muted);
+}
+
+// The track is the input's own box, so the runnable track must not paint over
+// it and must not add a second border.
+.redux-app-root input[type="range"]::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+  border: 0;
+}
+
+.redux-app-root input[type="range"]::-moz-range-track {
+  height: 100%;
+  background: transparent;
+  border: 0;
+}
+
+// Level: no thumb at all. The whole bar is the affordance, exactly like PCE's
+// level slider, and clicking anywhere jumps to that value.
+.redux-app-root input[type="range"][data-redux-slider="level"] {
+  height: var(--control-height);
+  border: 1px solid var(--input-border);
+  border-radius: var(--design-radius-inline);
+  background: var(--input-surface-disabled);
+}
+
+.redux-app-root input[type="range"][data-redux-slider="level"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 0;
+  height: 0;
+  border: 0;
+  background: transparent;
+}
+
+.redux-app-root input[type="range"][data-redux-slider="level"]::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border: 0;
+  background: transparent;
+}
+
+// Range: a squared thumb that sits on the rail. The track is 20px tall and the
+// thumb 12px, so the 4px offset is what centres it.
+.redux-app-root input[type="range"][data-redux-slider="range"] {
+  height: var(--control-height-compact);
+}
+
+.redux-app-root input[type="range"][data-redux-slider="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: var(--space-1-5);
+  border: 1px solid var(--input-border-focus);
+  border-radius: var(--design-radius-micro);
+  background: var(--foreground);
+}
+
+.redux-app-root input[type="range"][data-redux-slider="range"]:hover::-webkit-slider-thumb {
+  background: var(--accent);
+}
+
+.redux-app-root input[type="range"][data-redux-slider="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--input-border-focus);
+  border-radius: var(--design-radius-micro);
+  background: var(--foreground);
+}
+
+// Input.tsx owns this sibling tree and positions it over the native input's
+// padding box so the fill follows the track's exact dimensions.
+.redux-slider {
+  position: absolute;
+  overflow: hidden;
+  border-radius: var(--radius-control, 6px);
+  pointer-events: none;
+  // Above the track: a slider may have a decoration of its own painted over the
+  // input (the scrubber's spectrum, `shell.less`), and the fill and the readout
+  // are the parts that must never be covered.
+  z-index: 2;
+}
+
+.redux-slider-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--redux-ratio, 0%);
+  background: var(--accent);
+}
+
+// The readout, and the same readout clipped to the fill in the contrasting ink.
+// The inner copy is as wide as the track (not as wide as the clip) and starts at
+// the track's left edge, which is what makes the two copies line up to the pixel
+// and puts the colour boundary exactly on the fill's edge.
+.redux-slider-value,
+.redux-slider-value-clip > span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: var(--redux-track-width, 100%);
+  font-size: var(--type-caption);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.redux-slider-value {
+  color: var(--foreground);
+}
+
+.redux-slider-value-clip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--redux-ratio, 0%);
+  overflow: hidden;
+}
+
+.redux-slider-value-clip > span {
+  color: var(--on-accent);
+}
+
+// A right-clicked level bar swaps its readout for this exact-value field. It sits
+// on the same measured box as the bar, so switching in and out never moves the
+// control. `.redux-app-root` is required to carry the centring over the shared input rule.
+.redux-app-root .redux-slider-manual {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 0 var(--space-2);
+  text-align: center;
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+// A host is any element that carries a decoration; Input's local layout effect
+// only makes it a positioning context when computed position is `static`, so a
+// host that already positions itself (a rail, a wrap) keeps its own box.
+[data-redux-host] {
+  position: relative;
+}
+
+// --------------------------------------------------------------- panels
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--foreground-muted) 40%, transparent) transparent;
+}
+// Chromium's standard scrollbar properties override the pseudo-elements below,
+// including the rule that removes the native arrow buttons.
+@supports selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--foreground-muted) 38%, transparent);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--foreground-muted) 64%, transparent);
+  background-clip: padding-box;
+}
+
+// --------------------------------------------------------------- panels
+// One top-level host for both panels (see `ControlHost.tsx`): fixed positioning
+// is what lets a panel escape the scrolling, clipped rail it was opened in.
+
+.redux-control-popup {
+  position: fixed;
+  z-index: var(--z-floating);
+  padding: var(--space-1);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 16px 44px var(--shadow-color);
+  transform-origin: var(--control-origin-x, 50%) var(--control-origin-y, 0%);
+  animation: redux-control-in var(--design-dur-tint) var(--design-ease-enter);
+}
+
+@keyframes redux-control-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-control-popup {
+    animation: none;
+  }
+}
+
+.redux-select-popup {
+  box-sizing: border-box;
+  padding: 1px 0;
+  max-height: 280px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.redux-select-option {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border-radius: 0;
+  font-size: var(--type-caption);
+  white-space: nowrap;
+  width: 100%;
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-select-option[data-active="true"] {
+  background: var(--surface-hover);
+  outline: 0;
+}
+
+.redux-select-option[aria-selected="true"] {
+  color: var(--accent);
+}
+
+.redux-select-option[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: var(--app-cursor-default);
+}
+
+.redux-select-empty {
+  padding: var(--space-2);
+  font-size: var(--type-label);
+  color: var(--foreground-muted);
+}
+
+// --------------------------------------------------------------- picker
+.redux-color-popup {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.redux-color-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.redux-color-current-hex {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--foreground-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+.redux-color-current-swatch {
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--design-radius-micro);
+}
+
+.redux-color-body {
+  display: flex;
+  gap: var(--space-3);
+}
+
+// The square is the hue at full saturation under a white-to-transparent wash
+// (left to right) and a transparent-to-black one (top to bottom), which is the
+// standard SV field drawn with two gradients instead of a canvas.
+.redux-color-square {
+  position: relative;
+  flex: 1;
+  height: 160px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-control);
+  cursor: var(--app-cursor-pointer);
+}
+
+// The colour picker paints the colour model itself — the white-to-transparent
+// saturation wash and the hue rail — not a themed surface. These literals are
+// the intentional exception to the colour-token rule.
+.redux-color-square-white,
+.redux-color-square-black {
+  position: absolute;
+  inset: 0;
+}
+
+.redux-color-square-white {
+  background: linear-gradient(to right, #fff, transparent);
+}
+
+.redux-color-square-black {
+  background: linear-gradient(to top, #000, transparent);
+}
+
+.redux-color-marker,
+.redux-color-hue-marker {
+  position: absolute;
+  pointer-events: none;
+}
+
+.redux-color-marker {
+  width: 13px;
+  height: 13px;
+  margin: -7px 0 0 -7px;
+  border: 2px solid var(--foreground);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--shadow-color);
+}
+
+.redux-color-hue {
+  position: relative;
+  width: 18px;
+  height: 160px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-control);
+  cursor: var(--app-cursor-pointer);
+  background: linear-gradient(
+    to bottom,
+    #f00 0%,
+    #ff0 17%,
+    #0f0 33%,
+    #0ff 50%,
+    #00f 67%,
+    #f0f 83%,
+    #f00 100%
+  );
+}
+
+.redux-color-hue-marker {
+  left: -3px;
+  right: -3px;
+  height: 4px;
+  margin-top: -2px;
+  border: 1px solid var(--foreground);
+  border-radius: var(--design-radius-micro);
+}
+
+.redux-color-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.redux-color-fields label {
+  display: grid;
+  gap: var(--space-1);
+  flex: none;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.redux-color-fields label:first-child {
+  flex: 1;
+}
+
+.redux-color-fields input[type="text"] {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.redux-color-fields input[type="number"] {
+  width: 54px;
+}
+
+.redux-color-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

@@ -1,0 +1,61 @@
+// One inline alert surface for errors, warnings, and neutral notes. Tone only
+// changes the ink, hairline, and tint; spacing and layout stay identical.
+
+.redux-inline-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+  color: var(--foreground);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+  overflow-wrap: anywhere;
+}
+
+.redux-inline-alert[data-tone="danger"] {
+  border-color: color-mix(in srgb, var(--danger) 48%, var(--border-subtle));
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  color: var(--danger);
+}
+
+.redux-inline-alert[data-tone="warning"] {
+  border-color: color-mix(in srgb, var(--warning) 48%, var(--border-subtle));
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+  color: var(--warning);
+}
+
+.redux-inline-alert[data-tone="success"] {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border-subtle));
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+
+.redux-inline-alert-body {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.redux-inline-alert-body strong {
+  color: inherit;
+  font-size: var(--type-label);
+  font-weight: 500;
+}
+
+.redux-inline-alert-content {
+  min-width: 0;
+}
+
+.redux-inline-alert-content p {
+  margin: 0;
+}
+
+.redux-inline-alert-action {
+  flex: none;
+  margin-left: auto;
+}

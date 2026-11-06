@@ -1,0 +1,388 @@
+/*
+ * Curve trajectory mode: the chart preview is the editing surface.
+ *
+ * The only floating window is the vertical tool rail. The generation range lives
+ * in the inspector, and the global transport drives playback. Inspector and
+ * sidebar remain outside this overlay.
+ */
+
+.stage.curve-preview-active
+  > :not(.preview-underlay):not(.curve-preview-layer):not(.free-camera-layer) {
+  display: none;
+}
+
+// The chart underlay is always visible in curve mode; the path is authored on
+// the same presentation frame the game uses.
+.stage.curve-preview-active .preview-underlay {
+  visibility: visible;
+}
+
+// Free camera supplies the shared camera transform, but its floating dock and
+// frame chrome belong to the free-camera mode itself.
+.stage.curve-preview-active > .free-camera-layer {
+  display: none;
+}
+
+.stage.curve-preview-active .free-camera-frame-clip {
+  display: none;
+}
+
+.curve-preview-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.curve-preview-edit-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* A separate marker layer keeps playback out of React's render path. */
+.curve-preview-marker-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.curve-preview-layer[data-tool="select"] .curve-preview-edit-canvas {
+  cursor: default;
+}
+
+/* Equation mode is a read-only preview; the inspector owns the inputs. */
+.curve-preview-layer[data-mode="equation"] .curve-preview-edit-canvas {
+  pointer-events: none;
+  cursor: default;
+}
+
+.curve-mode-toggle {
+  margin-bottom: var(--space-2);
+}
+
+/* ------------------------------------------------------------ tool rail */
+
+.curve-tool-dock {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  width: 96px;
+  padding: 3px 0 var(--space-1);
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: 0 10px 28px var(--shadow-color);
+  pointer-events: auto;
+}
+
+.curve-tool-grip {
+  display: grid;
+  flex: none;
+  place-items: center;
+  height: 10px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.curve-tool-grip::before {
+  content: "⠿";
+  color: var(--foreground-muted);
+  font-size: var(--type-micro);
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.curve-tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 var(--space-1);
+}
+
+.curve-tool-row {
+  flex: none;
+  gap: var(--space-1-5);
+  width: 100%;
+}
+
+.curve-tool-divider {
+  width: calc(100% - 8px);
+  height: 1px;
+  margin: 3px auto;
+  background: var(--border-subtle);
+}
+
+/* ------------------------------------------------ curve Inspector panel */
+
+.curve-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.curve-inspector-section {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+// The footer bar owns the closing rule; the last section must not paint a second
+// line above it.
+.curve-inspector > .curve-inspector-section:last-of-type {
+  border-bottom: 0;
+}
+
+.curve-section-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 20px;
+}
+
+.curve-section-head > .redux-section-heading-title {
+  position: relative;
+  flex: none;
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.curve-inspector-section > .redux-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.curve-inspector .hint {
+  margin: 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: 1.4;
+}
+
+.curve-inspector .curve-status:empty {
+  display: none;
+}
+
+.curve-inspector .redux-segmented.is-block {
+  margin: var(--space-1) 0;
+}
+
+.curve-generate {
+  width: auto;
+  min-height: var(--design-control-height);
+}
+
+/* ------------------------------------------------ equation syntax editor */
+
+.curve-equation-editor {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--design-control-height);
+  overflow: hidden;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+}
+
+.curve-equation-editor.is-multiline {
+  min-height: 100px;
+}
+
+.curve-equation-editor:focus-within {
+  border-color: var(--input-border-focus);
+}
+
+.curve-equation-highlight,
+.curve-equation-input {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: var(--space-1-5) var(--space-3);
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+  letter-spacing: 0;
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
+.curve-equation-editor.is-multiline .curve-equation-highlight,
+.curve-equation-editor.is-multiline .curve-equation-input {
+  padding: var(--space-2) var(--space-3);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.curve-equation-highlight {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  pointer-events: none;
+}
+
+.curve-equation-input {
+  position: absolute;
+  inset: 0;
+  resize: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: transparent;
+  caret-color: var(--foreground);
+  background: transparent;
+  outline: none;
+  -webkit-text-fill-color: transparent;
+}
+
+.curve-equation-editor.is-multiline .curve-equation-input {
+  overflow: auto;
+}
+
+// The shared `.redux-app-root textarea` control rule owns the resting surface and font.
+// This control paints its text in the sibling `<pre>`, so the native textarea
+// has to stay transparent while the wrapper keeps the control chrome.
+.redux-app-root .curve-equation-editor .curve-equation-input {
+  padding: var(--space-1-5) var(--space-3);
+  border: 0;
+  min-height: 0;
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+  color: transparent;
+  background: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.redux-app-root .curve-equation-editor.is-multiline .curve-equation-input {
+  padding: var(--space-2) var(--space-3);
+}
+
+.curve-equation-editor.has-action .curve-equation-highlight {
+  padding-right: calc(var(--space-3) + var(--space-6));
+}
+
+.redux-app-root .curve-equation-editor.has-action .curve-equation-input {
+  padding-right: calc(var(--space-3) + var(--space-6));
+}
+
+.curve-equation-more {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-1);
+  right: var(--space-1);
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  min-height: 0;
+  padding: 0;
+  transform: none;
+  border-radius: var(--radius-control);
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  line-height: 1;
+}
+
+.curve-equation-editor:not(.is-multiline) .curve-equation-more {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.curve-equation-more:hover {
+  color: var(--foreground);
+}
+
+.redux-app-root .curve-equation-editor .curve-equation-input::placeholder {
+  color: var(--foreground-muted);
+  -webkit-text-fill-color: var(--foreground-muted);
+}
+
+.curve-equation-input::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.curve-equation-token.is-function {
+  color: var(--accent);
+}
+
+.curve-equation-token.is-variable {
+  color: var(--warning);
+}
+
+.curve-equation-token.is-constant {
+  color: var(--playing-indicator);
+}
+
+.curve-equation-token.is-number {
+  color: var(--foreground);
+}
+
+.curve-equation-token.is-operator,
+.curve-equation-token.is-punctuation {
+  color: var(--foreground-muted);
+}
+
+.curve-equation-token.is-invalid {
+  color: var(--danger);
+  text-decoration: underline dotted;
+}
+
+/* ------------------------------------------------ equation modal */
+
+.curve-equation-modal {
+  width: min(760px, calc(100vw - var(--space-7)));
+}
+
+.curve-equation-modal .modal-content {
+  max-height: 72vh;
+}
+
+.curve-equation-modal .curve-equation-editor.is-multiline {
+  min-height: 180px;
+}
+
+.curve-equation-palette {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.curve-equation-palette-head {
+  color: var(--foreground-muted);
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.curve-equation-palette-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.curve-equation-chip {
+  min-width: 52px;
+  min-height: var(--design-control-height-compact);
+  justify-content: center;
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+}

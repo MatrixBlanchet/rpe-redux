@@ -1,0 +1,131 @@
+// Stylesheet manifest.
+//
+// Every sheet below now lives with the feature it styles — a panel's rules sit
+// next to the panel, the settings modal's next to the modal. This file exists
+// only because CSS has no notion of ownership: cascade order *is* behaviour, so
+// the order has to be stated in exactly one place instead of being inherited
+// from a single 2500-line sheet.
+//
+// The order preserves the editor-to-theme cascade:
+//
+//   1. tokens/reset come first, so the semantic theme can override the editor's
+//      hard-coded dark literals;
+//   2. the semantic theme follows the editor styles so its overrides win.
+//
+// These are `@import`s rather than per-module `import "x.less"` statements on
+// purpose: the editor is loaded through a dynamic `import()` in App.tsx, so a
+// sheet imported from an editor module would land in an async CSS chunk and
+// paint after the first frame.
+
+@import "./tokens.less";
+@import "./reset.less";
+
+// ------------------------------------------------------------ design system
+// Tokens first, then the primitives' sheets. Everything below may use the design
+// vocabulary; the design sheets own button surfaces, shortcut chips, overlays
+// and the search panel.
+@import "../design.less";
+@import "../actions.less";
+@import "../chrome.less";
+@import "../patterns/toast.less";
+@import "../patterns/railItem.less";
+@import "../patterns/tree/treeFolder.less";
+@import "../components/field/field.less";
+@import "../components/input/colorField.less";
+@import "../components/input/searchField.less";
+@import "../components/menu/menu.less";
+
+@import "../../frontend/app/editorStyles.less";
+
+// --------------------------------------------------------------- app shell
+@import "../components/icon/icon.less";
+@import "../components/image/imageSkeleton.less";
+@import "../components/spinner/spinner.less";
+@import "../components/progress/progress.less";
+@import "../components/empty-state/emptyState.less";
+@import "../components/alert/inlineAlert.less";
+@import "../components/card/card.less";
+@import "../components/chip/chipButton.less";
+@import "../components/list/listRow.less";
+@import "../components/section/section.less";
+@import "../components/media/mediaTransport.less";
+@import "../components/video/videoPlayer.less";
+@import "../components/audio/audioPlayer.less";
+@import "../components/segmented/segmented.less";
+@import "../components/splitAction/splitAction.less";
+
+// ------------------------------------------------- semantic theme, applied
+// Last of the editor-facing sheets: these rules deliberately override the
+// editor's own surfaces at equal specificity, so they only work from here.
+@import "./theme.less";
+
+// ---------------------------------------------------------------- controls
+@import "../controls/controls.less";
+
+@import "../../frontend/app/appStyles.less";
+@import "../../frontend/chrome/topbar/developer/developerTools.less";
+@import "../components/modal/modal.less";
+@import "../components/confirm/confirm.less";
+@import "../components/popconfirm/popconfirm.less";
+@import "../buttonStates.less";
+@import "./cursors.less";
+
+// The product uses pointer-driven controls for most navigation, but keyboard
+// users still need a visible focus answer on actionable controls.
+.redux-app-root :where(*):focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.redux-app-root :where(.redux-button):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+// Text fields replace the platform focus ring, which is near-black on the dark
+// theme, with the same token the button ring uses.
+.redux-app-root :where(input, select, textarea):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+// A composite field (leading icon, borderless input, optional clear action) is
+// one control. Its focus answer belongs on the shell as a single ring, not on
+// the bare input inside it. Only Tab reveals it, like every other focus ring.
+.redux-app-root .redux-input-shell :is(input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+:root[data-input-mode="tab"]
+  .redux-app-root
+  .redux-input-shell:has(:is(input, select, textarea):focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+// Pointer clicks and keyboard activation (Space/Enter/Escape) leave DOM focus
+// on the control, but the ring is only useful while Tab is moving through the
+// interface. Keep Tab focus visible and drop the ring for every other modality.
+// The doubled root id outranks per-surface focus rules that predate this policy,
+// so individual components do not need their own activation workarounds.
+:root[data-input-mode="pointer"] .redux-app-root.redux-app-root :focus-visible,
+:root[data-input-mode="keyboard"] .redux-app-root.redux-app-root :focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+// Popups portal outside `.redux-app-root`, so the activation rule above cannot reach
+// their fields. Repeat it at document scope for form controls: Enter or Space
+// must never leave a focus ring on a field, while Tab still gets the shared one.
+:root[data-input-mode="pointer"] :is(input, select, textarea):focus,
+:root[data-input-mode="keyboard"] :is(input, select, textarea):focus {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--input-border);
+}
+
+.redux-app-root :where(input, select, textarea):focus,
+.redux-app-root :where(input, select, textarea):focus-visible {
+  border-color: var(--input-border);
+}

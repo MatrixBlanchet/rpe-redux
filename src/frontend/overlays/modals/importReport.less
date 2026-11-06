@@ -1,0 +1,65 @@
+// Compatibility report dialog: one heading per imported chart and one row per
+// difference. Reading surface only, so the rows stay plain and scroll together.
+
+.import-report-dialog {
+  width: min(620px, calc(100vw - var(--space-8)));
+}
+
+.import-report-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-height: min(52vh, 420px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.import-report-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.import-report-heading {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--type-label);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.import-report-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.import-report-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+  font-size: var(--type-caption);
+}
+
+.import-report-scope {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.import-report-detail {
+  color: var(--foreground-muted);
+  overflow-wrap: anywhere;
+}
+
+.import-report-more {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  font-style: italic;
+}

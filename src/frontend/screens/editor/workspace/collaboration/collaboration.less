@@ -1,0 +1,421 @@
+// Collaboration room status and transient remote cursors. Presence is
+// deliberately lighter than selection: it never owns pointer input and never
+// changes the document's dirty state.
+
+.collab-panel,
+.collab-room,
+.collab-forms {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.collab-room {
+  gap: var(--space-1);
+}
+
+.collab-panel .hint {
+  margin: 0;
+}
+
+.redux-app-root .collab-panel .collab-mode-switch {
+  width: 100%;
+  margin: 0;
+}
+
+.collab-mode-switch .redux-segmented-options {
+  width: 100%;
+}
+
+.collab-mode-switch .redux-segmented-option {
+  flex: 1 1 0;
+  justify-content: center;
+  text-align: center;
+}
+
+.collab-field-label {
+  min-width: 0;
+  cursor: help;
+}
+
+.collab-intro {
+  line-height: var(--line-body);
+}
+
+.collab-field-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--type-label);
+  text-align: right;
+}
+
+.collab-field-action {
+  align-items: center;
+}
+
+.collab-field-action .redux-button {
+  flex: none;
+}
+
+.collab-error {
+  margin: 0;
+}
+
+.collab-status {
+  margin: 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+}
+
+.collab-status.is-connected {
+  color: var(--foreground);
+}
+
+.collab-status.is-waiting,
+.collab-status.is-reconnecting {
+  color: var(--warning);
+}
+
+.collab-status.is-error {
+  color: var(--danger);
+}
+
+.collab-section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.collab-section h3 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.collab-member-list,
+.collab-pending-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collab-member,
+.collab-pending {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 34px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+}
+
+.collab-member-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collab-member-location {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.collab-member-swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.collab-member-role {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.collab-max-members {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.collab-max-members input[type="range"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.collab-max-members output {
+  flex: none;
+  min-width: 2ch;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.collab-pending {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.collab-unsent {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collab-unsent > li {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+}
+
+.collab-unsent-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.collab-unsent-text small {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.collab-pending > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collab-cursors {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-collab);
+  pointer-events: none;
+}
+
+.collab-cursor {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  transform: translate(-4px, -50%);
+  white-space: nowrap;
+}
+
+.collab-cursor-dot {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--surface-raised);
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 24%, transparent);
+}
+
+.collab-cursor-name {
+  padding: 1px var(--space-1-5);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  font-size: var(--type-caption);
+  box-shadow: 0 1px 4px var(--shadow-color);
+}
+
+// Other members' playheads occupy the lower half of the transport marker band.
+// The tick is permanent; the name only appears when the pointer approaches it.
+.collab-playheads {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-collab);
+  pointer-events: none;
+}
+
+.collab-playhead {
+  position: absolute;
+  width: 24px;
+  height: 16px;
+  transform: translateX(-50%);
+  color: var(--foreground);
+  pointer-events: auto;
+}
+
+.collab-playhead-bar {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 8px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: currentColor;
+  transition: opacity var(--design-dur-tint) ease;
+}
+
+.collab-playhead-name {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  max-width: 160px;
+  padding: 1px var(--space-1);
+  overflow: hidden;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  font-size: var(--type-caption);
+  line-height: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translateX(-50%) scaleX(0.86);
+  transform-origin: center top;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--design-dur-tint) ease,
+    transform var(--design-dur-tint) ease,
+    visibility var(--design-dur-tint);
+}
+
+.collab-playhead:hover {
+  z-index: 1;
+}
+
+.collab-playhead:hover .collab-playhead-name {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) scaleX(1);
+  pointer-events: auto;
+}
+
+.collab-playhead:hover .collab-playhead-bar {
+  opacity: 0;
+}
+
+.collab-server-address {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.collab-server-address .redux-field-control {
+  justify-content: flex-start;
+}
+
+.collab-server-address .collab-field-value {
+  text-align: left;
+}
+
+.collab-room-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.collab-room-actions .redux-button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.collab-room-details {
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-muted);
+}
+
+.collab-secret-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  max-width: 100%;
+  min-width: 0;
+}
+
+.collab-secret-value .collab-field-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collab-password-editor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.collab-secret-input {
+  --redux-field-inset: calc(var(--space-2) + var(--space-6));
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.collab-secret-input .redux-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.collab-secret-input input::-ms-reveal {
+  display: none;
+}
+
+.collab-secret-input .collab-secret-toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  transform: translateY(-50%);
+}
+
+.collab-secret-toggle {
+  flex: none;
+}
+
+.redux-app-root .collab-room .collab-password-update {
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.collab-invite-preview-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.collab-invite-preview-heading strong {
+  color: var(--foreground);
+  font-size: var(--type-body);
+}
+
+.collab-invite-preview-members {
+  max-height: 240px;
+  overflow: auto;
+}
+
+.collab-invite-preview-status {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.collab-invite-preview-empty {
+  margin: 0;
+  color: var(--foreground-muted);
+}

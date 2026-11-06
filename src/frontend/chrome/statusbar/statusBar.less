@@ -1,0 +1,51 @@
+// Status bar styles: the bar itself and its leading chart-info readouts.
+
+.chart-info {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  color: var(--foreground-muted);
+}
+
+.chart-info-row,
+.chart-info-items {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.chart-info-item {
+  white-space: nowrap;
+}
+
+.shell-body > footer {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-5);
+  background: var(--status-bar);
+  border-top: 1px solid var(--panel-border);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.shell-body > footer .chart-info {
+  flex: 1 1 auto;
+  max-width: none;
+  overflow: hidden;
+  font-size: var(--type-label);
+}
+
+.shell-body > footer .chart-info-item {
+  color: var(--foreground);
+}
+
+.shell-body > footer button {
+  min-height: var(--control-height-compact);
+  padding: 2px var(--space-2);
+  font-size: var(--type-caption);
+}

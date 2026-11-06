@@ -1,0 +1,67 @@
+// Rules split out of the pre-refactor monolithic sheets (base.less, theme.less,
+// shell.less, settings.less — all four are gone). They keep their original
+// relative order; cascade position is fixed by src/design/styles/index.less.
+
+#offset {
+  width: 70px;
+}
+
+// `.batch-execute` / `#batch-action` / `#batch-run` styled the top bar's batch
+// dropdown, which is gone. The drag control balls below are a separate thing and
+// stay: React renders their stable controls in `BatchControlsView.tsx`.
+.batch-controls-host {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.batch-controls {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  pointer-events: auto;
+}
+
+.batch-ball {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  border: 0;
+  border-radius: var(--design-radius-micro);
+  padding: 0;
+  background: var(--ball-color);
+  box-shadow: 0 1px var(--space-1) var(--shadow-color);
+  opacity: 0.85;
+  cursor: var(--app-cursor-pointer);
+  touch-action: none;
+  pointer-events: auto;
+}
+
+// Hover and drag only strengthen the handle's own colour. The shared button
+// reset paints `:active` with the neutral control surface, which reads as black
+// on these colour-coded balls, so the dragged state must outrank it and keep
+// brightening the fill.
+.batch-ball:hover {
+  background: var(--ball-color);
+  opacity: 1;
+  box-shadow: 0 1px var(--space-1) var(--shadow-color);
+}
+
+.redux-app-root .batch-ball:active:not(:disabled) {
+  background: var(--ball-color);
+  opacity: 1;
+  filter: brightness(1.25);
+  cursor: var(--app-cursor-pointer);
+}
+
+.batch-hint {
+  position: absolute;
+  top: -24px;
+  right: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  color: var(--foreground);
+  text-shadow: 0 1px 3px var(--shadow-color);
+}

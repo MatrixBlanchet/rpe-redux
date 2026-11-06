@@ -1,0 +1,97 @@
+{
+  "description": "Shared Go/TypeScript collaboration vectors. Both room implementations load this file so persisted limits, asset-name lengths, and fingerprint number spelling cannot drift.",
+  "roomStates": [
+    { "label": "legacy zero", "state": { "maxMembers": 0 }, "expected": { "maxMembers": 4 } },
+    { "label": "missing field", "state": {}, "expected": { "maxMembers": 4 } },
+    { "label": "negative", "state": { "maxMembers": -1 }, "expected": { "maxMembers": 4 } },
+    { "label": "one", "state": { "maxMembers": 1 }, "expected": { "maxMembers": 4 } },
+    { "label": "minimum", "state": { "maxMembers": 2 }, "expected": { "maxMembers": 2 } },
+    { "label": "default", "state": { "maxMembers": 4 }, "expected": { "maxMembers": 4 } },
+    { "label": "maximum", "state": { "maxMembers": 32 }, "expected": { "maxMembers": 32 } },
+    { "label": "above range", "state": { "maxMembers": 33 }, "expected": { "maxMembers": 4 } },
+    { "label": "far above range", "state": { "maxMembers": 1000 }, "expected": { "maxMembers": 4 } }
+  ],
+  "assetNames": [
+    { "label": "plain", "input": "cover.png", "expected": "cover.png" },
+    {
+      "label": "backslash separators",
+      "input": "folder\\cover.png",
+      "expected": "folder/cover.png"
+    },
+    { "label": "parent traversal", "input": "../escape.png", "expected": null },
+    { "label": "absolute path", "input": "/absolute.png", "expected": null },
+    { "label": "windows absolute path", "input": "C:\\absolute.png", "expected": null },
+    { "label": "nul control", "input": "cover\u0000.png", "expected": null },
+    { "label": "emoji file", "input": "😀.png", "expected": "😀.png" },
+    { "label": "emoji folder", "input": "😀/😀.png", "expected": "😀/😀.png" },
+    { "label": "astral symbol", "input": "𝄞.png", "expected": "𝄞.png" },
+    {
+      "label": "120 emoji plus suffix stays below 240 code points",
+      "input": { "repeat": "😀", "count": 120, "suffix": ".png" },
+      "expected": { "repeat": "😀", "count": 120, "suffix": ".png" }
+    },
+    {
+      "label": "240 emoji is the accepted boundary",
+      "input": { "repeat": "😀", "count": 240 },
+      "expected": { "repeat": "😀", "count": 240 }
+    },
+    {
+      "label": "241 emoji exceeds the boundary",
+      "input": { "repeat": "😀", "count": 241 },
+      "expected": null
+    },
+    {
+      "label": "240 ASCII characters is the accepted boundary",
+      "input": { "repeat": "a", "count": 240 },
+      "expected": { "repeat": "a", "count": 240 }
+    },
+    {
+      "label": "241 ASCII characters exceeds the boundary",
+      "input": { "repeat": "a", "count": 241 },
+      "expected": null
+    }
+  ],
+  "fingerprintNumbers": [
+    { "label": "zero", "value": 0, "canonical": "0" },
+    { "label": "negative zero", "value": -0, "canonical": "0" },
+    { "label": "one tenth", "value": 0.1, "canonical": "0.1" },
+    {
+      "label": "one third",
+      "value": 0.3333333333333333,
+      "canonical": "0.3333333333333333"
+    },
+    { "label": "micro", "value": 0.000001, "canonical": "0.000001" },
+    { "label": "nano", "value": 0.000000001, "canonical": "1e-9" },
+    {
+      "label": "large",
+      "value": 100000000000000000000,
+      "canonical": "100000000000000000000"
+    },
+    { "label": "huge", "value": 1e21, "canonical": "1e21" },
+    { "label": "negative", "value": -12.5, "canonical": "-12.5" },
+    { "label": "small decimal", "value": 0.00001234, "canonical": "0.00001234" },
+    {
+      "label": "max finite",
+      "value": 1.7976931348623157e308,
+      "canonical": "1.7976931348623157e308"
+    },
+    { "label": "min subnormal", "value": 5e-324, "canonical": "5e-324" }
+  ],
+  "fingerprintNonFinite": [
+    { "label": "NaN", "value": "NaN", "canonical": "null" },
+    { "label": "positive infinity", "value": "Infinity", "canonical": "null" },
+    { "label": "negative infinity", "value": "-Infinity", "canonical": "null" }
+  ],
+  "fingerprintDigests": [
+    {
+      "label": "mixed numeric object",
+      "value": {
+        "tiny": 0.000000001,
+        "large": 100000000000000000000,
+        "third": 0.3333333333333333,
+        "negativeZero": -0
+      },
+      "expected": "3be1f523"
+    }
+  ]
+}

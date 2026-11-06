@@ -1,0 +1,186 @@
+/**
+ * Desktop editor bridge.
+ *
+ * The Go sidecar accepts local MCP and code-cell requests and forwards them to
+ * this WebSocket. The bridge forwards to the mounted editor adapter and leaves
+ * chart reads, cell execution, and commits to that adapter. Every
+ * answered frame is recorded in the shared AI activity log for the inspector
+ * pane. The bridge authenticates with the per-process token the sidecar writes
+ * beside its database. It stays connected so the guide remains readable when
+ * both AI settings are off; the adapter and cell runtime still enforce those
+ * settings for every other request.
+ */
+import { invoke } from "@tauri-apps/api/core";
+import { getMcpApi } from "../../core/edit/mcp/api.ts";
+import { mcpActivity } from "../../core/edit/mcp/activity.ts";
+import { mcpBridgeUrl, parseMcpEndpointFile } from "../../core/edit/mcp/bridgeEndpoint.ts";
+import { getMcpGuide } from "../../core/edit/mcp/guide.ts";
+import { aiServiceOrigin } from "../../core/global/library/client.ts";
+import { isDesktop } from "../../core/platform/environment.ts";
+
+const RECONNECT_MS = 1_500;
+
+/** Reads the sidecar's handshake token through the native file bridge. */
+async function readBridgeToken(origin: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${origin}/api/mcp/endpoint`, { cache: "no-store" });
+    if (!response.ok) {
+      return null;
+    }
+    const payload = (await response.json()) as { path?: unknown };
+    if (typeof payload.path !== "string" || !payload.path) {
+      return null;
+    }
+    const raw = await invoke<ArrayBuffer | number[]>("read_picked_file", { path: payload.path });
+    const bytes = raw instanceof ArrayBuffer ? new Uint8Array(raw) : Uint8Array.from(raw);
+    return parseMcpEndpointFile(new TextDecoder().decode(bytes));
+  } catch {
+    return null;
+  }
+}
+
+/** Connects the editor bridge to the sidecar socket; returns a disposer that closes it. */
+export function installMcpBridge(): () => void {
+  if (!isDesktop()) {
+    return () => {};
+  }
+  let disposed = false;
+  let socket: WebSocket | null = null;
+  let connecting = false;
+  let retry: ReturnType<typeof setTimeout> | null = null;
+
+  /** Drops any scheduled reconnect. */
+  const clearRetry = () => {
+    if (retry) {
+      clearTimeout(retry);
+      retry = null;
+    }
+  };
+
+  /** Schedules one reconnect attempt while the bridge is installed. */
+  const schedule = () => {
+    if (disposed || retry) {
+      return;
+    }
+    retry = setTimeout(() => {
+      retry = null;
+      void connect();
+    }, RECONNECT_MS);
+  };
+
+  /** Stops reconnecting and closes the live socket. */
+  const close = () => {
+    clearRetry();
+    connecting = false;
+    const current = socket;
+    socket = null;
+    current?.close(1000, "bridge-disposed");
+  };
+
+  /** Handles one request frame, records it, and replies on the socket that delivered it. */
+  const answer = async (data: string, current: WebSocket) => {
+    let message: { readonly type?: string; readonly id?: string; readonly request?: unknown };
+    try {
+      message = JSON.parse(data) as typeof message;
+    } catch {
+      return;
+    }
+    if (message.type !== "request" || typeof message.id !== "string") {
+      return;
+    }
+    const request = message.request;
+    const method =
+      request && typeof request === "object" && "method" in request
+        ? (request as { method?: unknown }).method
+        : null;
+    const activity = mcpActivity.begin(request);
+    let response: unknown;
+    try {
+      if (method === "cell.guide" || method === "code.guide") {
+        // The guide follows AI permissions but must be readable before a chart mounts.
+        response = {
+          ok: true,
+          value: { text: getMcpGuide() },
+          revisions: { chartFingerprint: null, diskSnapshot: null, generation: 0 },
+        };
+      } else {
+        const api = getMcpApi();
+        if (!api) {
+          response = {
+            ok: false,
+            error: { code: "unavailable", message: "No editor chart runtime is mounted" },
+            revisions: null,
+          };
+        } else {
+          response = await api.handle(request);
+        }
+      }
+    } catch (error) {
+      response = {
+        ok: false,
+        error: {
+          code: "failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        revisions: null,
+      };
+    }
+    activity.finish(response);
+    // The request belongs to the bridge that delivered it; send the reply on
+    // that socket even if the editor reconnects while the answer is in flight.
+    if (current !== socket || current.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    current.send(JSON.stringify({ type: "response", id: message.id, response }));
+  };
+
+  /** Opens one socket unless a connection is already live; reconnects on close. */
+  const connect = async (): Promise<void> => {
+    if (disposed || connecting || socket) {
+      return;
+    }
+    connecting = true;
+    try {
+      if (disposed) {
+        connecting = false;
+        return;
+      }
+      const origin = aiServiceOrigin();
+      const token = await readBridgeToken(origin);
+      if (disposed || !token) {
+        connecting = false;
+        schedule();
+        return;
+      }
+      const current = new WebSocket(mcpBridgeUrl(origin, token));
+      socket = current;
+      current.addEventListener("open", () => {
+        connecting = false;
+      });
+      current.addEventListener("message", (event) => {
+        if (typeof event.data === "string") {
+          void answer(event.data, current);
+        }
+      });
+      current.addEventListener("close", () => {
+        if (socket === current) {
+          socket = null;
+        }
+        connecting = false;
+        schedule();
+      });
+      current.addEventListener("error", () => {
+        current.close();
+      });
+    } catch {
+      connecting = false;
+      schedule();
+    }
+  };
+
+  void connect();
+  return () => {
+    disposed = true;
+    close();
+  };
+}

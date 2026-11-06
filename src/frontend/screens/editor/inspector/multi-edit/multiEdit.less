@@ -1,0 +1,54 @@
+// Multi-edit pane styling: the preview toggle, feedback, the apply row, and
+// the applied-parameter history.
+//
+// Apply is the pane's only commit action, so it gets its own centered row; the
+// history scrolls instead of growing and pushing the form off screen.
+
+// Apply is the panel's one commit action and belongs at the bottom-right.
+.batch-apply {
+  margin-top: var(--space-3);
+}
+
+// Applied parameter sets, newest first. The strip scrolls instead of growing:
+// a long history must not push the form's controls off screen.
+.batch-history {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-2);
+}
+
+.batch-history-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.batch-history-tab {
+  max-width: 100%;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: var(--app-cursor-pointer);
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--foreground);
+  }
+
+  &.is-selected {
+    border-color: var(--accent);
+    background: var(--active-accent-fill);
+    color: var(--foreground);
+  }
+}
+
+.batch-history-empty {
+  margin: 0;
+}

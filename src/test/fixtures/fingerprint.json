@@ -1,0 +1,83 @@
+{
+  "generatedBy": "src/test/makeFixtures.mjs",
+  "contract": "Assert the semantics below. Hashes are a drift alarm, not a requirement.",
+  "image": {
+    "file": "smoke.png",
+    "width": 128,
+    "height": 128,
+    "probes": [
+      {
+        "at": [0, 0],
+        "rgba": [255, 255, 0, 255]
+      },
+      {
+        "at": [127, 0],
+        "rgba": [0, 255, 255, 255]
+      },
+      {
+        "at": [0, 127],
+        "rgba": [255, 0, 255, 255]
+      },
+      {
+        "at": [127, 127],
+        "rgba": [255, 255, 255, 255]
+      },
+      {
+        "at": [32, 32],
+        "rgba": [255, 0, 0, 255]
+      },
+      {
+        "at": [96, 32],
+        "rgba": [0, 255, 0, 255]
+      },
+      {
+        "at": [32, 96],
+        "rgba": [0, 0, 255, 255]
+      },
+      {
+        "at": [96, 96],
+        "rgba": [255, 255, 255, 255]
+      },
+      {
+        "at": [64, 64],
+        "rgba": [0, 0, 0, 0]
+      }
+    ],
+    "bytes": 416,
+    "sha256": "6144577f553e765d28684390dfbcfc962c1a5cb94f31b3275c2347bc56508ca3"
+  },
+  "audio": {
+    "file": "smoke.wav",
+    "sampleRate": 22050,
+    "channels": 2,
+    "bitsPerSample": 16,
+    "frames": 88200,
+    "durationSeconds": 4,
+    "tones": [441, 294],
+    "peak": 0.4998779296875,
+    "energy": {
+      "leftAt441": 0.25,
+      "leftAt294": 0,
+      "rightAt441": 0,
+      "rightAt294": 0.25
+    },
+    "bytes": 352844,
+    "sha256": "95a0025e850e453670532554e0d16293e2d19291b5b7ad56ee9c9348f5408ec1"
+  },
+  "chart": {
+    "file": "smoke.json",
+    "lines": 3,
+    "notes": 6,
+    "scoringNotes": 5,
+    "bpmEntries": 2,
+    "song": "smoke.wav",
+    "background": "smoke.png",
+    "sha256": "b5e859aff8dc556a4d4ad010a7a4254d1a8182ec17cdeefddcebb46d376fd293"
+  },
+  "package": {
+    "file": "smoke.pez",
+    "entries": ["Info.txt", "smoke.json", "smoke.png", "smoke.wav"],
+    "bytes": 3811,
+    "sha256": "e3556ead14b978b6001c8369bb38bb4825c376fd2ac4b5f8ed95488a9b39d986"
+  }
+}

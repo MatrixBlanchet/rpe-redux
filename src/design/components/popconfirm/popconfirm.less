@@ -1,0 +1,67 @@
+// Anchored confirmation popover. Its transform origin is the trigger's centre,
+// set inline by `Popconfirm.tsx`; the surface therefore grows out of the
+// control instead of falling from the viewport edge.
+
+.redux-popconfirm {
+  position: fixed;
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(300px, calc(100vw - 16px));
+  padding: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: var(--shadow-overlay-popover);
+  opacity: 0;
+  transform: scale(0.94);
+  transform-origin: var(--popconfirm-origin-x, 50%) var(--popconfirm-origin-y, 0%);
+  transition:
+    opacity var(--design-dur-tint) ease,
+    transform var(--design-dur-disclosure) var(--design-ease-enter);
+  &[data-state="open"] {
+    opacity: 1;
+    transform: scale(1);
+  }
+  &[data-state="closing"] {
+    opacity: 0;
+    transform: scale(0.96);
+    pointer-events: none;
+    transition-duration: var(--design-dur-exit);
+    transition-timing-function: var(--design-ease-exit);
+  }
+}
+
+.redux-popconfirm-heading strong {
+  display: block;
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: var(--line-label);
+}
+
+.redux-popconfirm-description {
+  margin: 0;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  line-height: var(--line-body);
+}
+
+// The panel owns the vertical rhythm, so a field row does not add its own
+// trailing margin inside the popover.
+.redux-popconfirm > .redux-field-row {
+  margin-bottom: 0;
+}
+
+.redux-popconfirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.redux-popconfirm-actions .redux-button {
+  min-height: var(--control-height-compact);
+  padding-inline: var(--space-3);
+}

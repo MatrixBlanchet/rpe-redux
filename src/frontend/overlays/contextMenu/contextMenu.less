@@ -1,0 +1,51 @@
+// Shared popup-menu styles for pointer context menus: project cards and the
+// timeline menu. The title bar draws its own anchored application menu sheet.
+
+.redux-menu-popup {
+  position: fixed;
+  margin: 0;
+  padding: var(--space-1);
+  border-radius: var(--radius-panel);
+  background: var(--popover-surface);
+  color: var(--foreground);
+  border: 1px solid var(--popover-border);
+  box-shadow: var(--popover-shadow);
+  width: 304px;
+  max-height: calc(100vh - 16px);
+  // The menu owns the wheel while the pointer is over it; a long action list
+  // scrolls itself and never chains into the canvas or timeline behind.
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  transform-origin: top left;
+  animation: redux-menu-in var(--design-dur-tint) var(--design-ease-enter) both;
+
+  .redux-kbd {
+    color: var(--foreground-muted);
+  }
+}
+
+@keyframes redux-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-menu-popup {
+    animation: none;
+  }
+}
+
+.redux-rich-tooltip {
+  position: fixed;
+  margin: 0;
+  // The shared tooltip joins the overlay elevation family at its own weight.
+  box-shadow: var(--shadow-overlay-tooltip);
+}

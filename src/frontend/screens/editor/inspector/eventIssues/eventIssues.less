@@ -1,0 +1,60 @@
+// Chart issue rows: compact metadata with one locate action that appears only
+// while the row is hovered or contains keyboard focus.
+.event-issues-panel {
+  display: grid;
+}
+
+.event-issues-list {
+  display: grid;
+}
+
+.event-issues-list > .redux-divider {
+  background: var(--border-subtle);
+}
+
+.event-issue-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  cursor: var(--app-cursor-default);
+}
+
+.event-issue-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.event-issue-title {
+  overflow: hidden;
+  font-size: var(--type-label);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-issue-meta {
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+}
+
+.event-issue-locate {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--design-dur-tint) ease;
+}
+
+.event-issue-row:hover .event-issue-locate,
+.event-issue-row:focus-within .event-issue-locate {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .event-issue-locate {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}

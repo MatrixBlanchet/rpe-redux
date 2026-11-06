@@ -1,0 +1,41 @@
+// The authoring canvases sit over the rendered preview.
+//
+// `#realtime-preview` covers the whole stage (`preview.less`) and the authoring
+// surface is transparent, so the render reads through the surface you edit on.
+// The workspace always carries `redux-stage-overlay`; the preview is the
+// workspace underlay rather than a pane that can be hidden behind the editor.
+//
+// Extension overlays sit above the authoring canvases so a package can draw
+// against the live preview, but below the shell's notices and timeline markers.
+
+@import (reference) "../../../../../../design/styles/palette.less";
+
+.redux-app-root .workspace.redux-stage-overlay .canvases {
+  background: transparent;
+}
+
+// Extension overlays sit above the authoring canvases so a package can draw
+// against the live preview, but below the shell's notices and timeline markers.
+// The host layer never captures pointer input; an overlay opts in on the child
+// that needs it.
+.extension-overlays {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+// Window-scoped Extension overlays can place content over the toolbar and
+// inspector. They stay below the modal scrim and above the editor shell.
+.extension-window-overlays {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-extension);
+  pointer-events: none;
+}
+
+.extension-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

@@ -1,0 +1,105 @@
+/* Shared transport anatomy for the audio and video players: the play button,
+   the seek rail, the time readout, and their focus and drag states. Feature
+   players own their frame and overlay; this sheet owns the controls inside it. */
+
+.redux-media-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.redux-media-button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--foreground);
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-media-button:hover {
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+
+.redux-media-button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.redux-media-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 18px;
+  cursor: var(--app-cursor-pointer);
+}
+
+.redux-media-track::before {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 24%, transparent);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.redux-media-track-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  transform: translateY(-50%);
+}
+
+.redux-media-track-thumb {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--foreground);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity var(--design-dur-tint) var(--design-ease-enter);
+}
+
+.redux-media-track:hover .redux-media-track-thumb,
+.redux-media-track:focus-visible .redux-media-track-thumb,
+.redux-media-controls[data-dragging="true"] .redux-media-track-thumb {
+  opacity: 1;
+}
+
+.redux-media-track:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.redux-media-track[aria-disabled="true"] {
+  cursor: default;
+}
+
+.redux-media-time {
+  flex: none;
+  min-width: 2.9em;
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redux-media-track-thumb {
+    transition: none;
+  }
+}

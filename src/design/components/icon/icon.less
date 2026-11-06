@@ -1,0 +1,26 @@
+// Glyphs are PNG alpha masks; the surface owns the ink. The element paints one
+// theme token through the mask, so one glyph set works on the dark canvas, the
+// light canvas, and every accent or semantic button in between. The baked RGB is
+// ignored, which is why a package does not need a light and a dark copy. The ink
+// follows the action tint so a hover, press, toggle, or theme swap fades instead
+// of snapping while the surrounding surface is already transitioning.
+.redux-icon {
+  display: block;
+  flex: none;
+  pointer-events: none;
+  background-color: var(--icon-color, var(--foreground));
+  transition: background-color var(--design-dur-tint) var(--design-ease-move);
+  mask-image: var(--redux-icon);
+  -webkit-mask-image: var(--redux-icon);
+  mask-position: center;
+  -webkit-mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-size: 100%;
+  -webkit-mask-size: 100%;
+}
+
+// Compatibility class for extension markup: paints the glyph with accent ink.
+.redux-icon.redux-icon-tinted {
+  --icon-color: var(--accent);
+}

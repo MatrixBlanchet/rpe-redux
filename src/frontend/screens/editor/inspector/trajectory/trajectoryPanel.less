@@ -1,0 +1,129 @@
+// Rules split out of the pre-refactor monolithic sheets (base.less, theme.less,
+// shell.less, settings.less — all four are gone). They keep their original
+// relative order; cascade position is fixed by src/design/styles/index.less.
+
+.trajectory-preview {
+  display: block;
+  width: calc(100% - 24px);
+  height: 180px;
+  margin: var(--space-3);
+  border: 1px solid var(--border-strong);
+}
+
+.trajectory-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.trajectory-preset-grid > button {
+  min-width: 0;
+  padding: var(--space-1);
+  white-space: normal;
+}
+
+.trajectory-preset-grid > button[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.trajectory-preset-grid > button canvas {
+  height: 65px;
+  width: 100%;
+  margin-bottom: var(--space-1);
+}
+
+.trajectory-preset-editor {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: var(--space-3) 0;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-strong);
+}
+
+.trajectory-preset-editor > strong,
+.trajectory-preset-editor > button {
+  margin: var(--space-2) var(--space-3);
+}
+
+.trajectory-preset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-2) var(--space-3);
+}
+
+.trajectory-preset-actions button {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.trajectory-preset-source {
+  width: calc(100% - 24px);
+  min-height: 230px;
+  margin: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+  box-sizing: border-box;
+}
+
+.trajectory-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#trajectory-editor .error {
+  color: var(--danger);
+}
+
+[data-panel="trajectory"]:not([hidden]) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#trajectory-editor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.trajectory-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: var(--space-3);
+}
+
+.trajectory-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: 1px solid var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.trajectory-seed {
+  display: flex;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.trajectory-seed input {
+  flex: 1;
+  width: 0;
+}
+
+.trajectory-seed button {
+  flex: 0 0 30px;
+  padding: var(--space-1);
+  font-size: var(--glyph-size-sm);
+}

@@ -1,0 +1,290 @@
+// Note-skin settings styles: the skin picker, asset previews, and their empty
+// states.
+
+@import (reference) "../../../../design/styles/tokens.less";
+
+// The note-skin page: one selection row followed by the texture families. The
+// page owns no card grid of its own — previews are the only place where an
+// image is shown at its own aspect ratio.
+.redux-skin {
+  display: grid;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+
+.redux-skin-current {
+  margin-top: 0;
+}
+
+.redux-skin-previews {
+  display: grid;
+  gap: var(--space-4);
+}
+
+// Match the settings row inset: section headings and their previews start on
+// the same line as the page title and the field labels above them.
+.redux-skin-preview-section {
+  padding: 0 var(--space-3);
+
+  h3 {
+    margin: 0;
+    color: var(--foreground-muted);
+    font-size: var(--type-label);
+    font-weight: 500;
+  }
+}
+
+.redux-skin-preview-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.redux-skin-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--space-2);
+}
+
+.redux-skin-preview-asset {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-2);
+  img {
+    display: block;
+    width: 100%;
+    height: 52px;
+    object-fit: contain;
+  }
+  figcaption {
+    overflow: hidden;
+    color: var(--foreground-muted);
+    font-family: var(--font-mono);
+    font-size: var(--type-caption);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// The image well is the skeleton's positioning context. Keeping the caption
+// outside it lets the name stay readable while its texture decodes.
+.redux-skin-preview-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 52px;
+  overflow: hidden;
+}
+
+.redux-skin-particle-list {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: var(--space-2);
+  .redux-skin-preview-asset {
+    min-width: 0;
+  }
+  img {
+    height: 56px;
+  }
+}
+
+.redux-skin-bar-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 96px;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--control-on-surface);
+  .redux-skin-bar-media {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+  }
+  img {
+    display: block;
+    min-width: 0;
+    object-fit: contain;
+  }
+  figcaption {
+    flex: none;
+    color: var(--foreground-muted);
+    font-family: var(--font-mono);
+    font-size: var(--type-caption);
+  }
+  // The event texture is a tall slice of the bar; the judge-line texture is a
+  // 4000x5 strip. Each is shown at the size that makes its subject readable.
+  &[data-asset="event_bar"] img {
+    height: 88px;
+    width: auto;
+  }
+  &[data-asset="line"] img {
+    width: 100%;
+    height: 5px;
+  }
+}
+
+// Three hit sounds share one row of equal-width buttons; auto-fit keeps them
+// side by side on a wide page and wraps them once the window narrows.
+.redux-skin-sounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: var(--space-2);
+}
+
+// One sound is one button: the name on the left, the play/pause glyph on the
+// right, and a progress fill painted under both. The fill uses the theme's
+// playing-indicator green so it reads as playback on every palette.
+.redux-skin-sound-player {
+  min-width: 0;
+}
+
+button.redux-skin-sound {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--control-on-surface);
+  color: var(--foreground);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--redux-skin-sound-progress, 0%);
+    background: color-mix(in srgb, var(--playing-indicator) 30%, transparent);
+    pointer-events: none;
+  }
+
+  &.is-playing {
+    border-color: color-mix(in srgb, var(--playing-indicator) 55%, var(--panel-border));
+  }
+
+  &.is-finished::before {
+    animation: redux-skin-sound-fade var(--design-dur-search) var(--design-ease-exit) forwards;
+  }
+
+  &:hover:not(:disabled),
+  &:active:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--control-on-surface);
+  }
+
+  // While the skeleton is up, nothing is actionable yet; keep the shared
+  // shimmer at full strength instead of the disabled-control fade.
+  &:disabled {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+.redux-skin-sound-name,
+.redux-skin-sound-icon {
+  position: relative;
+  min-width: 0;
+}
+
+@keyframes redux-skin-sound-fade {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.redux-skin-sound-name {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redux-skin-sound-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+// Page-level skeletons keep the preview layout stable while the skin pack is
+// read; once it arrives, each asset swaps from its own skeleton to its content.
+.redux-skin-loading {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--control-on-surface);
+}
+
+.redux-skin-loading-tile {
+  height: 92px;
+}
+
+.redux-skin-loading-particle {
+  height: 76px;
+}
+
+.redux-skin-loading-bar {
+  height: 96px;
+}
+
+.redux-skin-loading-sound {
+  min-height: var(--control-height);
+}
+
+.redux-skin-missing {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--radius-control);
+  color: var(--foreground-muted);
+  font-size: var(--type-caption);
+  width: fit-content;
+}
+
+.redux-skin-warning {
+  margin: 0;
+}
+
+.redux-skin-error {
+  margin: 0;
+}
+
+.redux-skin-empty {
+  margin: 0;
+  padding: var(--space-5);
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--radius-control);
+  color: var(--foreground-muted);
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .redux-skin-particle-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .redux-skin-preview-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
