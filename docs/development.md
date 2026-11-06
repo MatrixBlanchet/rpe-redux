@@ -39,7 +39,8 @@ A good first hour looks like this:
 2. Read [Architecture](architecture.md) for the layers, then `frontend/app/`
    (`App`, `Shell`, `Workbench`) for how the window is composed.
 3. Follow one feature from registry to surface in [Repository tour](#repository-tour).
-4. Add a focused unit test in `src/test/` and run `npm run test:unit`; add the
+4. Add a focused unit test in the matching `src/test/<topic>/` folder and run
+   `npm run test:unit`; add the
    desktop check only after the source gate is green.
 
 ## Prerequisites

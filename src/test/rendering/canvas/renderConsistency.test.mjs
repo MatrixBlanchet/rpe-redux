@@ -1,0 +1,377 @@
+/** Verifies render-cache, opacity, and WebGL context-recovery contracts. */
+import assert from "node:assert/strict";
+import test from "node:test";
+import { measureCanvas } from "../../../frontend/screens/editor/canvas/canvas2d.ts";
+import { NoteBatch } from "../../../frontend/screens/editor/canvas/noteBatch.ts";
+import {
+  noteSkewAtHit,
+  noteSkewCurve,
+  noteSkewShear,
+} from "../../../frontend/screens/editor/canvas/noteGeometry.ts";
+import {
+  holdFallbackAlpha,
+  isPreviewNoteSelected,
+  previewNoteTint,
+  shouldHighlightPreviewNote,
+} from "../../../frontend/screens/editor/workspace/preview/drawing/previewLines.ts";
+import {
+  drawEventBar,
+  eventBarOpacity,
+} from "../../../frontend/screens/editor/workspace/timeline/events/eventRenderCache.ts";
+import { TimelineEventBatch } from "../../../frontend/screens/editor/workspace/timeline/events/timelineEventBatch.ts";
+import { EditorRenderScheduler } from "../../../frontend/screens/editor/workspace/runtime/frame/renderScheduler.ts";
+
+/** A canvas and WebGL2 stub that tracks listeners and draw calls. */
+function fakeWebGLCanvas() {
+  const listeners = new Map();
+  let lost = false;
+  const calls = { draws: 0, uploads: [] };
+  const noop = () => {};
+  const gl = new Proxy(
+    {
+      VERTEX_SHADER: 1,
+      FRAGMENT_SHADER: 2,
+      COMPILE_STATUS: 3,
+      LINK_STATUS: 4,
+      ARRAY_BUFFER: 5,
+      STATIC_DRAW: 6,
+      STREAM_DRAW: 7,
+      TEXTURE_2D: 8,
+      TEXTURE_MIN_FILTER: 9,
+      TEXTURE_MAG_FILTER: 10,
+      TEXTURE_WRAP_S: 11,
+      TEXTURE_WRAP_T: 12,
+      LINEAR: 13,
+      CLAMP_TO_EDGE: 14,
+      BLEND: 15,
+      SRC_ALPHA: 16,
+      ONE_MINUS_SRC_ALPHA: 17,
+      COLOR_BUFFER_BIT: 18,
+      SCISSOR_TEST: 19,
+      TRIANGLE_STRIP: 20,
+      FLOAT: 21,
+      TEXTURE0: 22,
+      isContextLost: () => lost,
+      getShaderParameter: () => true,
+      getProgramParameter: () => true,
+      getShaderInfoLog: () => "",
+      getUniformLocation: () => null,
+      getAttribLocation: () => 0,
+      createShader: () => ({}),
+      createProgram: () => ({}),
+      createBuffer: () => ({}),
+      createTexture: () => ({}),
+      drawArraysInstanced: () => {
+        calls.draws += 1;
+      },
+      bufferSubData: (_target, _offset, data) => {
+        calls.uploads.push(Array.from(data));
+      },
+    },
+    {
+      get(target, property) {
+        if (property in target) {
+          return target[property];
+        }
+        return noop;
+      },
+    },
+  );
+  const canvas = {
+    width: 0,
+    height: 0,
+    clientWidth: 100,
+    clientHeight: 100,
+    getContext: (type) => (type === "webgl2" ? gl : null),
+    addEventListener: (type, listener) => {
+      const current = listeners.get(type) ?? [];
+      current.push(listener);
+      listeners.set(type, current);
+    },
+    removeEventListener: (type, listener) => {
+      listeners.set(
+        type,
+        (listeners.get(type) ?? []).filter((candidate) => candidate !== listener),
+      );
+    },
+    dispatch(type) {
+      const event = {
+        type,
+        defaultPrevented: false,
+        preventDefault() {
+          this.defaultPrevented = true;
+        },
+      };
+      if (type === "webglcontextlost") {
+        lost = true;
+      } else if (type === "webglcontextrestored") {
+        lost = false;
+      }
+      for (const listener of listeners.get(type) ?? []) {
+        listener(event);
+      }
+      return event;
+    },
+  };
+  return { canvas, calls };
+}
+
+const textureSource = {
+  naturalWidth: 8,
+  naturalHeight: 8,
+  width: 8,
+  height: 8,
+};
+const descriptor = {
+  source: textureSource,
+  useful: { x: 0, y: 0, width: 8, height: 8 },
+};
+
+test("GPU event bars carry the per-line opacity alongside the global alpha", () => {
+  const { canvas, calls } = fakeWebGLCanvas();
+  const batch = new TimelineEventBatch(canvas);
+  const skin = { eventBarTexture: () => descriptor };
+  assert.equal(batch.begin(100, 100, skin, eventBarOpacity(0.8)), true);
+  assert.equal(batch.add({ x: 1, y: 2, width: 10, height: 20 }, 0.5), true);
+  assert.equal(batch.alpha, 0.8);
+  assert.equal(batch.instances[8], 0.5);
+  batch.finish();
+  assert.equal(calls.draws, 1);
+});
+
+test("event-bar opacity matches between the canvas fallback and the batch", () => {
+  assert.equal(eventBarOpacity(undefined), 1);
+  assert.equal(eventBarOpacity(0.8, 0.5), 0.4);
+  assert.equal(eventBarOpacity(1, 0.25), 0.25);
+  const calls = [];
+  const receiver = {
+    eventBatch: {
+      add(_rectangle, alpha) {
+        calls.push(alpha);
+        return true;
+      },
+    },
+    appearance: { skin: null },
+  };
+  drawEventBar(receiver, {}, { x: 0, y: 0, width: 4, height: 8 }, 0.5);
+  assert.deepEqual(calls, [0.5]);
+});
+
+test("Hold fallback keeps the body and head alpha identical", () => {
+  assert.equal(holdFallbackAlpha(1, 0.5), 0.5);
+  assert.equal(holdFallbackAlpha(0.4, 0.5), 0.2);
+  assert.equal(holdFallbackAlpha(2, 0.5), 0.5);
+});
+
+test("note skew shear is one degree-to-shear conversion for both renderers", () => {
+  assert.equal(noteSkewShear(0), 0);
+  assert.ok(Math.abs(noteSkewShear(45) - 1) < 1e-12);
+  assert.ok(Math.abs(noteSkewShear(-45) + 1) < 1e-12);
+  assert.equal(noteSkewShear(12.5), Math.tan((12.5 * Math.PI) / 180));
+});
+
+test("timeline skew samples the line control where the note meets the line", () => {
+  const curve = noteSkewCurve({
+    skewControl: [
+      { x: 0, skew: 0.5 },
+      { x: 100, skew: 1.5 },
+    ],
+  });
+  assert.ok(curve);
+  assert.equal(noteSkewAtHit(curve, { type: 1, positionX: 40, yOffset: 0 }), 20);
+  assert.equal(noteSkewAtHit(curve, { type: 1, positionX: 40, yOffset: 100 }), 60);
+  assert.equal(noteSkewAtHit(curve, { type: 2, positionX: 40, yOffset: 100 }), 0);
+  assert.equal(
+    noteSkewAtHit(noteSkewCurve({ skewControl: [{ x: 0, skew: 5 }] }), {
+      type: 1,
+      positionX: 40,
+      yOffset: 0,
+    }),
+    0,
+  );
+  assert.equal(noteSkewAtHit(null, { type: 1, positionX: 40, yOffset: 0 }), 0);
+});
+
+test("canvas measurement is cached until the size or pixel ratio changes", () => {
+  const canvas = {
+    clientWidth: 320,
+    clientHeight: 180,
+    rectCalls: 0,
+    getBoundingClientRect() {
+      this.rectCalls += 1;
+      return { width: this.clientWidth + 0.5, height: this.clientHeight + 0.25 };
+    },
+  };
+  const initial = measureCanvas(canvas);
+  assert.equal(initial.width, 320.5);
+  assert.equal(initial.height, 180.25);
+  assert.equal(canvas.rectCalls, 1);
+  const cached = measureCanvas(canvas);
+  assert.equal(cached.width, 320.5);
+  assert.equal(cached.height, 180.25);
+  assert.equal(canvas.rectCalls, 1);
+  canvas.clientWidth = 640;
+  canvas.clientHeight = 360;
+  const resized = measureCanvas(canvas);
+  assert.equal(resized.width, 640.5);
+  assert.equal(resized.height, 360.25);
+  assert.equal(canvas.rectCalls, 2);
+  const originalRatio = globalThis.devicePixelRatio;
+  try {
+    globalThis.devicePixelRatio = (originalRatio || 1) + 1;
+    const ratioChanged = measureCanvas(canvas);
+    assert.equal(ratioChanged.width, 640.5);
+    assert.equal(ratioChanged.height, 360.25);
+    assert.equal(canvas.rectCalls, 3);
+  } finally {
+    globalThis.devicePixelRatio = originalRatio;
+  }
+});
+
+test("event batch degrades to canvas while the context is lost and rebuilds on restore", () => {
+  const { canvas, calls } = fakeWebGLCanvas();
+  const batch = new TimelineEventBatch(canvas);
+  const skin = { eventBarTexture: () => descriptor };
+  batch.begin(100, 100, skin, 1);
+  assert.equal(batch.isActive(), true);
+  const lost = canvas.dispatch("webglcontextlost");
+  assert.equal(lost.defaultPrevented, true);
+  assert.equal(batch.isContextLost(), true);
+  assert.equal(batch.isActive(), false);
+  assert.equal(batch.begin(100, 100, skin, 1), true);
+  assert.equal(batch.isActive(), false);
+  assert.equal(batch.add({ x: 0, y: 0, width: 10, height: 10 }), false);
+  batch.finish();
+  assert.equal(calls.draws, 0);
+  canvas.dispatch("webglcontextrestored");
+  assert.equal(batch.isContextLost(), false);
+  batch.begin(100, 100, skin, 1);
+  assert.equal(batch.isActive(), true);
+  assert.equal(batch.add({ x: 0, y: 0, width: 10, height: 10 }), true);
+  batch.finish();
+  assert.equal(calls.draws, 1);
+});
+
+test("note batch degrades to canvas while the context is lost and rebuilds on restore", () => {
+  const { canvas, calls } = fakeWebGLCanvas();
+  const batch = new NoteBatch(canvas);
+  const skin = {
+    noteTexture: () => descriptor,
+    holdBodyTexture: () => descriptor,
+    holdHeadTexture: () => descriptor,
+    holdEndTexture: () => descriptor,
+  };
+  batch.begin(100, 100, skin);
+  assert.equal(batch.isActive(), true);
+  assert.equal(batch.addHead(skin, 1, false, 50, 50, 8, 0, 0, 1), true);
+  const lost = canvas.dispatch("webglcontextlost");
+  assert.equal(lost.defaultPrevented, true);
+  assert.equal(batch.isContextLost(), true);
+  assert.equal(batch.isActive(), false);
+  assert.equal(batch.addHead(skin, 1, false, 50, 50, 8, 0, 0, 1), false);
+  batch.finish();
+  assert.equal(calls.draws, 0);
+  canvas.dispatch("webglcontextrestored");
+  assert.equal(batch.isContextLost(), false);
+  batch.begin(100, 100, skin);
+  assert.equal(batch.isActive(), true);
+  assert.equal(batch.addHead(skin, 1, false, 50, 50, 8, 0, 0, 1), true);
+  batch.finish();
+  assert.equal(calls.draws, 1);
+});
+
+test("selected note instances render after ordinary instances", () => {
+  const { canvas, calls } = fakeWebGLCanvas();
+  const batch = new NoteBatch(canvas);
+  const skin = {
+    noteTexture: () => descriptor,
+    holdBodyTexture: () => descriptor,
+    holdHeadTexture: () => descriptor,
+    holdEndTexture: () => descriptor,
+  };
+
+  batch.begin(100, 100, skin);
+  assert.equal(batch.addHead(skin, 1, false, 50, 50, 8, 0, 0, 1), true);
+  assert.equal(
+    batch.addHead(skin, 1, false, 50, 50, 8, 0, 0, 1, { mode: "selected", color: [0, 200, 0] }),
+    true,
+  );
+  batch.finish();
+
+  assert.equal(calls.uploads.length, 2);
+  assert.equal(calls.uploads[0][14], 0);
+  assert.equal(calls.uploads[1][14], 1);
+});
+
+test("authored green tint stays in multiply mode while selected green uses recoloring", () => {
+  const { canvas, calls } = fakeWebGLCanvas();
+  const batch = new NoteBatch(canvas);
+  const skin = {
+    noteTexture: () => descriptor,
+    holdBodyTexture: () => descriptor,
+    holdHeadTexture: () => descriptor,
+    holdEndTexture: () => descriptor,
+  };
+  batch.begin(100, 100, skin);
+  batch.addHead(skin, 1, false, 20, 20, 8, 0, 0, 1, { mode: "tint", color: [0, 200, 0] });
+  batch.addHead(skin, 1, false, 40, 40, 8, 0, 0, 1, { mode: "selected", color: [0, 200, 0] });
+  batch.finish();
+  assert.equal(calls.uploads[0][14], 0);
+  assert.equal(calls.uploads[1][14], 1);
+  assert.equal(calls.uploads[0][12], calls.uploads[1][12]);
+});
+
+test("ordinary preview notes keep their authored tint", () => {
+  assert.deepEqual(previewNoteTint({ tint: [12, 34, 56], color: [90, 80, 70] }), [12, 34, 56]);
+  assert.deepEqual(previewNoteTint({ color: [90, 80, 70] }), [90, 80, 70]);
+  assert.equal(previewNoteTint({}), undefined);
+});
+
+test("preview selection resolves note indexes without changing their render kind", () => {
+  const selected = new Map([[2, new Set([4])]]);
+  assert.equal(isPreviewNoteSelected(selected, 2, 4), true);
+  assert.equal(isPreviewNoteSelected(selected, 2, 5), false);
+  assert.equal(isPreviewNoteSelected(selected, 1, 4), false);
+});
+
+test("preview selection does not enable the simultaneous-note highlight skin", () => {
+  const note = { type: 1 };
+  const surface = {
+    highlight: true,
+    simultaneous: new Set(),
+  };
+  const selectedEntry = { note, noteIndex: 4 };
+  assert.equal(shouldHighlightPreviewNote(surface, selectedEntry), false);
+
+  surface.simultaneous.add(note);
+  assert.equal(shouldHighlightPreviewNote(surface, selectedEntry), true);
+});
+
+test("a paused, unchanged frame does not repaint the playhead", () => {
+  const scheduler = new EditorRenderScheduler();
+  const request = {
+    now: 0,
+    seconds: 0,
+    playing: false,
+    previewVisible: false,
+    previewHighDensity: false,
+    contentRefreshRate: 144,
+    timelineRevision: 1,
+    viewportOrigin: 0,
+    previewChart: {},
+    previewRevision: 0,
+    previewSession: null,
+    previewSelection: null,
+    authoringRegionVisible: true,
+  };
+  const adapter = { paint() {} };
+  const first = scheduler.tick(request, adapter);
+  assert.equal(first.work.timeline, true);
+  assert.equal(first.work.playhead, true);
+  const idle = scheduler.tick({ ...request, now: 1000 / 144 }, adapter);
+  assert.equal(idle.work.timeline, false);
+  assert.equal(idle.work.playhead, false);
+  assert.equal(idle.status, "hidden");
+  const moved = scheduler.tick({ ...request, now: 2000 / 144, seconds: 0.1 }, adapter);
+  assert.equal(moved.work.playhead, true);
+});

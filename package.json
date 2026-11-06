@@ -19,7 +19,7 @@
     "build:web": "vite build",
     "build:server": "node src/backend/build.ts",
     "docs:build": "node scripts/buildDocsSite.mjs",
-    "test:unit": "node --test \"src/test/*.test.mjs\"",
+    "test:unit": "node --test \"src/test/**/*.test.mjs\"",
     "smoke": "node scripts/smoke.mjs",
     "icons:build": "node scripts/buildThemeIcons.mjs",
     "icons:check": "node scripts/checkThemeIcons.mjs",
