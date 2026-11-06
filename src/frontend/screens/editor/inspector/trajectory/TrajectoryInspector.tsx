@@ -14,7 +14,7 @@ export function TrajectoryInspector() {
     null as TrajectoryPanelSnapshot | null,
   );
   return (
-    <div id="trajectory-editor">
+    <div className="trajectory-editor">
       {trajectoryPanel &&
         createElement(trajectoryPanel.component, {
           ...trajectoryPanel.props,

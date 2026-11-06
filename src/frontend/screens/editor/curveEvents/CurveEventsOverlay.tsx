@@ -69,6 +69,7 @@ import { useCurveOverlayKeyboard } from "./useCurveOverlayKeyboard.ts";
 import { useCurveToolDock } from "./useCurveToolDock.ts";
 import { samplePreviewMarker } from "./previewSampling.ts";
 import { applyCurveWheelZoom } from "./curveWheel.ts";
+import { useTimelineDomSurface } from "../workspace/timeline/surface/TimelineDomSurface.tsx";
 
 /** Tools that create a path; path handles remain hidden while one is active. */
 const CREATION_TOOLS: ReadonlySet<CurveTool> = new Set(
@@ -102,6 +103,9 @@ function sameHandle(left: OverlayHandle | null, right: OverlayHandle | null): bo
 
 /** Stage overlay for curve authoring: paints the draft, handles pointer tools, and hosts the tool dock. */
 export function CurveEventsOverlay() {
+  const {
+    refs: { stage },
+  } = useTimelineDomSurface();
   const runtime = useEditorRuntime();
   const active = useSyncExternalStore(
     curvePreviewMode.subscribe,
@@ -241,7 +245,7 @@ export function CurveEventsOverlay() {
       unsubscribe();
       restoreFreeCamera(previous);
     };
-  }, [active]);
+  }, [active, stage]);
 
   // A mode switch must not leave a half-finished draft or connector behind.
   useEffect(
@@ -377,7 +381,7 @@ export function CurveEventsOverlay() {
     // filter keeps wheels over the inspector and other surfaces untouched.
     const wheel = (event: WheelEvent) => {
       const target = event.target;
-      if (!(target instanceof Element) || !target.closest("#stage")) {
+      if (!(target instanceof Element) || !stage.current?.contains(target)) {
         return;
       }
       event.preventDefault();
@@ -400,7 +404,7 @@ export function CurveEventsOverlay() {
     };
     window.addEventListener("wheel", wheel, { capture: true, passive: false });
     return () => window.removeEventListener("wheel", wheel, { capture: true });
-  }, [active]);
+  }, [active, stage]);
 
   /** Clear path and segment selection plus transient hover state. */
   function clearSelection(): void {

@@ -28,18 +28,18 @@
 
 // A multi-line note field never shows the event field, and the reverse; the
 // overview strips frame whichever field is active.
-.editor.multi-notes #events,
-.editor.multi-notes #events-backdrop,
-.editor.multi-notes #events-playhead,
-.editor.multi-notes #events-batch,
-.editor.multi-notes #layer {
+.editor.multi-notes .timeline-events,
+.editor.multi-notes .timeline-events-backdrop,
+.editor.multi-notes .timeline-events-playhead,
+.editor.multi-notes .timeline-event-batch,
+.editor.multi-notes .layer-buttons {
   display: none;
 }
 
-.editor.multi-events #notes,
-.editor.multi-events #notes-backdrop,
-.editor.multi-events #notes-playhead,
-.editor.multi-events #notes-batch {
+.editor.multi-events .timeline-notes,
+.editor.multi-events .timeline-notes-backdrop,
+.editor.multi-events .timeline-notes-playhead,
+.editor.multi-events .timeline-note-batch {
   display: none;
 }
 
@@ -53,7 +53,7 @@
   overflow: hidden;
 }
 
-#timeline-markers {
+.timeline-markers {
   position: absolute;
   z-index: 7;
   top: 0;
@@ -186,39 +186,37 @@ canvas {
 // layer, so a note or an event bar is never crossed by a background line. The
 // editing canvas is above both: it carries the header bands, the value labels,
 // the playhead and every selection overlay.
-#notes-backdrop,
-#events-backdrop {
+.timeline-backdrop {
   grid-row: 1;
   z-index: 0;
   pointer-events: none;
   background: transparent;
 }
 
-#notes-backdrop {
+.timeline-notes-backdrop {
   grid-column: 2;
 }
 
-#events-backdrop {
+.timeline-events-backdrop {
   grid-column: 3;
 }
 
-#notes-playhead,
-#events-playhead {
+.timeline-playhead {
   grid-row: 1;
   z-index: 4;
   pointer-events: none;
   background: transparent;
 }
 
-#notes-playhead {
+.timeline-notes-playhead {
   grid-column: 2;
 }
 
-#events-playhead {
+.timeline-events-playhead {
   grid-column: 3;
 }
 
-#notes {
+.timeline-notes {
   grid-column: 2;
   grid-row: 1;
   border-right: 1px solid var(--border-strong);
@@ -235,7 +233,7 @@ canvas {
   background: transparent;
 }
 
-#events {
+.timeline-events {
   grid-column: 3;
   grid-row: 1;
   border-left: 1px solid var(--border-strong);
@@ -260,11 +258,11 @@ canvas {
   border: 1px solid var(--border-strong);
 }
 
-#note-density {
+.timeline-note-density {
   grid-column: 1;
 }
 
-#history-strip {
+.timeline-history-strip {
   grid-column: 4;
 }
 
@@ -314,18 +312,18 @@ canvas {
   background: var(--timeline-surface);
 }
 
-.editor.notes-hidden #notes,
-.editor.notes-hidden #notes-backdrop,
-.editor.notes-hidden #notes-batch,
-.editor.notes-hidden #notes-playhead {
+.editor.notes-hidden .timeline-notes,
+.editor.notes-hidden .timeline-notes-backdrop,
+.editor.notes-hidden .timeline-note-batch,
+.editor.notes-hidden .timeline-notes-playhead {
   display: none;
 }
 
-.editor.events-hidden #events,
-.editor.events-hidden #events-backdrop,
-.editor.events-hidden #events-playhead,
-.editor.events-hidden #events-batch,
-.editor.events-hidden #layer {
+.editor.events-hidden .timeline-events,
+.editor.events-hidden .timeline-events-backdrop,
+.editor.events-hidden .timeline-events-playhead,
+.editor.events-hidden .timeline-event-batch,
+.editor.events-hidden .layer-buttons {
   display: none;
 }
 
@@ -363,14 +361,12 @@ canvas {
     calc(var(--timeline-middle) * (1 - var(--timeline-exclusive-ratio, 0.75)) / 2);
   column-gap: 0;
 
-  & #notes,
-  & #notes-backdrop,
-  & #notes-playhead,
-  & #notes-batch,
-  & #events,
-  & #events-backdrop,
-  & #events-playhead,
-  & #events-batch {
+  & .timeline-notes,
+  & .timeline-backdrop,
+  & .timeline-playhead,
+  & .timeline-note-batch,
+  & .timeline-events,
+  & .timeline-event-batch {
     grid-column: 2;
   }
 }
@@ -385,35 +381,33 @@ canvas {
 // Every field canvas shares the middle cell in a single-region layout; the
 // strips keep their outer cells.
 .editor:is(.notes-hidden, .events-hidden, .multi-notes, .multi-events) {
-  & #notes,
-  & #notes-backdrop,
-  & #notes-playhead,
-  & #notes-batch,
-  & #events,
-  & #events-backdrop,
-  & #events-playhead,
-  & #events-batch {
+  & .timeline-notes,
+  & .timeline-backdrop,
+  & .timeline-playhead,
+  & .timeline-note-batch,
+  & .timeline-events,
+  & .timeline-event-batch {
     grid-column: 3;
   }
 
-  & #history-strip {
+  & .timeline-history-strip {
     grid-column: 5;
   }
 }
 
-.editor.notes-hidden:not(.events-hidden) #events {
+.editor.notes-hidden:not(.events-hidden) .timeline-events {
   border-left: 0;
 }
 
 .editor.notes-hidden.events-hidden .canvases,
-.editor.notes-hidden.events-hidden #layer {
+.editor.notes-hidden.events-hidden .layer-buttons {
   display: none;
 }
 
 // The layer selector is the bottom strip of the event field, so it tracks the
 // event column in every layout instead of floating over a fixed offset.
-.editor.multi-events #layer,
-.editor.notes-hidden:not(.events-hidden) #layer {
+.editor.multi-events .layer-buttons,
+.editor.notes-hidden:not(.events-hidden) .layer-buttons {
   grid-column: 3;
   width: calc(50% - 8px);
   justify-self: center;

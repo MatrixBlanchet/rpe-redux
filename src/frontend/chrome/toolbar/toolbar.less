@@ -156,18 +156,18 @@
 
 // The transport button swaps its two glyphs on the playing flag instead of the
 // editor painting the button from its frame loop.
-#play .redux-icon-pause {
+.toolbar-playback-button .redux-icon-pause {
   display: none;
 }
-#play[data-playing="true"] .redux-icon-play {
+.toolbar-playback-button[data-playing="true"] .redux-icon-play {
   display: none;
 }
-#play[data-playing="true"] .redux-icon-pause {
+.toolbar-playback-button[data-playing="true"] .redux-icon-pause {
   display: block;
 }
 
 // The transport is one square cell like every other toolbar action.
-.redux-app-root .redux-toolbar-line #play {
+.redux-app-root .redux-toolbar-line .toolbar-playback-button {
   flex: none;
   width: var(--tool-cell);
   min-width: var(--tool-cell);
@@ -177,15 +177,15 @@
   justify-content: center;
 }
 
-.redux-app-root .redux-toolbar-line #play[data-playing="true"] {
+.redux-app-root .redux-toolbar-line .toolbar-playback-button[data-playing="true"] {
   background: var(--active-accent-fill);
 }
 
-.redux-app-root .redux-toolbar-line #play[data-playing="true"] .redux-icon {
+.redux-app-root .redux-toolbar-line .toolbar-playback-button[data-playing="true"] .redux-icon {
   --icon-color: var(--active-accent);
 }
 
-.redux-app-root .redux-toolbar-line #play:focus-visible {
+.redux-app-root .redux-toolbar-line .toolbar-playback-button:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }

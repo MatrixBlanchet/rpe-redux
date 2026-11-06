@@ -5,7 +5,7 @@
  * creation, and rename state machine stays in `LineTree.tsx`. List rows are
  * intentionally static: moving a line or folder is not a list gesture.
  */
-import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode, Ref } from "react";
 import { Button } from "../../../../../design/components/button/Button.tsx";
 import { ListRow } from "../../../../../design/components/list/ListRow.tsx";
 import { TreeFolder } from "../../../../../design/patterns/tree/TreeFolder.tsx";
@@ -19,14 +19,26 @@ export interface LineRowProps {
   group: number;
   active: boolean;
   selected: boolean;
+  rowRef?: Ref<HTMLElement>;
+  onPointerDown?(event: React.PointerEvent<HTMLElement>): void;
   onSelect(index: number, event?: ReactMouseEvent<HTMLElement>): void;
 }
 
 /** One static line row; selection is the only list-level line action. */
-export function LineRow({ line, index, group, active, selected, onSelect }: LineRowProps) {
+export function LineRow({
+  line,
+  index,
+  group,
+  active,
+  selected,
+  rowRef,
+  onPointerDown,
+  onSelect,
+}: LineRowProps) {
   return (
     <ListRow
       selected={selected}
+      ref={rowRef}
       current={active}
       className="line-row"
       role="treeitem"
@@ -35,6 +47,7 @@ export function LineRow({ line, index, group, active, selected, onSelect }: Line
       tabIndex={0}
       data-line-index={index}
       data-group-index={group}
+      onPointerDown={onPointerDown}
       onClick={(event) => onSelect(index, event)}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) {
@@ -58,15 +71,27 @@ export interface LineCardProps {
   index: number;
   active: boolean;
   selected: boolean;
+  rowRef?: Ref<HTMLButtonElement>;
+  onPointerDown?(event: React.PointerEvent<HTMLElement>): void;
   onSelect(index: number, event?: ReactMouseEvent<HTMLElement>): void;
 }
 
 /** One static line card for the optional grid presentation. */
-export function LineCard({ chart, line, index, active, selected, onSelect }: LineCardProps) {
+export function LineCard({
+  chart,
+  line,
+  index,
+  active,
+  selected,
+  rowRef,
+  onPointerDown,
+  onSelect,
+}: LineCardProps) {
   const notes = line.numOfNotes ?? line.notes?.length ?? 0;
   return (
     <Button
       type="button"
+      ref={rowRef}
       variant="plain"
       className={`line-grid-card${active ? " current" : ""}${selected ? " is-selected" : ""}`}
       role="treeitem"
@@ -74,6 +99,7 @@ export function LineCard({ chart, line, index, active, selected, onSelect }: Lin
       aria-selected={selected}
       aria-current={active ? "true" : undefined}
       data-line-index={index}
+      onPointerDown={onPointerDown}
       onClick={(event) => onSelect(index, event)}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {

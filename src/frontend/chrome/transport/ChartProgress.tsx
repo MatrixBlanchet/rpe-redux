@@ -83,7 +83,7 @@ export function ChartProgress() {
   return (
     <div className="redux-status-card" hidden={editorVisibility.atHome}>
       <div className="scrubber-wrap" ref={scrubberWrap} onContextMenuCapture={progressMenu.open}>
-        <div id="timeline-markers" ref={timelineMarkers}>
+        <div id="timeline-markers" className="timeline-markers" ref={timelineMarkers}>
           {markers && <MemoizedTimelineMarkers {...markers} />}
         </div>
         {/* The scrubber is the playhead: the level bar's fill and printed value
@@ -92,6 +92,7 @@ export function ChartProgress() {
             its full-height hit area without a native thumb. */}
         <SliderField
           id="scrubber"
+          className="transport-scrubber"
           inputRef={scrubber}
           min={0}
           max={progress.duration}
@@ -106,7 +107,11 @@ export function ChartProgress() {
             opaque track of its own. The A-B range is a separate decoration, so
             the scrubber itself always keeps the full-track seek domain. */}
         <span className="scrubber-spectrum-window" aria-hidden="true">
-          <canvas id="scrubber-spectrum" ref={scrubberSpectrum} aria-hidden="true" />
+          <canvas
+            className="transport-scrubber-spectrum"
+            ref={scrubberSpectrum}
+            aria-hidden="true"
+          />
         </span>
         {loopStyle && <span className="scrubber-ab-range" style={loopStyle} aria-hidden="true" />}
       </div>
@@ -114,8 +119,8 @@ export function ChartProgress() {
       <JumpToTimeDialog />
       <div className="redux-status-line">
         <span>{progress.beat}</span>
-        <span id="bpm-display">{progress.bpm}</span>
-        <span id="clock">{progress.chartTime}</span>
+        <span className="transport-bpm">{progress.bpm}</span>
+        <span className="transport-clock">{progress.chartTime}</span>
       </div>
     </div>
   );

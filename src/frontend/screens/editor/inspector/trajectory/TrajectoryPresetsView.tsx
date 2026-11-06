@@ -20,6 +20,7 @@ import {
   type TrajectorySample,
   type ValidatedCurvePreset,
 } from "../../../../../core/global/chart/trajectory/curveTrajectory.ts";
+import { secureRandomIntInclusive } from "../../../../../core/utils/random.ts";
 import {
   COMMON_FIELDS,
   drawPath,
@@ -272,9 +273,7 @@ function PresetEditor({
               key === "seed"
                 ? () => {
                     const previous = Number(common.seed ?? 0);
-                    const next =
-                      (previous + 1 + (crypto.getRandomValues(new Uint32Array(1))[0] % 100000)) %
-                      100001;
+                    const next = (previous + 1 + secureRandomIntInclusive(0, 100000)) % 100001;
                     changeCommon("seed", next);
                   }
                 : undefined

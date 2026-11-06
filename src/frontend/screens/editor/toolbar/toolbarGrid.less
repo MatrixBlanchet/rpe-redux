@@ -19,12 +19,15 @@
   }
 
   // A stepper's two buttons are drawn inside their field, the line picker's
-  // chevron is an inset overlay, and the picker's field takes the whole control
-  // span, so none of them is sized as a cell of its own.
+  // chevron is an inset overlay, the picker field takes the whole control span,
+  // and a split action owns the width of both halves. None of those elements is
+  // sized as a cell of its own.
   .redux-toolbar-line
     :is(button, label, input:not([type="checkbox"]), select):not(.redux-stepper-button):not(
       .line-picker-toggle
-    ):not(.line-field) {
+    ):not(.line-field):not(.toolbar-field-line-input):not(.redux-split-action-main):not(
+      .redux-split-action-toggle
+    ) {
     box-sizing: border-box;
     flex: none;
     width: calc(var(--tool-cell) * var(--cells, 1));
@@ -72,10 +75,10 @@
     padding-right: 0;
   }
 
-  #play {
+  .toolbar-playback-button {
     --cells: 1;
   }
-  #rewind {
+  .toolbar-action-rewind {
     --cells: 1;
   }
 
@@ -87,7 +90,7 @@
   .rate-field {
     --cells: 3;
   }
-  #rate {
+  .toolbar-field-rate {
     --cells: 2;
   }
 
@@ -95,8 +98,8 @@
     --cells: 3;
   }
 
-  #division,
-  #grid-count {
+  .toolbar-field-division,
+  .toolbar-field-grid-count {
     --cells: 2;
   }
 
@@ -104,7 +107,7 @@
     --cells: 3;
   }
 
-  #preview-ratio {
+  .toolbar-field-preview-ratio {
     --cells: 2;
   }
 }

@@ -7,10 +7,11 @@
 }
 
 // The toolbar's generic field rule uses an :is(... input:not(...)) argument,
-// which raises its specificity to three classes. These ids keep the split
-// control's own run/chevron geometry ahead of that shared sizing rule.
-.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-run,
-.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-toggle {
+// which raises its specificity to three classes. The generic rule explicitly
+// excludes these semantic split-action parts, so this component owns their
+// run/chevron geometry.
+.redux-app-root .redux-toolbar-line .redux-extension-picker .redux-split-action-main,
+.redux-app-root .redux-toolbar-line .redux-extension-picker .redux-split-action-toggle {
   min-height: 0;
   height: 100%;
   border: 0;
@@ -20,7 +21,7 @@
   font-size: var(--type-body);
 }
 
-.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-run {
+.redux-app-root .redux-toolbar-line .redux-extension-picker .redux-split-action-main {
   display: inline-flex;
   flex: 1 1 auto;
   width: auto;
@@ -32,14 +33,14 @@
   text-align: left;
 }
 
-.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-run:disabled {
+.redux-app-root .redux-toolbar-line .redux-extension-picker .redux-split-action-main:disabled {
   opacity: 0.5;
 }
 
 // The chevron is a compact pill inset in the split frame, matching the line
 // picker's dropdown: the shared frame keeps its border on every side and the
 // hover fill carries the control radius instead of the frame's corners.
-.redux-app-root .redux-toolbar-line .redux-extension-picker #extension-picker-toggle {
+.redux-app-root .redux-toolbar-line .redux-extension-picker .redux-split-action-toggle {
   display: inline-flex;
   flex: none;
   align-self: center;
@@ -55,19 +56,19 @@
 }
 
 // The shared split-action hover is transparent by default here; the toolbar's
-// id rule above must not erase it from either half.
+// generic cell sizing must not erase it from either half.
 .redux-app-root
   .redux-toolbar-line
   .redux-extension-picker
-  #extension-picker-run:hover:not(:disabled),
+  .redux-split-action-main:hover:not(:disabled),
 .redux-app-root
   .redux-toolbar-line
   .redux-extension-picker
-  #extension-picker-toggle:hover:not(:disabled),
+  .redux-split-action-toggle:hover:not(:disabled),
 .redux-app-root
   .redux-toolbar-line
   .redux-extension-picker
-  #extension-picker-toggle[aria-expanded="true"] {
+  .redux-split-action-toggle[aria-expanded="true"] {
   background: var(--surface-hover);
   color: var(--foreground);
 }

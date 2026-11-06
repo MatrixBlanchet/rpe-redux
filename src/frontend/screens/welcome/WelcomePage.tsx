@@ -78,7 +78,7 @@ export function WelcomePage({ onCoverUrlChange }: { onCoverUrlChange: (url: stri
     cards?.onDelete(entry.source.project);
   };
   return (
-    <main id="home" hidden={!editorVisibility.atHome}>
+    <main id="home" className="redux-home-page" hidden={!editorVisibility.atHome}>
       <div className="redux-welcome">
         <header className="redux-welcome-header">
           <div className="redux-welcome-actions">

@@ -7,8 +7,8 @@
  * must stay free of pane-specific selectors.
  */
 .inspector {
-  background: var(--surface-raised);
-  border: 1px solid var(--panel-border);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius-panel);
   padding: 0;
   overflow: hidden;
@@ -25,8 +25,8 @@
   gap: var(--space-2);
   height: calc(var(--control-height) + var(--space-1-5));
   padding: 0 var(--space-2) 0 var(--space-3);
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--panel-header);
+  border-bottom: 1px solid transparent;
+  background: transparent;
 }
 
 .inspector-status-icon {
@@ -78,6 +78,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  background: transparent;
 }
 .inspector-empty-placeholder {
   display: grid;
@@ -92,11 +93,11 @@
 }
 
 .inspector details {
-  background: var(--surface-raised);
-  border-color: var(--panel-border);
+  background: transparent;
+  border-color: transparent;
 }
 
 .inspector summary {
-  background: var(--panel-header);
+  background: transparent;
   padding: var(--space-2) var(--space-3);
 }

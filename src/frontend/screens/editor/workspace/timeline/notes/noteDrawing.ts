@@ -526,6 +526,7 @@ export function drawMultiLineNotes(
       }
       if (
         session.notesMode === "multi_merged" &&
+        this.appearance.multiLineNoteLineNumbers &&
         session.targetLineIndices.length > 1 &&
         lineLabelCuller.tryPlace(
           { x: rendered, y: vertical },

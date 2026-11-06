@@ -38,7 +38,7 @@ export function LineSelectionGroupHeader({
       onClick={(event) => {
         // The name and disclosure own their presses; the blank part of the
         // header still toggles the group.
-        if (event.target instanceof Element && event.target.closest("button")) {
+        if (event.target !== event.currentTarget) {
           return;
         }
         onSelect();
