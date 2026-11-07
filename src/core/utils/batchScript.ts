@@ -149,8 +149,11 @@ export function compileExpression(source: string): CompiledExpression {
     }
     const name = token;
     const keyword = name.toLowerCase();
-    const callable = functions.get(keyword);
-    if (tokens[cursor] === "(" && callable) {
+    if (tokens[cursor] === "(" && functions.has(keyword)) {
+      const callable = functions.get(keyword);
+      if (typeof callable !== "function") {
+        throw new Error(t("model.batch.unparsableToken", { token: name }));
+      }
       cursor++;
       const args: CompiledExpression[] = [];
       if (tokens[cursor] !== ")") {
