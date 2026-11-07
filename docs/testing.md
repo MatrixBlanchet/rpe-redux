@@ -31,9 +31,11 @@ single case, and where a new test belongs.
 | Extension methods | `npm run check:extensions` | Method registry vs capability gate (part of `check`) | `npm ci` |
 
 CI runs `npm run verify` on Windows and `npm run check` on Linux
-(`.github/workflows/check.yml`). The desktop smoke suite stays local because it
-needs a built desktop executable. There is no tracked Git hook; run the gates
-yourself before reporting.
+(`.github/workflows/check.yml`). When a change touches `src-tauri/**`, the same
+workflow also runs a conditional Linux Rust job with `cargo fmt --check` and
+`cargo check`. The desktop smoke suite stays local because it needs a built
+desktop executable. There is no tracked Git hook; run the gates yourself before
+reporting.
 
 ## Source gate
 

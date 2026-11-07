@@ -15,6 +15,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect Rust changes
+    runs-on: ubuntu-24.04
+    outputs:
+      src_tauri: ${{ steps.paths.outputs.src_tauri }}
+    steps:
+      - name: Check out the revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect changed paths
+        id: paths
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+            changed="$(git diff-tree --root --no-commit-id --name-only -r "$HEAD_SHA")"
+          else
+            changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          fi
+
+          if grep -q '^src-tauri/' <<<"$changed"; then
+            echo "src_tauri=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "src_tauri=false" >> "$GITHUB_OUTPUT"
+          fi
+
   check:
     runs-on: windows-latest
     steps:
@@ -70,3 +103,55 @@ jobs:
 
       - name: Run source checks
         run: npm run check
+
+  rust:
+    name: Rust checks (Linux)
+    needs: changes
+    if: needs.changes.outputs.src_tauri == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Prepare Tauri assets
+        run: npm run docs:build && npm run build:web
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
+
+      - name: Build the Go sidecar
+        run: npm run build:server
+
+      - name: Stage bundled FFmpeg
+        run: node scripts/prepareFfmpeg.mjs
+
+      - name: Stage bundled Cloudflared
+        run: node scripts/prepareCloudflared.mjs
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+
+      - name: Check Rust sources
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+
+      - name: Compile Rust sources
+        run: cargo check --manifest-path src-tauri/Cargo.toml
