@@ -109,6 +109,16 @@
   border-right: 1px solid var(--border-subtle);
 }
 
+// Drawer list pages keep their scrolling content and action footer as sibling
+// regions. The column itself cannot own padding because the list surface must
+// still fill the reveal area, so give every footer the same inset as the
+// ordinary inspector panel surface. This keeps Timing, Lines, and Assets
+// aligned and leaves a bottom breathing space when the drawer is expanded.
+.drawer-split-list .redux-footer-bar {
+  margin-inline: var(--inspector-gutter);
+  padding-bottom: var(--inspector-gutter);
+}
+
 // The property column always occupies the inspector's resting width.
 .drawer-split-properties {
   width: var(--inspector-width);
