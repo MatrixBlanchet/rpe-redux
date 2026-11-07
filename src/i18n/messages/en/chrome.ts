@@ -212,6 +212,8 @@ export default {
   "chrome.toolbar.gridCountHint": "Selectable grid lines for note X coordinates",
 
   "chrome.toolbar.ratio": "Preview ratio",
+  "chrome.toolbar.scrollStart": "Show hidden toolbar actions to the right",
+  "chrome.toolbar.scrollEnd": "Show hidden toolbar actions to the left",
 
   "chrome.time.beat": "Beat",
   "chrome.time.beatHint": "Seek to the beat you entered",

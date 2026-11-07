@@ -194,6 +194,8 @@ export default {
   "chrome.toolbar.gridCountHint": "音符 X 坐标的可选网格线数量",
 
   "chrome.toolbar.ratio": "预览比例",
+  "chrome.toolbar.scrollStart": "向右查看隐藏的工具",
+  "chrome.toolbar.scrollEnd": "向左查看隐藏的工具",
 
   "chrome.time.beat": "拍数",
   "chrome.time.beatHint": "定位到输入的拍数",
