@@ -166,6 +166,8 @@ fn main() {
             storage::write_diagnostic_log,
             storage::open_diagnostic_logs,
             storage::save_custom_background,
+            storage::delete_custom_background,
+            storage::cleanup_custom_backgrounds,
             storage::read_custom_background,
             update::local_update::verify_local_update,
             update::local_update_worker::local_update_failure,

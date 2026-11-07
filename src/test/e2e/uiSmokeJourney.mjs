@@ -119,6 +119,30 @@ export async function workspaceSurfaces(runner) {
   await runner.waitFor("welcome more menu", () =>
     runner.evaluate("Boolean(document.querySelector('.redux-welcome-more-popup button'))"),
   );
+  await runner.evaluate(`(() => {
+    const popup = document.querySelector('.redux-welcome-more-popup');
+    if (!popup) return false;
+    popup.__reduxTestAnimationStarts = 0;
+    popup.addEventListener('animationstart', () => {
+      popup.__reduxTestAnimationStarts += 1;
+    });
+    return true;
+  })()`);
+  await runner.evaluate("document.querySelector('#home .redux-welcome-more')?.click(); true");
+  await runner.evaluate(
+    "new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))",
+  );
+  const repeatedOpen = await runner.evaluate(`(() => {
+    const popup = document.querySelector('.redux-welcome-more-popup');
+    return {
+      open: Boolean(popup?.matches(':popover-open')),
+      animationStarts: popup?.__reduxTestAnimationStarts ?? -1,
+    };
+  })()`);
+  runner.assert(
+    repeatedOpen.open && repeatedOpen.animationStarts === 0,
+    `repeated overflow-menu clicks must not replay the enter animation: ${JSON.stringify(repeatedOpen)}`,
+  );
   await runner.evaluate(
     "document.querySelector('.redux-welcome-more-popup button')?.click(); true",
   );

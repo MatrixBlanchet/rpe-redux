@@ -11,6 +11,7 @@ import { ControlHost } from "../../design/controls/ControlHost.tsx";
 import { SettingsWindow } from "../screens/settings/SettingsWindow.tsx";
 import { initializeUpdates } from "../screens/settings/updates/updateStore.ts";
 import { preferences } from "../../core/state/preferences.ts";
+import { values } from "../../core/state/values.ts";
 
 import { DEFAULT_THEME } from "../../core/theme/themes.ts";
 import { activeTheme, setActiveTheme, subscribeActiveTheme } from "../../core/theme/activeTheme.ts";
@@ -28,6 +29,7 @@ import {
 } from "../platform/desktop/runtimePorts.ts";
 import { NOTE_SKIN_EVENT, installNoteSkinBridge } from "../platform/noteSkinBridge.ts";
 import { prepareBackendInstance, startBackend } from "../../core/platform/desktop/backend.ts";
+import { cleanupCustomBackgrounds } from "../platform/desktop/customBackground.ts";
 import { StartupView } from "../screens/startup/StartupView.tsx";
 import { StartupBoundary } from "../screens/startup/StartupBoundary.tsx";
 import type { StartupFailureSource } from "../screens/startup/startupDiagnostics.ts";
@@ -129,6 +131,21 @@ function AppContent() {
     applyTheme(theme);
     syncNativeWindowTheme(theme);
   }, [theme]);
+
+  // A crash between saving a replacement image and committing its setting can
+  // leave an unreferenced file behind. Reconcile the dedicated folder once
+  // after durable preferences are attached so old replacements do not accumulate.
+  useEffect(() => {
+    if (!backendReady) {
+      return;
+    }
+    const activeReference = values.byId.has("custom-background")
+      ? String(values.byId.get("custom-background") ?? "")
+      : "";
+    void cleanupCustomBackgrounds(activeReference).catch((error: unknown) => {
+      console.error("Could not clean unused settings images", error);
+    });
+  }, [backendReady]);
 
   // Live folder sniffing: themes, skin folders, and Extension folders are
   // re-read on one timer, so dropping a package in place updates the UI without

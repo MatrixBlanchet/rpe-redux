@@ -14,6 +14,16 @@ export async function saveCustomBackground(name: string, bytes: Uint8Array): Pro
   });
 }
 
+/** Remove one no-longer-referenced background from application data. */
+export function deleteCustomBackground(reference: string): Promise<void> {
+  return invoke<void>("delete_custom_background", { reference });
+}
+
+/** Remove every saved background except the one still referenced by settings. */
+export function cleanupCustomBackgrounds(activeReference: string): Promise<void> {
+  return invoke<void>("cleanup_custom_backgrounds", { activeReference });
+}
+
 /** Read a previously stored custom background by its relative app-data reference. */
 export async function readCustomBackground(reference: string): Promise<Uint8Array> {
   const response = await invoke<number[] | ArrayBuffer>("read_custom_background", { reference });
