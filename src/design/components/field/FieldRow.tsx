@@ -33,6 +33,8 @@ export interface FieldRowProps {
   align?: "center" | "start";
   /** Dim the whole row and keep its reset affordance inert. */
   disabled?: boolean;
+  /** Keep a row active when only one compound-control part is disabled. */
+  partialDisabled?: boolean;
   /** Draw a hairline under the row; the final row in a list drops it. */
   divided?: boolean;
   /** Tint alternating rows in a long form list. */
@@ -68,6 +70,7 @@ export function FieldRow({
   layout = "split",
   align = "center",
   disabled = false,
+  partialDisabled = false,
   divided = false,
   striped = false,
   hoverable = false,
@@ -88,6 +91,7 @@ export function FieldRow({
       data-layout={layout}
       data-align={align}
       data-disabled={disabled || undefined}
+      data-partial-disabled={partialDisabled || undefined}
       data-divided={divided || undefined}
       data-striped={striped || undefined}
       data-hoverable={hoverable || undefined}

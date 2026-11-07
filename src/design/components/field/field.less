@@ -69,7 +69,7 @@
   }
 
   &[data-disabled="true"],
-  &:has(:is(input, select, textarea, button):disabled) {
+  &:has(:is(input, select, textarea, button):disabled):not([data-partial-disabled="true"]) {
     .redux-field-label {
       color: var(--foreground-muted);
       cursor: var(--app-cursor-disabled);

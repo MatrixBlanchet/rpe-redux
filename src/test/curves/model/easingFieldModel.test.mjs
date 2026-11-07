@@ -1,13 +1,13 @@
-/** Linear easing keeps its direction placeholder in the normal field colour. */
+/** Linear easing disables its direction placeholder while keeping it visible. */
 import assert from "node:assert/strict";
 import test from "node:test";
 import { easingDirectionControlState } from "../../../design/components/easing/easingFieldModel.ts";
 
-test("Linear direction placeholder is readable but not natively disabled", () => {
+test("Linear direction placeholder is natively disabled", () => {
   assert.deepEqual(easingDirectionControlState(false, false), {
-    disabled: false,
-    ariaDisabled: true,
-    tabIndex: -1,
+    disabled: true,
+    ariaDisabled: undefined,
+    tabIndex: undefined,
   });
 });
 
