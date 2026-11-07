@@ -8,6 +8,7 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 const inspectorSource = read("frontend/screens/editor/inspector/InspectorPanel.tsx");
 const onboardingStyles = read("frontend/onboarding/onboarding.less");
 const drawerSource = read("frontend/chrome/drawer/drawerPanes.ts");
+const drawerStyles = read("frontend/chrome/drawer/drawer.less");
 const fieldStyles = read("design/components/field/field.less");
 
 test("the empty inspector starts with navigation instead of a duplicate header", () => {
@@ -17,6 +18,13 @@ test("the empty inspector starts with navigation instead of a duplicate header",
 test("drawer destinations can own their anchored tutorials", () => {
   assert.match(drawerSource, /tutorial\?: HelpTutorialDefinition/u);
   assert.match(drawerSource, /registerHelpTutorial\(pane\.tutorial\)/u);
+});
+
+test("drawer list footers share the inspector inset", () => {
+  const footerRule = drawerStyles.match(/\.drawer-split-list \.redux-footer-bar \{([\s\S]*?)\}/u);
+  assert.ok(footerRule);
+  assert.match(footerRule[1], /margin-inline:\s*var\(--inspector-gutter\);/u);
+  assert.match(footerRule[1], /padding-bottom:\s*var\(--inspector-gutter\);/u);
 });
 
 test("onboarding geometry moves without replaying the dimming animation", () => {
