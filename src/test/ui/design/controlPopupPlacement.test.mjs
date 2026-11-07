@@ -121,6 +121,24 @@ test("the select policy flips when the space below is too small", () => {
   assert.equal(style["--control-origin-y"], "400px");
 });
 
+test("a forced-down select stays below when the space above is larger", () => {
+  const { style, flipUp } = placeControlPopup({
+    anchor: { left: 100, top: 600, bottom: 790, width: 80 },
+    panelWidth: 300,
+    panelHeight: 400,
+    viewport,
+    clampHeight: true,
+    flipThreshold: 120,
+    preferLargerSide: true,
+    forceDown: true,
+  });
+
+  assert.equal(flipUp, false);
+  assert.equal(style.maxHeight, 2);
+  assert.equal(style.top, 793);
+  assert.equal(style["--control-origin-y"], "0px");
+});
+
 test("a dialog makes the panel absolute and offsets the anchor by its client box", () => {
   const { style, flipUp } = placeControlPopup({
     anchor: { left: 120, top: 60, bottom: 80, width: 50 },

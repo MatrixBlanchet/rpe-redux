@@ -93,18 +93,10 @@ export default {
   "editor.dialogs.lineDialog.needLine": "Add a judge line first.",
   "editor.overlap.title": "Choose overlapping object",
   "editor.dialogs.exportDialog.title": "Export chart",
-  "editor.dialogs.exportDialog.description":
-    "Choose a container, then pick the folder and file name in the system save dialog.",
   "editor.dialogs.exportDialog.format": "Format",
   "editor.dialogs.exportDialog.formatPez": "RPE package (PEZ)",
   "editor.dialogs.exportDialog.formatOfficial": "Phigros official JSON",
   "editor.dialogs.exportDialog.formatPec": "PhiEdit PEC",
-  "editor.dialogs.exportDialog.pezHint":
-    "Keeps the chart and assets together in the native RPE package.",
-  "editor.dialogs.exportDialog.officialHint":
-    "Phigros-compatible JSON. Easing is baked into linear events; metadata, assets, textures, parent lines and note-level fields are omitted.",
-  "editor.dialogs.exportDialog.pecHint":
-    "PhiEdit text. Limited to 30 judge lines; easing is baked and metadata/assets are not included.",
   "editor.dialogs.exportDialog.warnings":
     "Exported with {count} loss warning(s). Some RPE features were omitted.",
   "editor.dialogs.exportDialog.export": "Export",

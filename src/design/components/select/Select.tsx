@@ -20,6 +20,8 @@ export type SelectTextAlign = "left" | "center" | "right";
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   "data-tip-title"?: string;
+  /** Keep the custom option popup below the control even when space above is larger. */
+  forceDown?: boolean;
   /**
    * Inner text alignment. A select reads as a list, so it keeps the leading
    * edge by default; a compact toolbar cell names its own edge explicitly.
@@ -29,7 +31,7 @@ type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
 
 /** A native `<select>` that opens the design-system list while keeping its value. */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { className = "", textAlign = "left", title, ...props },
+  { className = "", forceDown = false, textAlign = "left", title, ...props },
   ref,
 ) {
   const element = useRef<HTMLSelectElement>(null);
@@ -88,6 +90,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
       ref={element}
       className={`redux-select ${className}`}
       {...props}
+      data-force-down={forceDown ? "true" : undefined}
       autoComplete="off"
       data-text-align={textAlign}
       data-tip-title={props["data-tip-title"] ?? title}

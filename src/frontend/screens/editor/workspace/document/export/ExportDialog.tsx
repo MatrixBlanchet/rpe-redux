@@ -42,19 +42,12 @@ function ExportBody({ request, open }: { request: ExportPrompt; open: boolean })
   // The request takes itself down once the file is written; only a failed write
   // keeps the dialog open so the same options can be tried again.
   const action = usePromptAction(closeExportPrompt, { closeOnSuccess: false });
-  const hint =
-    format === "pez"
-      ? t("editor.dialogs.exportDialog.pezHint")
-      : format === "official"
-        ? t("editor.dialogs.exportDialog.officialHint")
-        : t("editor.dialogs.exportDialog.pecHint");
   return (
     <PromptDialog
       requestId={`export:${request.id}`}
       open={open}
       onClose={closeExportPrompt}
       label={request.title}
-      description={t("editor.dialogs.exportDialog.description")}
       className="redux-export-dialog"
       error={action.error}
       pending={action.pending}
@@ -65,6 +58,7 @@ function ExportBody({ request, open }: { request: ExportPrompt; open: boolean })
       <label className="redux-export-format">
         <span>{t("editor.dialogs.exportDialog.format")}</span>
         <Select
+          forceDown
           value={format}
           onChange={(event) => setFormat(event.target.value as ChartExportFormat)}
         >
@@ -72,7 +66,6 @@ function ExportBody({ request, open }: { request: ExportPrompt; open: boolean })
           <option value="official">{t("editor.dialogs.exportDialog.formatOfficial")}</option>
           <option value="pec">{t("editor.dialogs.exportDialog.formatPec")}</option>
         </Select>
-        <span className="redux-export-format-hint">{hint}</span>
       </label>
     </PromptDialog>
   );

@@ -20,6 +20,7 @@ interface PopupBase {
 export interface SelectPopupState extends PopupBase {
   kind: "select";
   element: HTMLSelectElement;
+  forceDown: boolean;
 }
 export interface ColorPopupState extends PopupBase {
   kind: "color";
@@ -85,6 +86,7 @@ export function openControlSelect(select: HTMLSelectElement): void {
     seq: openPopupSequence++,
     element: select,
     anchor: popupAnchorOf(select),
+    forceDown: select.dataset.forceDown === "true",
   });
 }
 
