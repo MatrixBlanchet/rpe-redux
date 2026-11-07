@@ -130,6 +130,10 @@ export default {
   "chrome.changelog.empty": "No release notes are available.",
   "chrome.changelog.titleMeta": "({version}, {date})",
   "chrome.changelog.settings": "Update settings",
+  "chrome.changelog.updateTitle": "Update available",
+  "chrome.changelog.skipVersion": "Skip this version",
+  "chrome.changelog.later": "Later",
+  "chrome.changelog.updateNow": "Update now",
 
   "chrome.pane.notes": "Note editing",
   "chrome.pane.events": "Event editing",

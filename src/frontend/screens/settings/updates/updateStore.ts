@@ -49,6 +49,7 @@ export { UPDATE_SETTING_KEYS };
 declarePersistedValue(UPDATE_SETTING_KEYS.autoCheck, false);
 declarePersistedValue(UPDATE_SETTING_KEYS.prereleases, false);
 declarePersistedValue(UPDATE_SETTING_KEYS.downloadPolicy, "never");
+declarePersistedValue(UPDATE_SETTING_KEYS.skippedVersion, "");
 
 /** Every phase the update flow can publish. */
 export type UpdatePhase =
@@ -136,6 +137,7 @@ export interface UpdateState {
   autoCheck: boolean;
   includePrereleases: boolean;
   downloadPolicy: UpdateDownloadPolicy;
+  skippedVersion: string;
   preparedVersion: string | null;
 }
 
@@ -160,6 +162,7 @@ let state: UpdateState = {
   autoCheck: false,
   includePrereleases: false,
   downloadPolicy: "never",
+  skippedVersion: "",
   preparedVersion: null,
 };
 
@@ -206,6 +209,12 @@ function settingDownloadPolicy(): UpdateDownloadPolicy {
   return value === "all" || value === "wifi" || value === "never" ? value : "never";
 }
 
+/** Read the persisted version the user chose to skip, or an empty string. */
+function settingSkippedVersion(): string {
+  const value = values.byId.get<string | undefined>(UPDATE_SETTING_KEYS.skippedVersion);
+  return value && isVersion(value) ? value : "";
+}
+
 /** Re-read the cached update configuration from the value store. */
 function refreshSettings(): void {
   set({
@@ -214,6 +223,7 @@ function refreshSettings(): void {
     autoCheck: settingFlag(UPDATE_SETTING_KEYS.autoCheck, false),
     includePrereleases: settingFlag(UPDATE_SETTING_KEYS.prereleases, false),
     downloadPolicy: settingDownloadPolicy(),
+    skippedVersion: settingSkippedVersion(),
   });
 }
 
@@ -277,6 +287,7 @@ export function initializeUpdates(): Promise<void> {
     values.byId.subscribe(UPDATE_SETTING_KEYS.autoCheck, refreshAndMaybeCheck);
     values.byId.subscribe(UPDATE_SETTING_KEYS.prereleases, refreshAndMaybeCheck);
     values.byId.subscribe(UPDATE_SETTING_KEYS.downloadPolicy, refreshAndMaybeCheck);
+    values.byId.subscribe(UPDATE_SETTING_KEYS.skippedVersion, refreshAndMaybeCheck);
     const version = await appVersion().catch(() => BUILD_APP_VERSION);
     set({ currentVersion: version });
     if (isDesktop()) {
@@ -360,11 +371,12 @@ export async function checkForUpdates(): Promise<void> {
       state.includePrereleases,
       state.currentVersion,
     );
+    const skipped = latest?.version === state.skippedVersion;
     set({
-      phase: available ? "available" : "up-to-date",
+      phase: available && !skipped ? "available" : "up-to-date",
       releases,
       latest,
-      available,
+      available: available && !skipped,
       preparedVersion:
         latest && state.preparedVersion === latest.version ? state.preparedVersion : null,
     });
@@ -379,6 +391,21 @@ export async function checkForUpdates(): Promise<void> {
       errorDetail: error instanceof Error ? error.message : String(error),
     });
   }
+}
+
+/** Persist a release choice that suppresses its update badge until a newer version appears. */
+export function skipUpdateVersion(version: string): void {
+  if (!isVersion(version)) {
+    return;
+  }
+  values.byId.set(UPDATE_SETTING_KEYS.skippedVersion, version);
+  set({
+    skippedVersion: version,
+    available: false,
+    phase: "up-to-date",
+    errorCode: null,
+    errorDetail: "",
+  });
 }
 
 /** Recheck the live document and active operations before any installation handoff. */

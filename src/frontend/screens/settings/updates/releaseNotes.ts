@@ -81,7 +81,7 @@ export interface ReleaseNotesSource {
   notes: string;
 }
 
-/** The release whose notes the changelog shows. */
+/** The release whose notes one changelog mode shows. */
 export interface ChangelogRelease {
   version: string;
   publishedAt: string;
@@ -290,25 +290,48 @@ export function formatReleaseDate(value: string): string {
 /**
  * The release whose notes the changelog shows.
  *
- * `releases` is the GitHub list (newest first). The running version wins when it
- * has notes in the requested language; a build that predates its own release
- * falls back to the newest release that has notes. Returns null when nothing is
- * readable yet, so the surface can show its loading or empty hint.
+ * `releases` is the GitHub list (newest first). The current changelog only shows
+ * the release matching the running version; it never silently changes into an
+ * update announcement. Returns null when that release is not readable yet.
  */
 export function selectChangelogRelease(
   releases: readonly ReleaseNotesSource[],
   currentVersion: string,
   language: Language,
 ): ChangelogRelease | null {
-  const published = releases
+  const current = releases
     .map((release) => ({
       version: release.version,
       publishedAt: release.publishedAt,
       notes: selectLanguageNotes(release.notes, language),
     }))
     .filter((release) => release.notes.length > 0);
-  const current = published.find(
-    (release) => compareVersions(release.version, currentVersion) === 0,
+  return current.find((release) => compareVersions(release.version, currentVersion) === 0) ?? null;
+}
+
+/**
+ * Select the newest readable release newer than the running version.
+ *
+ * This is the update-notes mode: it deliberately excludes the running release
+ * and older releases so an available update can never render the current log.
+ */
+export function selectUpdateChangelogRelease(
+  releases: readonly ReleaseNotesSource[],
+  currentVersion: string,
+  language: Language,
+): ChangelogRelease | null {
+  const future = releases
+    .map((release) => ({
+      version: release.version,
+      publishedAt: release.publishedAt,
+      notes: selectLanguageNotes(release.notes, language),
+    }))
+    .filter(
+      (release) => release.notes.length > 0 && compareVersions(release.version, currentVersion) > 0,
+    );
+  return future.reduce<ChangelogRelease | null>(
+    (best, release) =>
+      !best || compareVersions(release.version, best.version) > 0 ? release : best,
+    null,
   );
-  return current ?? published[0] ?? null;
 }
