@@ -113,6 +113,10 @@ export default {
   "chrome.changelog.empty": "没有可用的版本说明。",
   "chrome.changelog.titleMeta": "({version}, {date})",
   "chrome.changelog.settings": "更新设置",
+  "chrome.changelog.updateTitle": "发现新版本",
+  "chrome.changelog.skipVersion": "跳过此版本",
+  "chrome.changelog.later": "暂不更新",
+  "chrome.changelog.updateNow": "现在更新",
 
   "chrome.pane.notes": "音符编辑",
   "chrome.pane.events": "事件编辑",
