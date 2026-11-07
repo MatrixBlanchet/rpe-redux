@@ -141,6 +141,12 @@ jobs:
       - name: Build the Go sidecar
         run: npm run build:server
 
+      - name: Stage bundled FFmpeg
+        run: node scripts/prepareFfmpeg.mjs
+
+      - name: Stage bundled Cloudflared
+        run: node scripts/prepareCloudflared.mjs
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
 
