@@ -52,12 +52,7 @@ export function CanvasStage() {
       <BatchControlsOverlay />
       <PreviewCanvases />
       <AudioAnalysisCanvas />
-      <canvas
-        id="selection-overlay"
-        ref={selectionOverlay}
-        className="selection-overlay"
-        aria-hidden="true"
-      />
+      <canvas ref={selectionOverlay} className="selection-overlay" aria-hidden="true" />
       <Editor />
       <ExtensionOverlays />
       <LineInfoOverlay />

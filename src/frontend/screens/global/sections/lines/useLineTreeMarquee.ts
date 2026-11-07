@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type MutableRefObject,
   type RefObject,
 } from "react";
 import type { JudgeLine } from "../../../../../core/global/chart/chart.ts";
@@ -40,6 +41,7 @@ interface MarqueeGesture {
 
 interface MarqueeOptions {
   listRef: RefObject<HTMLDivElement | null>;
+  rowRefs: MutableRefObject<Map<number, HTMLElement>>;
   lines: readonly JudgeLine[];
   selectedIds: ReadonlySet<string>;
   lineIndices: ReadonlyMap<string, number>;
@@ -52,6 +54,7 @@ interface MarqueeOptions {
 /** Marquee state and the pointerdown entry point for the tree surface. */
 export function useLineTreeMarquee({
   listRef,
+  rowRefs,
   lines,
   selectedIds,
   lineIndices,
@@ -71,23 +74,11 @@ export function useLineTreeMarquee({
     [],
   );
 
-  const beginMarquee = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const beginMarquee = (event: ReactPointerEvent<HTMLElement>) => {
     if (event.button !== 0 || !event.shiftKey) {
       return;
     }
-    const target = event.target;
-    if (!(target instanceof Element)) {
-      return;
-    }
-    if (
-      target.closest(
-        "button, a, input, select, textarea, [role='button'], [contenteditable='true']",
-      )
-    ) {
-      return;
-    }
-    const row = target.closest<HTMLElement>("[data-line-index]");
-    const startIndex = row ? Number(row.dataset.lineIndex) : NaN;
+    const startIndex = Number(event.currentTarget.dataset.lineIndex);
     const startKey =
       Number.isInteger(startIndex) && startIndex >= 0 && startIndex < lines.length
         ? lineTreeKey(lines, startIndex)
@@ -134,10 +125,9 @@ export function useLineTreeMarquee({
       const right = Math.max(current.startX, current.currentX);
       const bottom = Math.max(current.startY, current.currentY);
       const hits = new Set(current.initial);
-      const root = listRef.current;
-      if (root) {
-        for (const node of root.querySelectorAll<HTMLElement>("[data-line-index]")) {
-          if (node.closest("[inert]")) {
+      if (listRef.current) {
+        for (const node of rowRefs.current.values()) {
+          if (!node.isConnected || node.hidden) {
             continue;
           }
           const index = Number(node.dataset.lineIndex);

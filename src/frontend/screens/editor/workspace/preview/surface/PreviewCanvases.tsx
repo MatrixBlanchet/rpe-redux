@@ -58,6 +58,7 @@ export function PreviewCanvases() {
     >
       <canvas
         id="realtime-preview"
+        className="preview-main-canvas"
         ref={canvas}
         role="img"
         aria-label={t("chrome.preview.canvas")}

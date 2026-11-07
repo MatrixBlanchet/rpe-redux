@@ -13,6 +13,7 @@ import { Input } from "../../../../../design/components/input/Input.tsx";
 import { Select } from "../../../../../design/components/select/Select.tsx";
 import { BeatField } from "../beat/BeatField.tsx";
 import type { Beat } from "../../../../../core/global/chart/timing/beat.ts";
+import { secureRandomIntInclusive } from "../../../../../core/utils/random.ts";
 import { COMMON_FIELDS, type TrajectoryOptionBag } from "./trajectoryPanelControls.ts";
 
 const EXPRESSION_FIELDS: Array<[string, MessageKey]> = [
@@ -126,7 +127,7 @@ function SeedField({
 }) {
   const randomize = () => {
     const previous = Number(value);
-    const next = (previous + 1 + (crypto.getRandomValues(new Uint32Array(1))[0] % 100000)) % 100001;
+    const next = (previous + 1 + secureRandomIntInclusive(0, 100000)) % 100001;
     onChange(next);
   };
   return (

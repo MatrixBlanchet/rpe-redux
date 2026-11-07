@@ -92,17 +92,10 @@ export default {
   "editor.dialogs.lineDialog.needLine": "请先添加判定线",
   "editor.overlap.title": "选择重叠物件",
   "editor.dialogs.exportDialog.title": "导出谱面",
-  "editor.dialogs.exportDialog.description":
-    "选择导出格式，然后在系统保存对话框中选择文件夹和文件名。",
   "editor.dialogs.exportDialog.format": "格式",
-  "editor.dialogs.exportDialog.formatPez": "RPE 包（PEZ）",
-  "editor.dialogs.exportDialog.formatOfficial": "Phigros 官谱 JSON",
-  "editor.dialogs.exportDialog.formatPec": "PhiEdit PEC",
-  "editor.dialogs.exportDialog.pezHint": "将谱面和素材保存在原生 RPE 包中。",
-  "editor.dialogs.exportDialog.officialHint":
-    "Phigros 兼容 JSON。缓动会烘焙为线性事件；元信息、素材、贴图、父子线和音符级字段不会导出。",
-  "editor.dialogs.exportDialog.pecHint":
-    "PhiEdit 文本格式。最多 30 条判定线；缓动会烘焙，元信息和素材不会包含在内。",
+  "editor.dialogs.exportDialog.formatPez": "RPE 格式（PEZ）",
+  "editor.dialogs.exportDialog.formatOfficial": "Phigros 官方格式（JSON）",
+  "editor.dialogs.exportDialog.formatPec": "PhiEdit 格式（PEC）",
   "editor.dialogs.exportDialog.warnings": "已导出，包含 {count} 条损失警告；部分 RPE 特性被省略。",
   "editor.dialogs.exportDialog.export": "导出",
 

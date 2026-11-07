@@ -147,6 +147,7 @@ export function SelectPopup({ state }: { state: SelectPopupState }) {
     clampHeight: true,
     flipThreshold: Math.min(naturalHeight, 120),
     preferLargerSide: true,
+    placement: "below",
   });
 
   return (

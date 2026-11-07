@@ -19,6 +19,7 @@ import { selection } from "../../../../core/api/selection.ts";
 import type { SelectionApiSnapshot } from "../../../../core/edit/selection/api.ts";
 import { getHitTestApi, type HitTestResult } from "../../../../core/edit/hitTest/api.ts";
 import { getPreviewApi, type PreviewSnapshot } from "../../../../core/edit/preview/api.ts";
+import { useTimelineDomSurface } from "../../../screens/editor/workspace/timeline/surface/TimelineDomSurface.tsx";
 
 interface DeveloperOverlayState {
   readonly diagnostics: ReturnType<typeof captureDiagnosticsSnapshot> | null;
@@ -255,6 +256,9 @@ export function copyDiagnostics(): ActionResult {
 /** Draws the probe readout and diagnostics panel. */
 export function DeveloperToolsOverlay() {
   const { t: translate } = useTranslation();
+  const {
+    refs: { stage },
+  } = useTimelineDomSurface();
   const current = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const diagnosticsRef = useRef<HTMLElement>(null);
 
@@ -281,7 +285,7 @@ export function DeveloperToolsOverlay() {
     const move = (event: PointerEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       const api = getHitTestApi();
-      if (!target || !target.closest("#stage") || !api) {
+      if (!target || !stage.current?.contains(target) || !api) {
         setState({ probePoint: null, probeHits: [], probeIndex: 0 });
         return;
       }
@@ -318,7 +322,7 @@ export function DeveloperToolsOverlay() {
     };
     const select = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
-      if (!target?.closest("#stage") || !state.probeHits.length) {
+      if (!target || !stage.current?.contains(target) || !state.probeHits.length) {
         return;
       }
       event.preventDefault();
@@ -342,7 +346,7 @@ export function DeveloperToolsOverlay() {
       window.removeEventListener("click", select, true);
       window.removeEventListener("keydown", cancel, true);
     };
-  }, [current.probe]);
+  }, [current.probe, stage]);
 
   const activeHit = current.probeHits[current.probeIndex] ?? null;
 

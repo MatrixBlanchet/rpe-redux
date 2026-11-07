@@ -17,21 +17,20 @@ import type { TimelinePointerCanvasBindings, TimelineStripBindings } from "./tim
 
 /** One overview strip canvas with its pointer bindings. */
 function OverviewStrip({
-  id,
+  name,
   bindings,
   surfaceRef,
   hidden,
 }: {
-  id: string;
+  name: string;
   bindings: TimelineStripBindings | undefined;
   surfaceRef: Ref<HTMLCanvasElement>;
   hidden: boolean;
 }) {
   return (
     <canvas
-      id={id}
       ref={surfaceRef}
-      className="timeline-strip"
+      className={`timeline-strip timeline-${name}`}
       hidden={hidden}
       aria-hidden="true"
       onPointerDown={(event) => bindings?.pointerDown(event.nativeEvent)}
@@ -58,6 +57,7 @@ function EditingCanvas({
   return (
     <canvas
       id={id}
+      className={`timeline-${id}`}
       // The canvas may still receive focus after pointer interaction, but it
       // must not become a stop in sequential Tab navigation.
       tabIndex={-1}
@@ -78,15 +78,13 @@ function EditingCanvas({
 
 /** A rendering-only canvas layer: backdrop, playhead, or GPU batch. */
 function BatchCanvas({
-  id,
   className,
   surfaceRef,
 }: {
-  id: string;
   className: string;
   surfaceRef: Ref<HTMLCanvasElement>;
 }) {
-  return <canvas id={id} className={className} ref={surfaceRef} aria-hidden="true" />;
+  return <canvas className={className} ref={surfaceRef} aria-hidden="true" />;
 }
 
 /** Attach a non-passive wheel listener so timeline input can prevent scrolling. */
@@ -122,7 +120,7 @@ export function TimelineCanvases() {
   return (
     <>
       <OverviewStrip
-        id="note-density"
+        name="note-density"
         bindings={activeOverview?.density}
         surfaceRef={surface.attach.noteDensity}
         hidden={!activeOverview || !densityBarsEnabled}
@@ -133,13 +131,11 @@ export function TimelineCanvases() {
         lines instead of being covered by them.
       */}
       <BatchCanvas
-        id="notes-backdrop"
-        className="timeline-backdrop"
+        className="timeline-backdrop timeline-notes-backdrop"
         surfaceRef={surface.attach.notesBackdrop}
       />
       <BatchCanvas
-        id="notes-playhead"
-        className="timeline-playhead"
+        className="timeline-playhead timeline-notes-playhead"
         surfaceRef={surface.attach.notesPlayhead}
       />
       <EditingCanvas
@@ -148,19 +144,13 @@ export function TimelineCanvases() {
         canvasRef={notes}
         surfaceRef={surface.attach.notes}
       />
+      <BatchCanvas className="timeline-note-batch" surfaceRef={surface.attach.noteBatch} />
       <BatchCanvas
-        id="notes-batch"
-        className="timeline-note-batch"
-        surfaceRef={surface.attach.noteBatch}
-      />
-      <BatchCanvas
-        id="events-backdrop"
-        className="timeline-backdrop"
+        className="timeline-backdrop timeline-events-backdrop"
         surfaceRef={surface.attach.eventsBackdrop}
       />
       <BatchCanvas
-        id="events-playhead"
-        className="timeline-playhead"
+        className="timeline-playhead timeline-events-playhead"
         surfaceRef={surface.attach.eventsPlayhead}
       />
       <EditingCanvas
@@ -169,13 +159,9 @@ export function TimelineCanvases() {
         canvasRef={events}
         surfaceRef={surface.attach.events}
       />
-      <BatchCanvas
-        id="events-batch"
-        className="timeline-event-batch"
-        surfaceRef={surface.attach.eventBatch}
-      />
+      <BatchCanvas className="timeline-event-batch" surfaceRef={surface.attach.eventBatch} />
       <OverviewStrip
-        id="history-strip"
+        name="history-strip"
         bindings={activeOverview?.history}
         surfaceRef={surface.attach.history}
         hidden={!activeOverview || !densityBarsEnabled}

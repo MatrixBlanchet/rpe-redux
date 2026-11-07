@@ -73,7 +73,7 @@
 // mounted. The chrome shares one continuous image: bars keep a light tint for
 // contrast, and the content panels let more of the artwork through.
 .redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome) .shell-content,
-.redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome) #home,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-welcome) .redux-home-page,
 .redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .shell-content,
 .redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .workbench {
   background: transparent;
@@ -94,7 +94,10 @@
 // Let the artwork read through the editor's main panels without turning every
 // control into a translucent surface.
 .redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .workbench-workspace > .workspace,
-.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .workbench-inspector > .inspector {
+.redux-app-root
+  .redux-app-shell:has(> .cover-backdrop-editor)
+  .workbench-inspector
+  > .inspector:not(.is-drawer) {
   background: color-mix(in srgb, var(--surface) 50%, transparent);
 }
 
@@ -105,8 +108,11 @@
 
 // The inspector header and summary rows sit over the same image instead of
 // breaking it with an opaque strip.
-.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .inspector-status,
-.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .inspector summary {
+.redux-app-root
+  .redux-app-shell:has(> .cover-backdrop-editor)
+  .inspector:not(.is-drawer)
+  .inspector-status,
+.redux-app-root .redux-app-shell:has(> .cover-backdrop-editor) .inspector:not(.is-drawer) summary {
   background: color-mix(in srgb, var(--panel-header) 55%, transparent);
 }
 

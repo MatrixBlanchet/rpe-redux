@@ -2,19 +2,19 @@
 // marker layer.
 
 @import (reference) "../../../design/styles/palette.less";
-#clock {
+.transport-clock {
   min-width: 72px;
   color: var(--foreground);
   font-variant-numeric: tabular-nums;
 }
 
-#bpm-display {
+.transport-bpm {
   color: var(--accent);
   white-space: nowrap;
   font-size: var(--type-caption);
 }
 
-#scrubber {
+.transport-scrubber {
   flex: 1;
   min-width: 65px;
 }
@@ -26,12 +26,12 @@
   flex: 1 1 120px;
   min-width: 65px;
   height: 100%;
-  // The marker strip (`#timeline-markers`, 16px, absolute at the top) keeps its
-  // band; everything below it is the bar.
+  // The timeline marker strip is 16px tall and keeps its band; everything below
+  // it is the bar.
   padding-top: var(--space-4);
 }
 
-.scrubber-wrap #scrubber {
+.scrubber-wrap .transport-scrubber {
   width: 100%;
   min-width: 0;
 }
@@ -43,9 +43,11 @@
   height: 100%;
 }
 
-.redux-app-root #scrubber {
+.redux-app-root .transport-scrubber {
   height: 100%;
   min-height: 40px;
+  background: transparent;
+  border-color: transparent;
 }
 
 .scrubber-spectrum-window {
@@ -72,7 +74,7 @@
   pointer-events: none;
 }
 
-.redux-app-root #scrubber-spectrum {
+.redux-app-root .transport-scrubber-spectrum {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -116,7 +118,7 @@
   padding: var(--space-1-5);
   border: 0;
   border-radius: var(--radius-panel);
-  background: var(--surface-raised);
+  background: transparent;
   min-width: 0;
 }
 
@@ -150,17 +152,17 @@
   text-align: right;
 }
 
-.redux-status-line #clock {
+.redux-status-line .transport-clock {
   min-width: 0;
   color: inherit;
   font-size: inherit;
 }
 
-.redux-status-line #bpm-display {
+.redux-status-line .transport-bpm {
   font-size: inherit;
 }
 
-.transport #clock {
+.transport .transport-clock {
   color: @accent;
 }
 

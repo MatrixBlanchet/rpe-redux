@@ -27,6 +27,8 @@
  * its own stacking context, because that number never leaves the parent box.
  * This gate also rejects `--z-*` names the ladder does not define, rung
  * definitions outside the token sheet, and inline `zIndex` styles.
+ * Product styles use semantic classes; DOM ids remain available for automation
+ * and accessibility contracts but never own a stylesheet rule.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { extname, join, relative, resolve, sep } from "node:path";
@@ -45,6 +47,7 @@ const spacingFailures = [];
 const rawButtonFailures = [];
 const fieldRhythmFailures = [];
 const zIndexFailures = [];
+const cssIdSelectorFailures = [];
 const usedZIndexTokens = new Set();
 const definedZIndexTokens = new Set();
 const allowedSize = /^var\(--(?:type|glyph-size)-[a-z0-9-]+\)$/u;
@@ -131,6 +134,12 @@ function visit(directory) {
           }
         }
         const code = stripComments(line);
+        for (const match of code.matchAll(/#([A-Za-z_][A-Za-z0-9_-]*)/gu)) {
+          if (!/^[0-9a-fA-F]{3,8}$/u.test(match[1])) {
+            cssIdSelectorFailures.push(`${location}: ${line.trim()}`);
+            break;
+          }
+        }
         if (!colorExceptionSheets.has(relativePath)) {
           if (rawColor.test(code) || namedColorDeclaration.test(code)) {
             colorFailures.push(`${location}: ${line.trim()}`);
@@ -304,6 +313,16 @@ if (zIndexFailures.length) {
   process.exitCode = 1;
 } else {
   console.log("PASS style rules: z-index uses the shared ladder");
+}
+
+if (cssIdSelectorFailures.length) {
+  console.error(
+    "CSS ID selectors are forbidden (use a semantic class; keep ids only for automation/accessibility):\n" +
+      cssIdSelectorFailures.join("\n"),
+  );
+  process.exitCode = 1;
+} else {
+  console.log("PASS style rules: no CSS ID selectors");
 }
 
 const undefinedZIndexTokens = [...usedZIndexTokens].filter(

@@ -149,6 +149,7 @@ export function SettingsWindow({
   const fields = settingsDefinitions();
   const visibility = useSettingVisibility(fields);
   const panelsRef = useRef<HTMLDivElement | null>(null);
+  const sectionRefs = useRef(new Map<string, HTMLElement>());
   const pendingScroll = useRef<{ key: string; offset: number } | null>(null);
   const lastScroll = useRef<SettingsScrollMemory | null>(null);
   const scrollWriteTimer = useRef(0);
@@ -386,9 +387,7 @@ export function SettingsWindow({
       if (!container || !pending || !container.offsetHeight) {
         return;
       }
-      const section = container.querySelector<HTMLElement>(
-        `[data-settings-section="${pending.key}"]`,
-      );
+      const section = sectionRefs.current.get(pending.key);
       if (!section) {
         if (attempts++ < 4) {
           frame = requestAnimationFrame(align);
@@ -425,7 +424,7 @@ export function SettingsWindow({
           align();
         }
       });
-      for (const section of container.querySelectorAll("[data-settings-section]")) {
+      for (const section of sectionRefs.current.values()) {
         observer.observe(section);
       }
     }
@@ -470,9 +469,7 @@ export function SettingsWindow({
       if (pendingScroll.current) {
         return;
       }
-      const sections = [
-        ...container.querySelectorAll<HTMLElement>("[data-settings-section]"),
-      ].filter((section) => !section.hidden);
+      const sections = [...sectionRefs.current.values()].filter((section) => !section.hidden);
       let activeSection = sections[0];
       const first = activeSection?.dataset.settingsSection;
       if (!activeSection || !first) {
@@ -602,6 +599,13 @@ export function SettingsWindow({
               return (
                 <section
                   key={entry.key}
+                  ref={(section) => {
+                    if (section) {
+                      sectionRefs.current.set(entry.key, section);
+                    } else {
+                      sectionRefs.current.delete(entry.key);
+                    }
+                  }}
                   className="redux-settings-panel"
                   data-category={entry.key}
                   data-settings-section={entry.key}

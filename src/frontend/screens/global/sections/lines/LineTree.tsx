@@ -93,6 +93,7 @@ export function LineTree({
   onNotify,
 }: LineTreeProps) {
   const listRef = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef(new Map<number, HTMLElement>());
   const [createPrompt, setCreatePrompt] = useState<CreatePrompt | null>(null);
   const [renameGroup, setRenameGroup] = useState<GroupRenameDraft | null>(null);
   const longPressTimer = useRef<number | null>(null);
@@ -225,6 +226,7 @@ export function LineTree({
 
   const { marquee, beginMarquee } = useLineTreeMarquee({
     listRef,
+    rowRefs,
     lines,
     selectedIds: selected,
     lineIndices,
@@ -487,6 +489,14 @@ export function LineTree({
         group={group}
         active={index === session.lineIndex}
         selected={marquee?.hits.has(key) ?? selectedIndices.has(index)}
+        rowRef={(row) => {
+          if (row) {
+            rowRefs.current.set(index, row);
+          } else {
+            rowRefs.current.delete(index);
+          }
+        }}
+        onPointerDown={beginMarquee}
         onSelect={selectRow}
       />
     );
@@ -503,7 +513,6 @@ export function LineTree({
         role="tree"
         aria-label={t("editorPanels.linePanel.title")}
         aria-multiselectable="true"
-        onPointerDown={beginMarquee}
         onScroll={(event) => {
           scrollTopRef.current = event.currentTarget.scrollTop;
         }}
@@ -553,6 +562,14 @@ export function LineTree({
                           index={index}
                           active={index === session.lineIndex}
                           selected={marquee?.hits.has(key) ?? selectedIndices.has(index)}
+                          rowRef={(row) => {
+                            if (row) {
+                              rowRefs.current.set(index, row);
+                            } else {
+                              rowRefs.current.delete(index);
+                            }
+                          }}
+                          onPointerDown={beginMarquee}
                           onSelect={selectRow}
                         />
                       );

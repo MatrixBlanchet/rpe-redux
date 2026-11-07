@@ -39,6 +39,7 @@ export function SettingsNavigation({
   const { t, tRaw } = useTranslation();
   const searching = query.trim().length > 0;
   const listRef = useRef<HTMLDivElement | null>(null);
+  const itemRefs = useRef(new Map<string, HTMLElement>());
   const railRef = useRef<HTMLSpanElement | null>(null);
   const placed = useRef(false);
   // Tracks whether the rail had a measurable position on the previous pass; a
@@ -88,11 +89,7 @@ export function SettingsNavigation({
         shown.current = false;
         return;
       }
-      const active = searching
-        ? null
-        : list.querySelector<HTMLElement>(
-            `.redux-settings-nav-item[data-category="${railTarget}"]`,
-          );
+      const active = searching ? null : itemRefs.current.get(railTarget);
       rail.dataset.visible = active ? "true" : "false";
       if (!active) {
         return;
@@ -159,6 +156,13 @@ export function SettingsNavigation({
           return (
             <Button
               key={entry.key}
+              ref={(item) => {
+                if (item) {
+                  itemRefs.current.set(entry.key, item);
+                } else {
+                  itemRefs.current.delete(entry.key);
+                }
+              }}
               type="button"
               variant="ghost"
               className={`redux-settings-nav-item ${entry.parent ? "redux-settings-nav-child" : "redux-settings-nav-parent"}`}

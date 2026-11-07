@@ -12,7 +12,7 @@
  * the whole bar and hands each field the text it shows, which is what makes a
  * field a rendering of a value rather than an owner of one.
  */
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode, type Ref } from "react";
 import { Icon, iconName } from "../../../../design/components/icon/Icon.tsx";
 import { Input, type InputTextAlign } from "../../../../design/components/input/Input.tsx";
 import { Select } from "../../../../design/components/select/Select.tsx";
@@ -54,6 +54,8 @@ export interface ToolbarNumberFieldProps {
   icon?: string;
   /** The class that glyph's cluster carries; `toolbarGrid.less` sizes its cells. */
   fieldClassName?: string;
+  /** Attach the native field to the owning toolbar composite. */
+  inputRef?: Ref<HTMLInputElement>;
   /** The shell's richer tooltip, drawn by the icon beside the field. */
   tipTitle?: string;
   tipDesc?: string;
@@ -100,6 +102,7 @@ export function ToolbarNumberField({
   disabled,
   icon,
   fieldClassName,
+  inputRef,
   tipTitle,
   tipDesc,
   titleFor,
@@ -142,7 +145,8 @@ export function ToolbarNumberField({
   const field = (
     <Input
       id={id}
-      className={stepper ? "redux-stepper" : undefined}
+      ref={inputRef}
+      className={`toolbar-field-${id}${stepper ? " redux-stepper" : ""}`}
       stepWrap={wrap}
       textAlign={textAlign}
       type={text ? "text" : "number"}
@@ -255,6 +259,45 @@ export interface ToolbarSelectProps {
   onChange(value: string): void;
 }
 
+/** Renders the line field and gives its picker the same native input ref. */
+function ToolbarLinePickerField({
+  entry,
+  tRaw,
+}: {
+  entry: Extract<ToolbarField, { field: "number" }>;
+  tRaw: (key: string) => string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <div className="line-picker-control">
+      <ToolbarNumberField
+        id={entry.domId}
+        inputRef={inputRef}
+        value={values.byId.get<string>(entry.value)}
+        label={tRaw(entry.label)}
+        min={resolvedBound(entry.min)}
+        max={resolvedBound(entry.max)}
+        step={entry.step}
+        wrap={entry.wrap}
+        stepper={entry.stepper}
+        text={entry.text}
+        textAlign={entry.textAlign}
+        disabled={entry.disabled?.()}
+        icon={entry.icon}
+        fieldClassName={entry.className}
+        titleFor={entry.title}
+        tipTitle={entry.tipTitle ? tRaw(entry.tipTitle) : undefined}
+        tipDesc={entry.tipDesc ? tRaw(entry.tipDesc) : undefined}
+        accept={entry.accept}
+        commitOnBlur={entry.commitOnBlur}
+        onInput={(next) => entry.input(next)}
+        onCommit={entry.commit ? (next) => entry.commit?.(next) : undefined}
+      />
+      <LineSelectionPicker inputRef={inputRef} />
+    </div>
+  );
+}
+
 /** A select with the field's name in front of it. */
 function ToolbarSelect({
   id,
@@ -270,6 +313,7 @@ function ToolbarSelect({
       {leading}
       <Select
         id={id}
+        className={`toolbar-field-${id}`}
         aria-label={label}
         textAlign="center"
         value={value}
@@ -301,6 +345,9 @@ export function toolbarFieldNode(entry: ToolbarField, tRaw: (key: string) => str
       />
     );
   }
+  if (entry.dropdown === "linePicker") {
+    return <ToolbarLinePickerField entry={entry} tRaw={tRaw} />;
+  }
   const numberField = (
     <ToolbarNumberField
       id={entry.domId}
@@ -325,14 +372,6 @@ export function toolbarFieldNode(entry: ToolbarField, tRaw: (key: string) => str
       onCommit={entry.commit ? (next) => entry.commit?.(next) : undefined}
     />
   );
-  if (entry.dropdown === "linePicker") {
-    return (
-      <div className="line-picker-control">
-        {numberField}
-        <LineSelectionPicker />
-      </div>
-    );
-  }
   return numberField;
 }
 

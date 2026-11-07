@@ -11,7 +11,6 @@ export function TrajectoryOverlay() {
   const visible = useEditorRuntimeValue((runtime) => runtime.ui.trajectoryOverlay, false);
   return (
     <canvas
-      id="trajectory-overlay"
       ref={trajectoryOverlay}
       className="trajectory-overlay"
       hidden={!visible}

@@ -18,7 +18,7 @@
   min-width: 0;
 }
 
-.redux-app-root #home .redux-library-sort-select {
+.redux-app-root .redux-home-page .redux-library-sort-select {
   flex: 0 1 auto;
   width: clamp(120px, 18vw, 210px);
   height: 32px;
@@ -32,11 +32,11 @@
   min-width: 0;
 }
 
-.redux-app-root #home .redux-library-view-switch {
+.redux-app-root .redux-home-page .redux-library-view-switch {
   flex: none;
 }
 
-.redux-app-root #home .redux-library-view-switch .redux-segmented-option {
+.redux-app-root .redux-home-page .redux-library-view-switch .redux-segmented-option {
   display: inline-grid;
   place-items: center;
   width: 40px;
@@ -52,7 +52,7 @@
 // The library column is a vertical stack: search row, scrolling cards, footer.
 // Only the cards flex, so the footer stays on the column's bottom edge in every
 // data state, including empty and failed ones.
-.redux-app-root #home .redux-welcome-library {
+.redux-app-root .redux-home-page .redux-welcome-library {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -61,7 +61,7 @@
 
 // --------------------------------------------------------------- detail card
 
-.redux-app-root #home .redux-library-detail {
+.redux-app-root .redux-home-page .redux-library-detail {
   display: flex;
   flex: none;
   flex-direction: column;
@@ -203,7 +203,7 @@
 
 // Match the footer action gap; the shared glyph rule keeps its own 6px optical
 // gap for compact controls.
-.redux-app-root #home .redux-library-card-actions .redux-button {
+.redux-app-root .redux-home-page .redux-library-card-actions .redux-button {
   gap: var(--space-2);
 }
 
@@ -288,7 +288,7 @@
 // The card region is the only flexible row in the library column. It takes the
 // leftover height, keeps a small floor for very short windows, and scrolls its
 // own content; the old viewport-derived max-heights left the page short.
-#home .redux-library-cards {
+.redux-home-page .redux-library-cards {
   display: grid;
   flex: 1 1 auto;
   grid-template-columns: minmax(0, 1fr);
@@ -304,21 +304,21 @@
 
 // Empty states are siblings of the card region. An empty region must not claim
 // half of the column and push the placeholder away from the centre.
-#home .redux-library-cards:empty {
+.redux-home-page .redux-library-cards:empty {
   display: none;
 }
 
-#home .redux-library-cards[data-skeleton="true"] {
+.redux-home-page .redux-library-cards[data-skeleton="true"] {
   align-content: center;
 }
 
-#home .redux-library-cards[data-view="grid"] {
+.redux-home-page .redux-library-cards[data-view="grid"] {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   grid-auto-rows: auto;
   gap: var(--space-3);
 }
 
-.redux-app-root #home .project-card {
+.redux-app-root .redux-home-page .project-card {
   position: relative;
   min-width: 0;
   min-height: 0;
@@ -465,7 +465,7 @@
   line-height: 1;
 }
 
-.redux-app-root #home .redux-library-cards[data-view="grid"] .project-card {
+.redux-app-root .redux-home-page .redux-library-cards[data-view="grid"] .project-card {
   padding: var(--space-2);
   border-color: var(--border-subtle);
   background: var(--surface-raised);
@@ -491,7 +491,7 @@
   }
 }
 
-.redux-app-root #home .redux-library-cards[data-view="grid"] .project-level {
+.redux-app-root .redux-home-page .redux-library-cards[data-view="grid"] .project-level {
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);
@@ -502,13 +502,13 @@
   box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow-color) 40%, transparent);
 }
 
-#home .redux-library-stale {
+.redux-home-page .redux-library-stale {
   flex: none;
   margin: 0 0 var(--space-2);
   color: var(--foreground-muted);
 }
 
-#home .redux-library-empty {
+.redux-home-page .redux-library-empty {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -536,14 +536,14 @@
 
 // The ready empty library carries its own creation actions instead of repeating
 // them in a footer directly below.
-#home .redux-library-empty .redux-library-actions {
+.redux-home-page .redux-library-empty .redux-library-actions {
   width: min(100%, 420px);
   margin-top: var(--space-3);
   padding-top: 0;
   border-top: none;
 }
 
-#home .redux-library-search-empty {
+.redux-home-page .redux-library-search-empty {
   display: grid;
   flex: 1 1 auto;
   place-items: center;
@@ -578,7 +578,7 @@
   border-top: 1px solid var(--border-subtle);
 }
 
-.redux-app-root #home .redux-library-action {
+.redux-app-root .redux-home-page .redux-library-action {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -614,7 +614,7 @@
   }
 }
 
-.redux-app-root #home .redux-library-action .redux-kbd {
+.redux-app-root .redux-home-page .redux-library-action .redux-kbd {
   padding: 1px var(--space-1-5);
   font-size: var(--type-micro);
   opacity: 0.72;
@@ -623,7 +623,7 @@
 // The primary footer action puts its shortcut on the accent fill, so its ink
 // follows the button's resolved foreground instead of the muted page colour.
 .redux-app-root
-  #home
+  .redux-home-page
   .redux-library-action.redux-button-solid
   :is(.redux-shortcut-labels, .redux-kbd) {
   color: var(--action-foreground-resting, var(--on-accent));

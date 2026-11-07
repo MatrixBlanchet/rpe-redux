@@ -172,6 +172,21 @@
   box-shadow: var(--chrome-panel-shadow);
 }
 
+// The inspector keeps its geometry and optional elevation, but its surface is
+// transparent in every material mode so the owned fields are the only filled
+// controls inside it.
+.redux-app-root .workbench-inspector > .inspector {
+  background: transparent;
+  border-color: transparent;
+}
+
+// A drawer is a widened overlay, not an ordinary inspector pane. Keep its
+// surface opaque so a translucent workspace/canvas can never show through it.
+.redux-app-root .workbench-inspector > .inspector.is-drawer {
+  background: var(--surface-raised);
+  border-color: var(--panel-border);
+}
+
 // An overlay inspector leaves the grid entirely and floats over the workspace.
 // The width stays capped at half the frame so the canvas remains usable. A top
 // bar or inspector-grid sidebar removes the right rail track first.
@@ -490,7 +505,7 @@
 :root[data-chrome-toolbar-placement="left"]:not([data-chrome-toolbar-flow="grid"])
   .redux-app-root
   .redux-toolbar-line
-  #play {
+  .toolbar-playback-button {
   align-self: flex-start;
   width: var(--tool-cell);
   min-width: var(--tool-cell);
@@ -532,7 +547,10 @@
   margin: 0;
 }
 
-:root[data-chrome-toolbar-placement="left"] .redux-app-root .redux-toolbar-line #play {
+:root[data-chrome-toolbar-placement="left"]
+  .redux-app-root
+  .redux-toolbar-line
+  .toolbar-playback-button {
   width: 100%;
   min-width: 0;
   margin-inline: 0;
@@ -706,6 +724,14 @@
   backdrop-filter: blur(var(--theme-backdrop-blur));
 }
 
+// The transport's outer card is only a layout wrapper; the spectrum and
+// scrubber provide the visible progress surface themselves.
+.redux-app-root .redux-status-card {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .transport-host-grip {
   display: flex;
   align-items: center;
@@ -759,9 +785,9 @@
 }
 
 :root:not([data-chrome-pattern="none"]) .redux-app-root .workbench,
-:root:not([data-chrome-pattern="none"]) .redux-app-root #home,
+:root:not([data-chrome-pattern="none"]) .redux-app-root .redux-home-page,
 :root:not([data-chrome-ambient="none"]) .redux-app-root .workbench,
-:root:not([data-chrome-ambient="none"]) .redux-app-root #home {
+:root:not([data-chrome-ambient="none"]) .redux-app-root .redux-home-page {
   background: transparent;
 }
 

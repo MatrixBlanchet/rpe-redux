@@ -15,6 +15,7 @@ import {
   type CSSProperties,
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import { IconButton } from "../../../../design/components/button/IconButton.tsx";
@@ -66,7 +67,11 @@ function groupOptions(options: readonly EditorLineOption[]) {
 }
 
 /** Toolbar judge-line selector with folders, shift-toggle, and marquee selection. */
-export function LineSelectionPicker() {
+export function LineSelectionPicker({
+  inputRef,
+}: {
+  inputRef?: RefObject<HTMLInputElement | null>;
+}) {
   const { t } = useTranslation();
   const lineSelection = useLineSelectionPreferences();
   const collapsed = useMemo(
@@ -76,6 +81,7 @@ export function LineSelectionPicker() {
   const button = useRef<HTMLButtonElement>(null);
   const popup = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef(new Map<number, HTMLElement>());
   const initialScrollIndex = useRef<number | null>(null);
   const marqueeCleanup = useRef<(() => void) | null>(null);
   const marqueeActive = useRef(false);
@@ -138,10 +144,7 @@ export function LineSelectionPicker() {
   const show = () => {
     // Align the popover with the input it belongs to, not with the chevron that
     // opens it: the list then reads as the field's own dropdown.
-    const field = button.current
-      ?.closest(".line-picker-control")
-      ?.querySelector<HTMLInputElement>("#line-input");
-    const target = field ?? button.current;
+    const target = inputRef?.current ?? button.current;
     if (!target) {
       return;
     }
@@ -174,11 +177,8 @@ export function LineSelectionPicker() {
         return;
       }
       const targetIndex = initialScrollIndex.current;
-      const row =
-        targetIndex === null
-          ? null
-          : container.querySelector<HTMLElement>(`[data-line-index="${targetIndex}"]`);
-      const focusTarget = row ?? container.querySelector<HTMLButtonElement>(".line-selection-row");
+      const row = targetIndex === null ? null : rowRefs.current.get(targetIndex);
+      const focusTarget = row ?? rowRefs.current.values().next().value;
       focusTarget?.focus({ preventScroll: true });
       if (!row) {
         return;
@@ -265,9 +265,7 @@ export function LineSelectionPicker() {
     const top = Math.min(from.y, to.y);
     const bottom = Math.max(from.y, to.y);
     const rows: { index: number; top: number }[] = [];
-    for (const row of container.querySelectorAll<HTMLElement>(
-      ".line-selection-row[data-line-index]",
-    )) {
+    for (const row of rowRefs.current.values()) {
       const index = Number(row.dataset.lineIndex);
       const rect = row.getBoundingClientRect();
       const rowLeft = rect.left - originX;
@@ -467,15 +465,9 @@ export function LineSelectionPicker() {
               aria-label={t("chrome.toolbar.lineSelection")}
               onPointerDownCapture={(event) => {
                 // Shift is a range-selection modifier: pressing it inside the
-                // list must not move focus onto a folder or row.
-                if (!event.shiftKey) {
-                  return;
-                }
-                const target = event.target;
-                if (
-                  target instanceof Element &&
-                  target.closest(".line-selection-group-head, .line-selection-row")
-                ) {
+                // list must not move focus onto a folder or row. The row and
+                // group handlers still own the actual selection behavior.
+                if (event.shiftKey) {
                   event.preventDefault();
                 }
               }}
@@ -531,6 +523,13 @@ export function LineSelectionPicker() {
                             <ListRow
                               as="button"
                               type="button"
+                              ref={(row) => {
+                                if (row) {
+                                  rowRefs.current.set(entry.index, row);
+                                } else {
+                                  rowRefs.current.delete(entry.index);
+                                }
+                              }}
                               selected={previewing ? committed && !changing : committed}
                               current={entry.index === current}
                               className={`line-selection-row${changing && !removing ? " is-marquee-preview" : ""}${removing ? " is-marquee-remove" : ""}`}

@@ -523,7 +523,7 @@
 // that belonged to the surface underneath. The tip is itself a popover, so the
 // first rule excludes it when checking for another open popover (menus,
 // selects, pickers).
-:root:has(:popover-open:not(#redux-rich-tooltip)) .redux-rich-tooltip,
+:root:has(:popover-open:not(.redux-rich-tooltip)) .redux-rich-tooltip,
 :root:has(.redux-app-menu-sheet, .redux-welcome-drop, .asset-drop-overlay) .redux-rich-tooltip {
   display: none;
 }

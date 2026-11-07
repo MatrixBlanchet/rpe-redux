@@ -40,6 +40,7 @@ export function GlobalTimingWorkspace() {
   );
   const entries = useMemo(() => chart?.BPMList ?? [], [chart]);
   const listRef = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef(new Map<number, HTMLElement>());
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export function GlobalTimingWorkspace() {
     if (!list) {
       return;
     }
-    const row = list.querySelector<HTMLElement>(`[data-bpm-index="${selected}"]`);
+    const row = rowRefs.current.get(selected);
     if (!row) {
       return;
     }
@@ -221,6 +222,13 @@ export function GlobalTimingWorkspace() {
             {entries.map((entry, index) => (
               <ListRow
                 key={`${index}:${entry.startTime.join(":")}:${entry.bpm}`}
+                ref={(row) => {
+                  if (row) {
+                    rowRefs.current.set(index, row);
+                  } else {
+                    rowRefs.current.delete(index);
+                  }
+                }}
                 selected={selected === index}
                 className="global-timing-row"
                 data-bpm-index={index}
