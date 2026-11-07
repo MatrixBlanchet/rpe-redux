@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Product entry for the React shell: starts the owned backend and local service,
  * applies theme preferences, installs design-system hosts and editor surface
  * providers, and gates the shell behind startup readiness.
@@ -132,21 +132,6 @@ function AppContent() {
     syncNativeWindowTheme(theme);
   }, [theme]);
 
-  // A crash between saving a replacement image and committing its setting can
-  // leave an unreferenced file behind. Reconcile the dedicated folder once
-  // after durable preferences are attached so old replacements do not accumulate.
-  useEffect(() => {
-    if (!backendReady) {
-      return;
-    }
-    const activeReference = values.byId.has("custom-background")
-      ? String(values.byId.get("custom-background") ?? "")
-      : "";
-    void cleanupCustomBackgrounds(activeReference).catch((error: unknown) => {
-      console.error("Could not clean unused settings images", error);
-    });
-  }, [backendReady]);
-
   // Live folder sniffing: themes, skin folders, and Extension folders are
   // re-read on one timer, so dropping a package in place updates the UI without
   // a manual refresh. Each helper no-ops outside the desktop host.
@@ -219,6 +204,18 @@ function AppContent() {
         const found = await localService({ refresh: true });
         if (found) {
           await preferences.attach(createDesktopPreferenceClient(found.library));
+          // A crash between saving a replacement image and committing its
+          // setting can leave an unreferenced file behind. Reconcile the
+          // dedicated folder once the stored value is readable; a failed read
+          // must never be mistaken for "no background is configured".
+          if (preferences.status().durable) {
+            const activeReference = values.byId.has("custom-background")
+              ? String(values.byId.get("custom-background") ?? "")
+              : "";
+            void cleanupCustomBackgrounds(activeReference).catch((error: unknown) => {
+              console.error("Could not clean unused settings images", error);
+            });
+          }
           // Extension consent is kept in durable preferences, so package
           // discovery runs only after the preference store attaches.
           await loadPackagedExtensions();
