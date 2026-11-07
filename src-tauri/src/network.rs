@@ -201,7 +201,7 @@ fn portal_network_status() -> Option<NetworkStatus> {
         "org.freedesktop.portal.NetworkMonitor",
         "GetAvailable",
     );
-    let metered = busctl_call_bool(
+    let metered = busctl_call_metered(
         true,
         "org.freedesktop.portal.Desktop",
         "/org/freedesktop/portal/desktop",
@@ -281,6 +281,21 @@ fn busctl_call_bool(
 }
 
 #[cfg(target_os = "linux")]
+fn busctl_call_metered(
+    user_bus: bool,
+    service: &str,
+    path: &str,
+    interface: &str,
+    method: &str,
+) -> Option<bool> {
+    let mut args = vec!["call", service, path, interface, method];
+    if user_bus {
+        args.insert(0, "--user");
+    }
+    run_busctl(args).and_then(|value| parse_portal_metered(&value))
+}
+
+#[cfg(target_os = "linux")]
 fn run_busctl(args: Vec<&str>) -> Option<String> {
     let output = std::process::Command::new("busctl")
         .args(args)
@@ -304,6 +319,12 @@ fn parse_bool(value: &str) -> Option<bool> {
         "false" => Some(false),
         _ => None,
     }
+}
+
+#[cfg(target_os = "linux")]
+fn parse_portal_metered(value: &str) -> Option<bool> {
+    let value = value.split_whitespace().last()?;
+    parse_bool(value).or_else(|| parse_metered(value))
 }
 
 #[cfg(target_os = "linux")]
@@ -344,7 +365,10 @@ fn nmcli_type(value: &str) -> Option<&'static str> {
 
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
-    use super::{network_manager_type, nmcli_type, parse_metered, parse_object_path, parse_u32};
+    use super::{
+        network_manager_type, nmcli_type, parse_metered, parse_object_path, parse_portal_metered,
+        parse_u32,
+    };
 
     #[test]
     fn parses_network_manager_metered_values_conservatively() {
@@ -353,6 +377,15 @@ mod tests {
         assert_eq!(parse_metered("u 3"), Some(true));
         assert_eq!(parse_metered("u 4"), Some(false));
         assert_eq!(parse_metered("u 0"), None);
+    }
+
+    #[test]
+    fn parses_portal_metered_boolean_and_uint_values() {
+        assert_eq!(parse_portal_metered("b true"), Some(true));
+        assert_eq!(parse_portal_metered("b false"), Some(false));
+        assert_eq!(parse_portal_metered("u 1"), Some(true));
+        assert_eq!(parse_portal_metered("u 2"), Some(false));
+        assert_eq!(parse_portal_metered("u 0"), None);
     }
 
     #[test]
