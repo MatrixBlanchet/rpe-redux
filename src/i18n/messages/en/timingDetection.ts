@@ -7,8 +7,6 @@ export default {
   "editorPanels.timingDetection.newChart.never": "Never detect",
   "editorPanels.timingDetection.newChart.once": "Detect once",
   "editorPanels.timingDetection.newChart.skip": "Skip once",
-  "editorPanels.timingDetection.pendingToast":
-    "Timing detection is queued; it will run when this chart has audio.",
   "editorPanels.timingDetection.button": "Auto-detect BPM & offset",
   "editorPanels.timingDetection.title": "Detect BPM and offset",
   "editorPanels.timingDetection.analyzing": "Analyzing the beat…",

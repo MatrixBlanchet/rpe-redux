@@ -803,7 +803,6 @@ export function createDocumentRuntime(options: {
     }
     if (trigger !== "none") {
       markTimingDetectionPending(getSession(), trigger === "ask-after-audio" ? "ask" : "detect");
-      options.notify(t("editorPanels.timingDetection.pendingToast"), "info");
     }
     getSession().history.markUnsaved();
     documentCoordinator.admitSync({
