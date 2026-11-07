@@ -139,6 +139,7 @@ fn network_manager_status() -> Option<NetworkStatus> {
         "org.freedesktop.NetworkManager",
         "Metered",
     )
+    .as_deref()
     .and_then(parse_metered);
     let state = busctl_property(
         false,
@@ -147,6 +148,7 @@ fn network_manager_status() -> Option<NetworkStatus> {
         "org.freedesktop.NetworkManager",
         "State",
     )
+    .as_deref()
     .and_then(parse_u32);
     let primary = busctl_property(
         false,
@@ -155,6 +157,7 @@ fn network_manager_status() -> Option<NetworkStatus> {
         "org.freedesktop.NetworkManager",
         "PrimaryConnection",
     )
+    .as_deref()
     .and_then(parse_object_path)
     .filter(|path| path != "/");
     let kind = primary
@@ -202,6 +205,7 @@ fn portal_network_status() -> Option<NetworkStatus> {
         true,
         "org.freedesktop.portal.Desktop",
         "/org/freedesktop/portal/desktop",
+        "org.freedesktop.portal.NetworkMonitor",
         "GetMetered",
     );
     if available.is_none() && metered.is_none() {
