@@ -36,17 +36,29 @@
 // ------------------------------------------------------------------ header
 
 .redux-welcome-header {
+  position: absolute;
+  z-index: var(--z-content-overlay);
+  inset-block-start: var(--space-1-5);
+  inset-inline-start: var(--space-3);
   display: flex;
   flex: none;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: var(--space-6);
   min-width: 0;
   min-height: var(--control-height);
 }
 
-.redux-app-root .redux-home-page .redux-welcome-settings,
-.redux-app-root .redux-home-page .redux-welcome-more {
+.redux-app-root .redux-home-page .redux-welcome-actions {
+  --tool-cell: var(--theme-toolbar-cell, 41px);
+}
+
+.redux-app-root .redux-home-page .redux-welcome-actions .redux-icon-button {
+  width: var(--tool-cell);
+  min-width: var(--tool-cell);
+  height: var(--tool-cell);
+  min-height: var(--tool-cell);
+  padding: 0;
   color: var(--foreground-muted);
 
   .redux-icon {
@@ -56,14 +68,6 @@
   &:hover:not(:disabled) {
     color: var(--foreground);
   }
-}
-
-.redux-app-root .redux-home-page .redux-welcome-more {
-  flex: none;
-  width: var(--control-height-icon);
-  height: var(--control-height-icon);
-  min-width: var(--control-height-icon);
-  min-height: var(--control-height-icon);
 }
 
 // ----------------------------------------------------------------- columns
@@ -88,6 +92,9 @@
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   gap: clamp(20px, 3vw, 56px);
+  // The header is pinned to the page's toolbar corner, so reserve its original
+  // row and gap here to keep the library content at the same vertical rhythm.
+  margin-block-start: calc(var(--control-height) + clamp(20px, 2.6vh, 36px));
   min-width: 0;
   min-height: 0;
 }
