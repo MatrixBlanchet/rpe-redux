@@ -141,6 +141,8 @@ export function normalizeShortcutKey(key: string): string {
 
 const isModifier = (token: string): boolean =>
   (MODIFIER_ORDER as readonly string[]).includes(token);
+const isBareModifier = (token: string): boolean =>
+  (["CTRL", "ALT", "SHIFT", "META"] as readonly string[]).includes(token);
 
 const isMouse = (token: string): boolean =>
   (MOUSE_KEYS as readonly string[]).includes(token) ||
@@ -185,6 +187,9 @@ export function parseShortcut(text: unknown): ParsedShortcut {
   }
   if (new Set(parts).size !== parts.length) {
     return { ok: false, error: "shortcuts.error.duplicateKey" };
+  }
+  if (parts.length === 1 && isBareModifier(parts[0])) {
+    return { ok: true, shortcut: { key: parts[0], modifiers: [] } };
   }
   const modifiers = MODIFIER_ORDER.filter((token) => parts.includes(token));
   const keys = parts.filter((part) => !isModifier(part));
@@ -282,6 +287,11 @@ export function displayText(shortcut: Shortcut): string {
 
 /** ARIA key names for the tokens whose spelling differs from the DOM value. */
 const ARIA_KEYS: Record<string, string> = {
+  CTRL: "Control",
+  ALT: "Alt",
+  SHIFT: "Shift",
+  META: "Meta",
+  MOD: "Control",
   SPACE: "Space",
   ESCAPE: "Escape",
   ENTER: "Enter",
@@ -363,10 +373,13 @@ export function ariaShortcutText(shortcut: Shortcut): string {
  */
 export function shortcutIssue(shortcut: Shortcut): string | null {
   const key = normalizeShortcutKey(String(shortcut.key ?? ""));
-  if (!key || isModifier(key) || !isSupportedKey(key)) {
+  const modifiers = shortcut.modifiers ?? [];
+  if (!key || (isModifier(key) ? !isBareModifier(key) : !isSupportedKey(key))) {
     return "shortcuts.error.unsupportedKey";
   }
-  const modifiers = shortcut.modifiers ?? [];
+  if (isModifier(key) && modifiers.length > 0) {
+    return "shortcuts.error.unsupportedKey";
+  }
   if (new Set(modifiers).size !== modifiers.length) {
     return "shortcuts.error.duplicateKey";
   }
