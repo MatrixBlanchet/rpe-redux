@@ -7,7 +7,6 @@ export default {
   "editorPanels.timingDetection.newChart.never": "从不检测",
   "editorPanels.timingDetection.newChart.once": "仅本次检测",
   "editorPanels.timingDetection.newChart.skip": "本次跳过",
-  "editorPanels.timingDetection.pendingToast": "已排队自动检测；导入音频后会自动运行。",
   "editorPanels.timingDetection.button": "自动检测 BPM 与 Offset",
   "editorPanels.timingDetection.title": "检测 BPM 与 Offset",
   "editorPanels.timingDetection.analyzing": "正在分析节拍…",

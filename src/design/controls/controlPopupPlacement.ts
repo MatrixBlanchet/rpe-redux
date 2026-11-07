@@ -1,8 +1,8 @@
 /**
  * Shared geometry for the native-select and colour-control popups.
  *
- * Both panels anchor to a control, flip above it when the space below is too
- * small, stay inside the viewport or the open dialog, and publish the
+ * Both panels anchor to a control, can flip above it when the space below is
+ * too small, stay inside the viewport or the open dialog, and publish the
  * `--control-origin-*` variables the panel animation reads. Sizing policy stays
  * with each caller: a select clamps its height to the remaining space, while
  * the colour panel keeps its fixed size.
@@ -39,6 +39,8 @@ export interface ControlPopupPlacementOptions {
   flipThreshold?: number;
   /** Flip only when the space above is larger than the space below. */
   preferLargerSide?: boolean;
+  /** Choose an automatic side or keep the popup below the anchor. */
+  placement?: "auto" | "below";
   /** Top inset used when measuring the space above for the flip decision. */
   flipAboveInset?: number;
 }
@@ -74,6 +76,7 @@ export function placeControlPopup({
   clampHeight = false,
   flipThreshold = panelHeight,
   preferLargerSide = false,
+  placement = "auto",
   flipAboveInset = FLIP_GAP,
 }: ControlPopupPlacementOptions): ControlPopupPlacement {
   const containerLeft = dialog?.left ?? 0;
@@ -83,7 +86,9 @@ export function placeControlPopup({
   const below = Math.max(0, containerTop + containerHeight - anchor.bottom - FLIP_GAP);
   const above = Math.max(0, anchor.top - containerTop - flipAboveInset);
   const flipUp =
-    below < flipThreshold && (preferLargerSide ? above > below : above > flipThreshold);
+    placement !== "below" &&
+    below < flipThreshold &&
+    (preferLargerSide ? above > below : above > flipThreshold);
   const height = clampHeight
     ? Math.max(1, Math.min(panelHeight, flipUp ? above : below))
     : panelHeight;
@@ -91,9 +96,12 @@ export function placeControlPopup({
     EDGE,
     Math.min(anchor.left - containerLeft, containerWidth - panelWidth - EDGE),
   );
-  const top = flipUp
-    ? Math.max(EDGE, anchor.top - containerTop - height - GAP)
-    : Math.min(anchor.bottom - containerTop + GAP, containerHeight - height - EDGE);
+  const top =
+    placement === "below"
+      ? anchor.bottom - containerTop + GAP
+      : flipUp
+        ? Math.max(EDGE, anchor.top - containerTop - height - GAP)
+        : Math.min(anchor.bottom - containerTop + GAP, containerHeight - height - EDGE);
   const originX = Math.min(
     Math.max(anchor.left + anchor.width / 2 - (containerLeft + left), ORIGIN_INSET),
     panelWidth - ORIGIN_INSET,

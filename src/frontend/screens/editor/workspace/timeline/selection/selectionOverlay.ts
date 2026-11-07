@@ -106,9 +106,9 @@ export class SelectionOverlay {
       selection.area,
       {
         ...palette,
-        selectionNotesFill: `rgba(${noteRgb.join(", ")}, 0.13)`,
+        selectionNotesFill: `rgba(${noteRgb.join(", ")}, 0.18)`,
         selectionNotesStroke: noteColor,
-        selectionEventsFill: `rgba(${eventRgb.join(", ")}, 0.19)`,
+        selectionEventsFill: `rgba(${eventRgb.join(", ")}, 0.24)`,
         selectionEventsStroke: eventColor,
       },
     );

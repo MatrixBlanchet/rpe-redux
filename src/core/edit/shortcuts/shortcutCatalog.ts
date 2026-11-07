@@ -78,6 +78,22 @@ const samplingShortcuts: readonly EditorShortcutDefinition[] = [
     enabledFor: (context) =>
       context.hasEventSelection === true && !context.curveMode && !context.samplingActive,
   },
+  {
+    id: "sampling.hideGuides",
+    category: "editor.editing",
+    title: "shortcuts.editor.samplingHideGuides",
+    scope: "editor",
+    defaults: [{ key: "SHIFT" }],
+    enabledFor: (context) => context.samplingActive !== true,
+  },
+  {
+    id: "sampling.cancel",
+    category: "editor.editing",
+    title: "shortcuts.editor.samplingCancel",
+    scope: "editor",
+    defaults: [{ key: "ESCAPE" }],
+    enabledFor: (context) => context.samplingActive !== true,
+  },
 ];
 
 /** Editor shortcuts owned by the curve trajectory stage. */

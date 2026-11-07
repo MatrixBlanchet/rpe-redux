@@ -14,7 +14,7 @@ export function AudioAnalysisCanvas() {
   const visible = useEditorRuntimeValue((runtime) => runtime.ui.audioAnalysis, false);
   return (
     <canvas
-      id="audio-analysis-overlay"
+      className="audio-analysis-overlay"
       ref={audioAnalysisOverlay}
       hidden={!visible}
       aria-hidden="true"

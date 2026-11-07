@@ -106,7 +106,7 @@
   display: grid;
   grid-template-columns:
     minmax(0, 1fr) minmax(260px, min(var(--inspector-width), 57%))
-    56px;
+    var(--chrome-sidebar-track);
   grid-template-areas: "workspace inspector sidebar";
   gap: 0;
 }

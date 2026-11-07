@@ -101,8 +101,19 @@ export function matches(event: ShortcutEventLike, shortcut: Shortcut): boolean {
   // resolved into an actual Ctrl/Meta requirement before comparing.
   const needsCtrl = modifiers.includes("CTRL") || (wantsMod && !isApplePlatform());
   const needsMeta = modifiers.includes("META") || (wantsMod && isApplePlatform());
+  const key = normalizeShortcutKey(shortcut.key);
+  if (["CTRL", "ALT", "SHIFT", "META"].includes(key) && modifiers.length === 0) {
+    const eventKey = shortcutKey(event) === "CONTROL" ? "CTRL" : shortcutKey(event);
+    return (
+      key === eventKey &&
+      !(event.ctrlKey && key !== "CTRL") &&
+      !(event.metaKey && key !== "META") &&
+      !(event.altKey && key !== "ALT") &&
+      !(event.shiftKey && key !== "SHIFT")
+    );
+  }
   return (
-    normalizeShortcutKey(shortcut.key) === shortcutKey(event) &&
+    key === shortcutKey(event) &&
     Boolean(event.ctrlKey) === needsCtrl &&
     Boolean(event.metaKey) === needsMeta &&
     Boolean(event.altKey) === modifiers.includes("ALT") &&

@@ -113,6 +113,7 @@ function MeasuredToolbarAction({ entry, tRaw }: MeasuredToolbarActionProps) {
           }
         }}
         id={entry.domId}
+        className={entry.domId ? `toolbar-action-${entry.domId}` : undefined}
         style={style}
         data-toolbar-cells={cells ?? "auto"}
         {...tips}
@@ -136,6 +137,7 @@ function MeasuredToolbarAction({ entry, tRaw }: MeasuredToolbarActionProps) {
         }
       }}
       id={entry.domId}
+      className={entry.domId ? `toolbar-action-${entry.domId}` : undefined}
       style={style}
       data-toolbar-cells={cells ?? "auto"}
       icon={iconName(entry.icon)}

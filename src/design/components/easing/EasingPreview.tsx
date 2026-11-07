@@ -12,9 +12,10 @@
  * bounds (`easing(t, type, 0, 1)`) on purpose: the bounds select a sub-range of
  * that curve, and drawing the composed value would hide which segment was cut.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { bezier, easing } from "../../../core/utils/easing.ts";
 import { clamp01 } from "../../../core/utils/numbers.ts";
+import { EASING_CANVAS_HEIGHT, EASING_CANVAS_WIDTH, resizeEasingCanvas } from "./easingCanvas.ts";
 
 /**
  * Only the fields the preview draws. Naming the shape here keeps chart-model
@@ -31,8 +32,8 @@ interface EasingPreviewEvent {
   easingRight?: number;
 }
 
-const WIDTH = 260;
-const HEIGHT = 100;
+const WIDTH = EASING_CANVAS_WIDTH;
+const HEIGHT = EASING_CANVAS_HEIGHT;
 const LEFT = 10;
 const TOP = 12;
 const BOTTOM = 88;
@@ -44,6 +45,8 @@ const RANGE_MAX = 1.15;
 const xOf = (progress: number): number => LEFT + progress * PLOT_WIDTH;
 const yOf = (value: number): number =>
   BOTTOM - ((value - RANGE_MIN) / (RANGE_MAX - RANGE_MIN)) * (BOTTOM - TOP);
+const VALUE_TOP = yOf(1);
+const VALUE_BOTTOM = yOf(0);
 
 /** Stroke one sampled segment of a curve into the canvas. */
 function drawCurve(
@@ -71,7 +74,24 @@ function drawCurve(
 /** Draws the easing curve, its active bounds, and its control points for one event. */
 export function EasingPreview({ event }: { event: EasingPreviewEvent }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [drawVersion, setDrawVersion] = useState(0);
   const { bezier: isBezier, bezierPoints, easingType, easingLeft, easingRight } = event;
+
+  useEffect(() => {
+    const redraw = () => setDrawVersion((version) => version + 1);
+    window.addEventListener("redux-theme", redraw);
+    const canvas = canvasRef.current;
+    const observer =
+      canvas && typeof ResizeObserver !== "undefined" ? new ResizeObserver(redraw) : null;
+    if (observer && canvas) {
+      observer.observe(canvas);
+    }
+    redraw();
+    return () => {
+      window.removeEventListener("redux-theme", redraw);
+      observer?.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -85,18 +105,22 @@ export function EasingPreview({ event }: { event: EasingPreviewEvent }) {
     if (!accent || !quiet) {
       return;
     }
-    draw.clearRect(0, 0, WIDTH, HEIGHT);
+    const rect = canvas.getBoundingClientRect();
+    const { pixelWidth, pixelHeight, scaleX, scaleY } = resizeEasingCanvas(
+      canvas,
+      rect.width || WIDTH,
+      rect.height || HEIGHT,
+    );
+    draw.setTransform(1, 0, 0, 1, 0, 0);
+    draw.clearRect(0, 0, pixelWidth, pixelHeight);
+    draw.setTransform(scaleX, 0, 0, scaleY, 0, 0);
 
-    // The 0 and 1 levels: a curve that leaves this band is overshooting.
+    // The unit range is the closed frame; overshooting curves remain visible in
+    // the breathing room outside it without making any frame edge protrude.
     draw.strokeStyle = quiet;
     draw.lineWidth = 1;
     draw.setLineDash([2, 3]);
-    for (const level of [0, 1]) {
-      draw.beginPath();
-      draw.moveTo(xOf(0), yOf(level));
-      draw.lineTo(xOf(1), yOf(level));
-      draw.stroke();
-    }
+    draw.strokeRect(LEFT, VALUE_TOP, PLOT_WIDTH, VALUE_BOTTOM - VALUE_TOP);
     draw.setLineDash([]);
 
     if (isBezier) {
@@ -132,14 +156,17 @@ export function EasingPreview({ event }: { event: EasingPreviewEvent }) {
       draw.lineWidth = 1;
       draw.setLineDash([3, 3]);
       for (const boundary of [left, right]) {
+        if (boundary <= 0 || boundary >= 1) {
+          continue;
+        }
         draw.beginPath();
-        draw.moveTo(xOf(boundary), TOP);
-        draw.lineTo(xOf(boundary), BOTTOM);
+        draw.moveTo(xOf(boundary), VALUE_TOP);
+        draw.lineTo(xOf(boundary), VALUE_BOTTOM);
         draw.stroke();
       }
       draw.setLineDash([]);
     }
-  }, [isBezier, bezierPoints, easingType, easingLeft, easingRight]);
+  }, [drawVersion, isBezier, bezierPoints, easingType, easingLeft, easingRight]);
 
   return (
     <canvas

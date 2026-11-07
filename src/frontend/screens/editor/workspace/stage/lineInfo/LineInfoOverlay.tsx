@@ -12,7 +12,7 @@ export function LineInfoOverlay() {
     text: "",
   } satisfies LineInfoSnapshot);
   return (
-    <div id="line-info-overlay" hidden={!lineInfo.visible}>
+    <div className="line-info-overlay" hidden={!lineInfo.visible}>
       {lineInfo.text}
     </div>
   );

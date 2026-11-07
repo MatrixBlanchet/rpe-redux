@@ -106,6 +106,7 @@ export function EasingField({ value, onChange, label, disabled = false }: Easing
       layout="inline"
       density="compact"
       className={`easing-field${disabled ? " is-disabled" : ""}`}
+      partialDisabled={!disabled && directionControl.disabled}
       label={label}
       control={(id) => (
         <div className="easing-field-controls">

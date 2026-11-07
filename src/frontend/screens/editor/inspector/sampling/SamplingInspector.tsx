@@ -276,21 +276,6 @@ export function SamplingInspector() {
           />
         </>
       )}
-      <FieldRow
-        layout="inline"
-        density="compact"
-        label={t("editorPanels.sampling.showAnchorGuides")}
-        control={(id) => (
-          <Input
-            id={id}
-            type="checkbox"
-            checked={settings.showAnchorGuides}
-            onChange={(event) =>
-              updateSamplingSettings({ showAnchorGuides: event.currentTarget.checked })
-            }
-          />
-        )}
-      />
       <EasingCurveEditor
         mode={curveMode}
         easingType={easingType}

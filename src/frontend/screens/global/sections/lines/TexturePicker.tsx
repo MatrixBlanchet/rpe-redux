@@ -109,6 +109,7 @@ export function TextureBrowser({
 }: TextureBrowserProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef(new Map<number, HTMLElement>());
   const selectedIndex = textures.findIndex((texture) => texture.name === value);
   const listbox = useListbox({
     count: textures.length,
@@ -141,12 +142,10 @@ export function TextureBrowser({
   }, [triggerRef]);
 
   useEffect(() => {
-    const selected = listRef.current?.querySelector<HTMLButtonElement>(
-      '.line-texture-option[aria-selected="true"]',
-    );
+    const selected = selectedIndex >= 0 ? optionRefs.current.get(selectedIndex) : undefined;
     selected?.focus({ preventScroll: true });
     selected?.scrollIntoView({ block: "nearest" });
-  }, []);
+  }, [selectedIndex]);
 
   return createPortal(
     <div
@@ -178,6 +177,13 @@ export function TextureBrowser({
                 as="button"
                 type="button"
                 key={texture.name}
+                ref={(option) => {
+                  if (option) {
+                    optionRefs.current.set(index, option);
+                  } else {
+                    optionRefs.current.delete(index);
+                  }
+                }}
                 selected={selected}
                 className="line-texture-option"
                 {...listbox.optionProps(index)}

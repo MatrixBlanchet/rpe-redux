@@ -1,4 +1,4 @@
-// Workspace sampler layer: whole-viewport XY guides, the scalar ruler, the two
+// Workspace sampler layer: whole-viewport XY guides, the scalar scale, the two
 // draft anchors, and the floating easing editor. The overlay only paints;
 // interaction state belongs to `SamplingOverlay.tsx` and the sampling session.
 
@@ -40,62 +40,21 @@
   opacity: 0.38;
 }
 
-.sampling-guide-line[data-active="true"] {
+.sampling-guide-line[data-hovered="true"] {
   stroke: var(--accent-hover);
-  stroke-width: 1.75;
+  stroke-width: 2.5;
   opacity: 1;
 }
 
-// ---------------------------------------------------------------- ruler
+// ---------------------------------------------------------------- scalar scale
 
-.sampling-ruler-band {
-  fill: color-mix(in srgb, var(--surface-raised) 68%, transparent);
-  stroke: none;
-}
-
-.sampling-ruler-spine {
-  stroke: var(--border-strong);
-  stroke-width: 1;
-}
-
-.sampling-ruler-tick {
-  stroke: var(--accent);
-  stroke-width: 1;
-  opacity: 0.42;
-}
-
-.sampling-ruler-tick.is-major {
-  opacity: 0.7;
-}
-
-.sampling-ruler-tick[data-active="true"] {
-  stroke: var(--accent-hover);
-  stroke-width: 2;
-  opacity: 1;
-}
-
-.sampling-ruler-label {
+.sampling-scalar-label {
   fill: var(--foreground-muted);
   font-size: var(--type-micro);
   font-variant-numeric: tabular-nums;
 }
 
-.sampling-ruler-label[data-active="true"] {
-  fill: var(--foreground);
-}
-
 // ---------------------------------------------------------------- anchors
-
-.sampling-anchor-guide {
-  stroke: var(--warning);
-  stroke-width: 1.5;
-  stroke-dasharray: 6 4;
-  opacity: 0.85;
-}
-
-.sampling-anchor-guide[data-anchor="end"] {
-  stroke: var(--danger);
-}
 
 .sampling-anchor-point {
   fill: var(--warning);
@@ -107,25 +66,27 @@
   fill: var(--danger);
 }
 
-.sampling-path-line {
-  stroke: var(--foreground-muted);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 4;
-  opacity: 0.8;
-}
-
-// ---------------------------------------------------------------- rotation
-
-.sampling-rotation-ray {
+.sampling-anchor-path {
   stroke: var(--accent);
-  stroke-width: 2;
-  opacity: 0.72;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  opacity: 0.9;
 }
 
-.sampling-rotation-hub {
-  fill: var(--accent);
-  stroke: var(--surface-raised);
-  stroke-width: 2;
+.sampling-pointer-readout {
+  pointer-events: none;
+}
+
+.sampling-pointer-readout rect {
+  fill: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.sampling-pointer-readout text {
+  fill: var(--foreground);
+  font-size: var(--type-micro);
+  font-variant-numeric: tabular-nums;
 }
 
 // ---------------------------------------------------------------- floating panel

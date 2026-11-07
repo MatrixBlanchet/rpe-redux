@@ -161,7 +161,7 @@ export function ExtensionPicker() {
     if (!open) {
       return;
     }
-    panel.current?.querySelector<HTMLElement>('[role="listbox"]')?.focus();
+    panel.current?.focus();
   }, [open]);
 
   return (

@@ -19,6 +19,8 @@ export interface MarqueeOrigin {
   readonly top: number;
 }
 
+const MARQUEE_DASH = [6, 4];
+
 /** Paint one marquee rectangle in overlay-local coordinates. */
 export function drawMarqueeRectangle(
   context: CanvasRenderingContext2D,
@@ -45,12 +47,8 @@ export function drawMarqueeRectangle(
   context.strokeStyle =
     area === "notes" ? palette.selectionNotesStroke : palette.selectionEventsStroke;
   context.fillRect(x, y, width, height);
-  if (area === "notes") {
-    context.setLineDash([6, 4]);
-  }
-  if (preview) {
-    context.lineWidth = 1;
-  }
+  context.setLineDash(MARQUEE_DASH);
+  context.lineWidth = preview ? 1 : 1.5;
   context.strokeRect(x + (preview ? 0.5 : 0), y + (preview ? 0.5 : 0), width, height);
   context.restore();
 }

@@ -7,7 +7,7 @@ export interface EasingDirectionControlState {
   tabIndex: number | undefined;
 }
 
-/** Keep a directionless Linear placeholder readable without making it disabled. */
+/** Disable a directionless Linear placeholder while keeping its value visible. */
 export function easingDirectionControlState(
   hasDirections: boolean,
   fieldDisabled: boolean,
@@ -16,7 +16,7 @@ export function easingDirectionControlState(
     return { disabled: true, ariaDisabled: undefined, tabIndex: undefined };
   }
   if (!hasDirections) {
-    return { disabled: false, ariaDisabled: true, tabIndex: -1 };
+    return { disabled: true, ariaDisabled: undefined, tabIndex: undefined };
   }
   return { disabled: false, ariaDisabled: undefined, tabIndex: undefined };
 }

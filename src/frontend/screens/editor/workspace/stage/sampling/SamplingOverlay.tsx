@@ -20,8 +20,11 @@ import {
   samplingSettings,
   type SamplingTarget,
 } from "../../../../../../core/edit/sampling/sampling.ts";
+import { matches } from "../../../../../../core/shortcuts/keyMatching.ts";
+import { shortcutRegistry } from "../../../../../../core/shortcuts/registry.ts";
 import {
   beginSamplingDrag,
+  cancelSamplingDrag,
   commitSampling,
   endSamplingDrag,
   samplingSession,
@@ -34,12 +37,16 @@ import {
   anchorStagePoint,
   buildSamplingGeometry,
   sampleSamplingPointer,
+  samplingSettingsForPointer,
   viewportOf,
   type SamplingGeometry,
   type SamplingPointerSample,
   type SamplingProjection,
   type SamplingViewport,
 } from "./samplingGuides.ts";
+const SAMPLING_HIDE_GUIDES_SHORTCUT = "sampling.hideGuides";
+const SAMPLING_CANCEL_SHORTCUT = "sampling.cancel";
+const EMPTY_SHORTCUT_BINDINGS: readonly never[] = [];
 type GestureMode = "drag" | "camera";
 
 /** Local overlay flags together with the target they were captured for. */
@@ -96,8 +103,14 @@ export function SamplingOverlay() {
     samplingSettings.get,
     samplingSettings.get,
   );
+  const shortcutViews = useSyncExternalStore(
+    shortcutRegistry.subscribe,
+    shortcutRegistry.getSnapshot,
+    shortcutRegistry.getSnapshot,
+  );
   const root = useRef<HTMLDivElement>(null);
   const gesture = useRef<SamplingGesture | null>(null);
+  const shiftHiddenRef = useRef(false);
   const cursorRef = useRef<{ x: number; y: number } | null>(null);
   const cursorFrame = useRef<number | null>(null);
   const target = session.target;
@@ -111,6 +124,12 @@ export function SamplingOverlay() {
   const [shiftHidden, setShiftHidden] = useState(false);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const interaction = local.target === target ? local.interaction : "idle";
+  const hideGuideBindings =
+    shortcutViews.find((view) => view.id === SAMPLING_HIDE_GUIDES_SHORTCUT)?.bindings ??
+    EMPTY_SHORTCUT_BINDINGS;
+  const cancelBindings =
+    shortcutViews.find((view) => view.id === SAMPLING_CANCEL_SHORTCUT)?.bindings ??
+    EMPTY_SHORTCUT_BINDINGS;
 
   /** Set the interaction mode for the current target, resetting stale flags. */
   const setInteraction = useCallback(
@@ -131,24 +150,24 @@ export function SamplingOverlay() {
       gesture.current = null;
       setInteraction("idle");
       if (discardDraft && wasDragging) {
-        setSamplingDraft(null, null);
-        endSamplingDrag();
+        cancelSamplingDrag();
       }
     },
     [setInteraction],
   );
 
-  // Shift temporarily hides every guide; Escape discards the active drag or
+  // The configured guide modifier temporarily hides every guide; the configured cancel key
   // floating draft before the inspector's cancel shortcut sees it. The listener
   // is attached while the stage exists so it wins the capture order once the
-  // inspector pane opens, and it never calls preventDefault for Shift.
+  // inspector pane opens.
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
-      if (event.key === "Shift") {
+      if (hideGuideBindings.some((binding) => matches(event, binding))) {
+        shiftHiddenRef.current = true;
         setShiftHidden(true);
         return;
       }
-      if (event.key !== "Escape") {
+      if (!cancelBindings.some((binding) => matches(event, binding))) {
         return;
       }
       const current = samplingSession.get();
@@ -166,15 +185,16 @@ export function SamplingOverlay() {
       event.preventDefault();
       event.stopImmediatePropagation();
       cancelGesture(false);
-      setSamplingDraft(null, null);
-      endSamplingDrag();
+      cancelSamplingDrag();
     };
     const keyup = (event: KeyboardEvent) => {
-      if (event.key === "Shift") {
+      if (hideGuideBindings.some((binding) => matches(event, binding))) {
+        shiftHiddenRef.current = false;
         setShiftHidden(false);
       }
     };
     const blur = () => {
+      shiftHiddenRef.current = false;
       setShiftHidden(false);
       if (gesture.current) {
         cancelGesture(gesture.current.mode === "drag");
@@ -188,7 +208,7 @@ export function SamplingOverlay() {
       window.removeEventListener("keyup", keyup, true);
       window.removeEventListener("blur", blur);
     };
-  }, [cancelGesture]);
+  }, [cancelBindings, cancelGesture, hideGuideBindings]);
 
   // A new target is a new interaction: no pointer or camera drag from
   // the previous event may leak into it. The local flags are keyed by target,
@@ -335,13 +355,13 @@ export function SamplingOverlay() {
     : null;
   const viewport: SamplingViewport | null = projection ? viewportOf(projection) : null;
   const startPoint =
-    projection && geometry && draft.start
-      ? anchorStagePoint(draft.start, projection, geometry)
-      : null;
+    projection && geometry && draft.start ? anchorStagePoint(draft.start, projection) : null;
   const endPoint =
-    projection && geometry && draft.end ? anchorStagePoint(draft.end, projection, geometry) : null;
+    projection && geometry && draft.end ? anchorStagePoint(draft.end, projection) : null;
   const showGuides = settings.guidesEnabled && !shiftHidden;
-  const showAnchors = (settings.showAnchorGuides || session.dragging) && !shiftHidden;
+  // Anchor points and the drag path are part of the sample, not the guide grid.
+  // They remain visible while Shift temporarily hides the grid.
+  const showAnchors = Boolean(startPoint || endPoint);
   const midpoint =
     startPoint && endPoint
       ? { x: (startPoint.x + endPoint.x) / 2, y: (startPoint.y + endPoint.y) / 2 }
@@ -361,7 +381,7 @@ export function SamplingOverlay() {
       layer.getBoundingClientRect(),
       projection,
       target.axis,
-      settings,
+      samplingSettingsForPointer(settings, shiftHiddenRef.current),
     );
   };
 
@@ -397,8 +417,7 @@ export function SamplingOverlay() {
 
   /** Discard both anchors and leave the sampler idle on the same event. */
   const discardDraft = () => {
-    setSamplingDraft(null, null);
-    endSamplingDrag();
+    cancelSamplingDrag();
   };
 
   return (
@@ -521,7 +540,6 @@ export function SamplingOverlay() {
         <SamplingGuideLayer
           projection={projection}
           viewport={viewport}
-          axis={target.axis}
           geometry={geometry}
           start={draft.start}
           end={draft.end}
@@ -530,6 +548,7 @@ export function SamplingOverlay() {
           showGuides={showGuides}
           showAnchors={showAnchors}
           cursor={cursor}
+          dragging={session.dragging}
           guideOpacity={settings.guideOpacity / 100}
         />
       )}

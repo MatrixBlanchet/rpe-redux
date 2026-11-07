@@ -168,8 +168,10 @@ handles it receives.
   `inspector/sampling/` and `workspace/stage/sampling/` own the pane and the
   workspace overlay. Guide spacing is adjustable per axis: XY defaults to 50,
   rotation to 30°, opacity to 20, speed to 2 (speed range 0–20), and helper-line
-  opacity defaults to 50%. Guides can
-  be hidden temporarily with Shift while the overlay is dragging.
+  opacity defaults to 50%. The registered sampling guide shortcut can hide
+  grid guides temporarily while the overlay is dragging and also disables
+  snapping; the sampled start/end points, path, and pointer readout remain
+  visible.
 - Background tasks: `core/state/longTasks.ts` owns task lifecycle and action
   contributions; `frontend/chrome/topbar/LongTaskControl.tsx` presents them.
 - Runtime and local I/O: `core/runtime/` owns scheduling, retry pacing, and
@@ -265,7 +267,11 @@ handles it receives.
 - Updates: `frontend/screens/settings/updates/` owns update state and release
   data; `src-tauri/src/update/updater.rs` owns the signed manifest flow,
   `update/local_update_worker.rs` the post-exit handoff, and
-  `update/portable_update.rs` the in-place payload swap.
+  `update/portable_update.rs` the in-place payload swap. The frontend's
+  automatic package-download policy uses the cost-aware host network status in
+  `src-tauri/src/network.rs`; Linux prefers NetworkManager/portal metering and
+  only falls back to connection type. The frontend never inspects adapter
+  names or addresses.
 - Sessions: `frontend/screens/editor/workspace/session/` for last-workspace
   sampling and restore; `core/edit/session/workspaceSession.ts` for the stored
   shape.

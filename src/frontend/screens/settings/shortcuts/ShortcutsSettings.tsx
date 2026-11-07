@@ -95,7 +95,15 @@ const subscribeDeveloperAvailability = (listener: () => void): (() => void) => {
 const MAX_MAPPED_ROWS = 200;
 const MAX_UNMAPPED_ROWS = 200;
 
-function RpeHotkeySection({ record, onClear }: { record: RpeHotkeyRecord; onClear(): void }) {
+function RpeHotkeySection({
+  record,
+  onClear,
+  findRow,
+}: {
+  record: RpeHotkeyRecord;
+  onClear(): void;
+  findRow(id: string): HTMLElement | null;
+}) {
   const { t } = useTranslation();
   const mapped = record.entries.filter((entry) => entry.target);
   const unmapped = record.entries.filter((entry) => !entry.target);
@@ -104,9 +112,7 @@ function RpeHotkeySection({ record, onClear }: { record: RpeHotkeyRecord; onClea
   const unmappedShown = unmapped.slice(0, MAX_UNMAPPED_ROWS);
   /** Scrolls to one edited command and marks it so the row is findable. */
   const reveal = (id: string) => {
-    // The row is owned by this settings surface, not by a shell slot.
-    // eslint-disable-next-line no-restricted-syntax
-    const row = document.querySelector<HTMLElement>(`[data-command="${CSS.escape(id)}"]`);
+    const row = findRow(id);
     if (!row) {
       return;
     }
@@ -212,6 +218,7 @@ export function ShortcutsSettings() {
   const pendingShortcutRef = useRef<Shortcut | null>(null);
   /** Guards handlers that may still run between closing the dialog and their cleanup. */
   const recordingOpenRef = useRef(false);
+  const shortcutRows = useRef(new Map<string, HTMLElement>());
 
   // Clear global recording ownership when the editor unmounts.
   useEffect(() => () => setShortcutRecording(false), []);
@@ -485,14 +492,29 @@ export function ShortcutsSettings() {
         </p>
       )}
       {rpeRecord && rpeRecord.entries.length > 0 && (
-        <RpeHotkeySection record={rpeRecord} onClear={() => setRpeRecord(null)} />
+        <RpeHotkeySection
+          record={rpeRecord}
+          onClear={() => setRpeRecord(null)}
+          findRow={(id) => shortcutRows.current.get(id) ?? null}
+        />
       )}
       {groups.map(({ category, entries }) => (
         <section key={category.id} className="redux-shortcut-category">
           <h3>{tRaw(category.title)}</h3>
           {entries.map((view) => {
             return (
-              <div className="redux-shortcut-row" key={view.id} data-command={view.id}>
+              <div
+                className="redux-shortcut-row"
+                key={view.id}
+                data-command={view.id}
+                ref={(node) => {
+                  if (node) {
+                    shortcutRows.current.set(view.id, node);
+                  } else {
+                    shortcutRows.current.delete(view.id);
+                  }
+                }}
+              >
                 <span className="redux-shortcut-label">{tRaw(view.title)}</span>
                 <div className="redux-shortcut-actions">
                   <IconButton

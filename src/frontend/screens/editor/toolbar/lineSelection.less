@@ -29,16 +29,16 @@
 }
 
 // The chevron is an overlay, so the input's own :hover never sees it. Hover the
-// whole selector frame instead; the ids outrank the control sheet's guarded
-// resting border.
-.redux-app-root .redux-toolbar .line-picker-control:hover #line-input {
+// whole selector frame instead; the component selector outranks the control
+// sheet's guarded resting border.
+.redux-app-root .redux-toolbar .line-picker-control:hover .toolbar-field-line-input {
   border-color: var(--input-border-hover);
 }
 
 // The glyph keeps its leading cell, and the input starts after it. The trailing
 // cell stays reserved for the chevron, so the value's centred content box is
 // centred on the bordered field rather than on the glyph-plus-field control.
-.redux-app-root .redux-toolbar .line-picker-control #line-input {
+.redux-app-root .redux-toolbar .line-picker-control .toolbar-field-line-input {
   width: calc(100% - var(--tool-cell));
   padding-right: var(--tool-cell);
   border-radius: var(--radius-control);
@@ -65,9 +65,9 @@
   z-index: 1;
 }
 
-// The pill is centred in the trailing chevron cell. The ID-qualified selector
-// outranks IconButton's `md` preset, whose fixed 32px box would otherwise
-// overflow the 34px field and leave the pill off-centre.
+// The pill is centred in the trailing chevron cell. The component-qualified
+// selector outranks IconButton's `md` preset, whose fixed 32px box would
+// otherwise overflow the 34px field and leave the pill off-centre.
 .redux-app-root .redux-toolbar .line-picker-control .line-picker-toggle {
   top: 3px;
   right: 2px;

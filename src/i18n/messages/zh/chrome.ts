@@ -25,6 +25,7 @@ export default {
   "chrome.toolbar.freeCameraZoom": "缩放",
   "chrome.toolbar.freeCameraPanX": "平移 X",
   "chrome.toolbar.freeCameraPanY": "平移 Y",
+  "chrome.toolbar.freeCameraReset": "视角归位",
   "chrome.toolbar.noiseRendering": "实际噪域渲染",
   "chrome.toolbar.noiseRenderingUnavailable": "实际噪域渲染不可用，请切换到简化渲染以继续编辑。",
   "chrome.toolbar.previewBatchUnavailable":
@@ -193,6 +194,8 @@ export default {
   "chrome.toolbar.gridCountHint": "音符 X 坐标的可选网格线数量",
 
   "chrome.toolbar.ratio": "预览比例",
+  "chrome.toolbar.scrollStart": "向右查看隐藏的工具",
+  "chrome.toolbar.scrollEnd": "向左查看隐藏的工具",
 
   "chrome.time.beat": "拍数",
   "chrome.time.beatHint": "定位到输入的拍数",

@@ -70,6 +70,14 @@ export function advanceShortcutCapture(
       ? state.pressedKeys
       : [...state.pressedKeys, pressedKey];
     const shortcut = recordShortcut(action.event);
+    const key = shortcutKey(action.event);
+    if (!shortcut && state.pressedKeys.length === 0 && MODIFIER_KEYS.has(key)) {
+      return {
+        state: { pressedKeys, candidate: { key, modifiers: [] } },
+        commit: null,
+        cancelled: false,
+      };
+    }
     if (!shortcut || MODIFIER_KEYS.has(shortcutKey(action.event))) {
       return {
         state: { pressedKeys, candidate: state.candidate },

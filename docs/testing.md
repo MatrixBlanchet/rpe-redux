@@ -23,7 +23,7 @@ single case, and where a new test belongs.
 | --- | --- | --- | --- |
 | Source gate | `npm run check` | Types, lint, style rules, Less compile, docs links, icons, SDK, unit suite, Go tests | `npm ci` |
 | Formatting gate | `npm run verify` | `check` plus Prettier over source and docs | `npm ci` |
-| Unit suite | `npm run test:unit` | `src/test/*.test.mjs` | Node.js 22.18+ |
+| Unit suite | `npm run test:unit` | `src/test/**/*.test.mjs` | Node.js 22.18+ |
 | Smoke suite | `npm run smoke` | Six P0 journeys against the packaged window | `npm run build -- --debug`; Windows |
 | Go service | `npm run server:test` | `src/backend/**/*_test.go` | Go 1.25.3+ |
 | Rust | `npm run check:native` | `cargo fmt --check` and `cargo check` | Rust stable |
@@ -63,20 +63,23 @@ Prettier in `npm run verify` covers `docs/**/*.md`, not the root Markdown files.
 
 ## Unit suite
 
-`npm run test:unit` runs `node --test "src/test/*.test.mjs"`. The files execute
+`npm run test:unit` runs `node --test "src/test/**/*.test.mjs"`. The files execute
 the TypeScript sources directly through Node's built-in type stripping, so there
 is no bundler step and no compiled test output.
 
 ```powershell
 npm run test:unit                          # whole suite
-node --test src/test/transactionKernel.test.mjs
-node --test --test-name-pattern="delete" src/test/*.test.mjs
+node --test src/test/editor/transactions/transactionKernel.test.mjs
+node --test --test-name-pattern="delete" "src/test/**/*.test.mjs"
 ```
 
-Each file owns one contract and starts with a header comment naming it. The
-files import production modules with explicit `.ts` extensions and use
-`node:test` with `node:assert/strict`. There are no per-directory fixtures for
-the unit suite; data lives in the test file unless several suites share it.
+Each file owns one contract and starts with a header comment naming it. Tests
+are grouped below `src/test/` by topic and subsystem, such as
+`chart/format/`, `editor/events/`, `rendering/preview/`,
+`extensions/sandbox/`, and `settings/registry/`. The files import production
+modules with explicit `.ts` extensions and use `node:test` with
+`node:assert/strict`. There are no per-directory fixtures for the unit suite;
+data lives in the test file unless several suites share it.
 
 `src/test/` also holds non-test helpers:
 
@@ -131,7 +134,7 @@ for a P0 path that must be proven end to end.
 ## Quick audio check
 
 ```powershell
-node --test src/test/timeStretch.test.mjs
+node --test src/test/editor/timeline/timeStretch.test.mjs
 npm run desktop
 ```
 
@@ -163,7 +166,7 @@ when hit sounds are mixed in.
   the static gate for the Extension method registry; it runs in `npm run check`.
 - `npm run docs:build` builds the Extension documentation site; its renderer,
   links, navigation, and generated API pages are exercised by
-  `src/test/docsSite.test.mjs` as part of `npm run test:unit`.
+  `src/test/docs/site/docsSite.test.mjs` as part of `npm run test:unit`.
 
 ## Fixtures
 
@@ -190,9 +193,9 @@ run the generator and commit the regenerated file with the test change.
 
 1. Find the module that owns the rule. Extract a pure function there if the
    behavior is only reachable through the DOM; test the function.
-2. Add `src/test/<subject>.test.mjs` with a one-line header comment stating the
-   contract, then one `test(...)` per contract. Name the behavior, not the
-   function.
+2. Add `src/test/<topic>/<subsystem>/<subject>.test.mjs` with a one-line header
+   comment stating the contract, then one `test(...)` per contract. Put the
+   file beside related tests and name the behavior, not the function.
 3. Import production modules with explicit `.ts` extensions. Assert on returned
    values and stable error codes instead of implementation detail.
 4. For a P0 path that only exists in the packaged window, add a journey under

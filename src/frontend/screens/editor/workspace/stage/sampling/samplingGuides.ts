@@ -1,14 +1,16 @@
 /**
  * Geometry and value mapping for the workspace sampler guides.
  *
- * The overlay paints stage-wide guide lines for XY samples, a vertical
- * scalar ruler for rotation/opacity/speed, and the two draft anchors on top of
- * them. This module owns the chart-space to stage-space conversion, the guide
- * values derived from the live camera, and the one pointer-to-sample rule.
+ * The overlay paints stage-wide guide lines for XY samples, a horizontal
+ * min-to-max scalar scale for rotation/opacity/speed, and the two draft
+ * anchors on top of them. This module owns the chart-space to stage-space
+ * conversion, the guide values derived from the live camera, and the one
+ * pointer-to-sample rule.
  * The sampling session and the core sampler remain the only owners of state
  * and chart mutation.
  */
 import {
+  normalizeSamplingScalar,
   samplingGuideValues,
   samplingRangeOf,
   snapSamplingScalar,
@@ -20,12 +22,6 @@ import {
 /** Distance in CSS pixels under which a pointer snaps to a guide. */
 export const SAMPLING_SNAP_PX = 6;
 
-/** Default inset of the scalar ruler from the viewport's right edge. */
-const RULER_INSET = 96;
-/** Inset used when the viewport is too narrow for the full ruler gutter. */
-const RULER_COMPACT_INSET = 24;
-/** Width of the translucent ruler band. */
-const RULER_BAND_WIDTH = 68;
 /** Guard against a pathologically dense guide list at extreme zoom-out. */
 const MAX_GUIDE_LINES = 1200;
 /** Minimum screen-space distance between generated guide lines. */
@@ -94,33 +90,19 @@ export interface SamplingGuideLine {
   major: boolean;
 }
 
-/** One labelled tick on the scalar ruler. */
-export interface SamplingRulerTick {
-  value: number;
-  y: number;
-  label: string;
-  major: boolean;
-}
-
-/** The vertical scale that rotation, opacity, and speed use. */
-export interface SamplingRuler {
-  /** Stage x of the ruler spine. */
-  x: number;
-  /** Stage x where the translucent band starts. */
-  bandLeft: number;
-  bandWidth: number;
-  /** Value at the top edge of the viewport. */
-  topValue: number;
-  /** Value at the bottom edge of the viewport. */
-  bottomValue: number;
-  ticks: SamplingRulerTick[];
+/** The endpoint labels for a bounded scalar scale. */
+export interface SamplingScalarScale {
+  minValue: number;
+  maxValue: number;
+  minLabel: string;
+  maxLabel: string;
 }
 
 /** Everything the guide layer needs to paint one frame. */
 export interface SamplingGeometry {
   vertical: SamplingGuideLine[];
   horizontal: SamplingGuideLine[];
-  ruler: SamplingRuler | null;
+  scalar: SamplingScalarScale | null;
 }
 
 /** A pointer-derived sample, its rendered anchor, and its snap outcome. */
@@ -169,7 +151,25 @@ export function samplingGuideOpacity(
   const cursorRadius =
     Math.max(1, Math.min(viewport.width, viewport.height)) * GUIDE_CURSOR_REVEAL_RATIO;
   const cursorOpacity = unit(1 - Math.hypot(cursor.x - x, cursor.y - y) / cursorRadius);
-  return Math.max(boundaryOpacity, cursorOpacity);
+  return unit(boundaryOpacity + cursorOpacity);
+}
+
+/** Return the nearest guide key when the pointer is close enough to one line. */
+export function nearestGuideKey(
+  lines: readonly SamplingGuideLine[],
+  pointerPosition: number,
+  maxDistance = 10,
+): string | null {
+  let nearest: SamplingGuideLine | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const line of lines) {
+    const distance = Math.abs(line.position - pointerPosition);
+    if (distance < nearestDistance) {
+      nearest = line;
+      nearestDistance = distance;
+    }
+  }
+  return nearest && nearestDistance <= maxDistance ? nearest.key : null;
 }
 
 /**
@@ -242,54 +242,61 @@ export function stagePointOf(
   };
 }
 
-/** Whether an axis uses the vertical scalar ruler instead of XY guides. */
+/** Whether an axis uses the bounded scalar scale instead of XY guides. */
 export function isScalarAxis(axis: SamplingAxis): boolean {
   return axis === "rotation" || axis === "alpha" || axis === "speed";
 }
 
-/** The top and bottom values of the scalar ruler for one axis. */
-function scalarBounds(axis: SamplingAxis): { top: number; bottom: number } {
+/** The base canvas domain used to map a scalar axis to the preview. */
+function scalarBounds(axis: SamplingAxis): { min: number; max: number } {
   if (axis === "rotation") {
-    // Rotation reads as a dial: 0° at the top and 360° at the bottom.
-    return { top: 0, bottom: 360 };
+    return { min: -180, max: 180 };
   }
   const range = samplingRangeOf(axis);
-  return { top: range.max, bottom: range.min };
+  return { min: range.min, max: range.max };
 }
 
-/** Map one scalar to its stage y on the ruler. */
-export function scalarToStageY(
+/** Map one scalar to its stage x, continuing linearly outside the preview. */
+export function scalarToStageX(
   axis: SamplingAxis,
   value: number,
   viewport: SamplingViewport,
 ): number {
-  const { top, bottom } = scalarBounds(axis);
-  const span = top - bottom;
+  const { min, max } = scalarBounds(axis);
+  const span = max - min;
   if (span === 0) {
-    return viewport.top + viewport.height / 2;
+    return viewport.left + viewport.width / 2;
   }
-  return viewport.top + ((top - value) / span) * viewport.height;
+  const progress = (value - min) / span;
+  return viewport.left + progress * viewport.width;
 }
 
-/** Map one stage y in the viewport to a raw scalar. */
-export function stageYToScalar(
+/** Map one stage x in the viewport to a raw scalar, including outside values. */
+export function stageXToScalar(
   axis: SamplingAxis,
-  stageY: number,
+  stageX: number,
   viewport: SamplingViewport,
 ): number {
-  const { top, bottom } = scalarBounds(axis);
-  const progress =
-    viewport.height > 0 ? Math.min(1, Math.max(0, (stageY - viewport.top) / viewport.height)) : 0.5;
-  return top + progress * (bottom - top);
+  const { min, max } = scalarBounds(axis);
+  const progress = viewport.width > 0 ? (stageX - viewport.left) / viewport.width : 0.5;
+  return min + progress * (max - min);
 }
 
 /** Scalar distance equivalent to the snap radius, in the active axis' units. */
 export function scalarTolerance(axis: SamplingAxis, viewport: SamplingViewport): number {
-  if (viewport.height <= 0) {
+  if (viewport.width <= 0) {
     return 0;
   }
-  const { top, bottom } = scalarBounds(axis);
-  return (SAMPLING_SNAP_PX / viewport.height) * Math.abs(top - bottom);
+  const { min, max } = scalarBounds(axis);
+  return (SAMPLING_SNAP_PX / viewport.width) * Math.abs(max - min);
+}
+
+/** Return pointer settings with guide snapping disabled for a hidden-grid modifier. */
+export function samplingSettingsForPointer(
+  settings: SamplingSettings,
+  guidesHidden: boolean,
+): SamplingSettings {
+  return guidesHidden ? { ...settings, guidesEnabled: false } : settings;
 }
 
 /** Chart-space distance equivalent to the snap radius on one XY axis. */
@@ -313,17 +320,6 @@ export function formatSamplingScalar(axis: SamplingAxis, value: number): string 
   return String(rounded);
 }
 
-/** The value labels the ruler prints; labels thin out when ticks get dense. */
-function rulerLabel(value: number, axis: SamplingAxis): string {
-  if (axis === "rotation") {
-    return `${Math.round(value)}°`;
-  }
-  if (axis === "alpha") {
-    return String(Math.round(value));
-  }
-  return String(Math.round(value * 100) / 100);
-}
-
 /** Build the guide set for the current projection and sampling axis. */
 export function buildSamplingGeometry(
   projection: SamplingProjection,
@@ -335,16 +331,14 @@ export function buildSamplingGeometry(
     return {
       vertical: buildXYGuides(projection, viewport, settings, "x"),
       horizontal: buildXYGuides(projection, viewport, settings, "y"),
-      ruler: null,
+      scalar: null,
     };
   }
-  return { vertical: [], horizontal: [], ruler: buildRuler(axis, viewport, settings) };
-}
-
-/** Stage x of the scalar ruler for one viewport. */
-function rulerXOf(viewport: SamplingViewport): number {
-  const inset = viewport.width >= RULER_INSET * 2.3 ? RULER_INSET : RULER_COMPACT_INSET;
-  return viewport.right - inset;
+  return {
+    vertical: buildScalarGuides(axis, projection, viewport, settings),
+    horizontal: [],
+    scalar: buildScalarScale(axis),
+  };
 }
 
 /** Build vertical or horizontal XY guide lines across the current viewport. */
@@ -397,45 +391,66 @@ function buildXYGuides(
   return lines;
 }
 
-/** Build the vertical scalar ruler and its labelled ticks. */
-function buildRuler(
+/** Build scalar guide lines across the entire stage, including outside the preview. */
+function buildScalarGuides(
   axis: SamplingAxis,
+  projection: SamplingProjection,
   viewport: SamplingViewport,
   settings: SamplingSettings,
-): SamplingRuler {
-  const x = rulerXOf(viewport);
-  const values = samplingGuideValues(axis, settings);
-  const { top, bottom } = scalarBounds(axis);
-  const ticks = values
-    .map((value) => ({
+): SamplingGuideLine[] {
+  const { min, max } = scalarBounds(axis);
+  const span = max - min;
+  const configuredValues = samplingGuideValues(axis, settings);
+  const firstPositive = configuredValues.find((value) => value > min);
+  const step = Math.max(Number.EPSILON, (firstPositive ?? max) - min);
+  const pixelsPerUnit = viewport.width / Math.max(Number.EPSILON, span);
+  const pixelStep = Math.max(Number.EPSILON, step * pixelsPerUnit);
+  const firstIndex = Math.floor(-viewport.left / pixelStep);
+  const lastIndex = Math.ceil((projection.stageWidth - viewport.left) / pixelStep);
+  const count = Math.max(0, lastIndex - firstIndex + 1);
+  const stride = Math.max(1, Math.ceil(count / MAX_GUIDE_LINES));
+  const lines = new Map<number, SamplingGuideLine>();
+
+  for (let index = firstIndex; index <= lastIndex; index += stride) {
+    const value = min + index * step;
+    lines.set(value, {
+      key: `${axis}:${value}`,
       value,
-      y: scalarToStageY(axis, value, viewport),
-      label: rulerLabel(value, axis),
-      major: areMultiples(axis, value, settings),
-    }))
-    .sort((left, right) => left.y - right.y);
-  return {
-    x,
-    bandLeft: Math.max(viewport.left, x - RULER_BAND_WIDTH / 2),
-    bandWidth: RULER_BAND_WIDTH,
-    topValue: top,
-    bottomValue: bottom,
-    ticks,
-  };
+      position: scalarGuideStageX(axis, value, viewport),
+      major: index % 5 === 0,
+    });
+  }
+
+  // Keep the configured endpoints visible even when the bounded maximum is not
+  // an exact multiple of the guide step (for example alpha=255 at step 20).
+  for (const value of [min, ...configuredValues, max]) {
+    lines.set(value, {
+      key: `${axis}:${value}`,
+      value,
+      position: scalarGuideStageX(axis, value, viewport),
+      major: value === min || value === max,
+    });
+  }
+
+  return [...lines.values()].sort((left, right) => left.position - right.position);
 }
 
-/** Whether a scalar guide is one of the labelled major steps. */
-function areMultiples(axis: SamplingAxis, value: number, settings: SamplingSettings): boolean {
-  if (axis === "alpha") {
-    return Math.abs(value % (settings.alphaGuideStep * 5)) < 1e-6;
-  }
-  if (axis === "rotation") {
-    return Math.abs(value % (settings.angleGuideStep * 2)) < 1e-6;
-  }
-  if (axis === "speed") {
-    return Math.abs(value % (settings.speedGuideStep * 5)) < 1e-6;
-  }
-  return true;
+/** Map a scalar to stage x without clamping, for the infinite scalar grid. */
+function scalarGuideStageX(axis: SamplingAxis, value: number, viewport: SamplingViewport): number {
+  const { min, max } = scalarBounds(axis);
+  const span = max - min;
+  return viewport.left + ((value - min) / span) * viewport.width;
+}
+
+/** Build only the endpoint labels for a bounded scalar axis. */
+function buildScalarScale(axis: SamplingAxis): SamplingScalarScale {
+  const { min, max } = scalarBounds(axis);
+  return {
+    minValue: min,
+    maxValue: max,
+    minLabel: formatSamplingScalar(axis, min),
+    maxLabel: formatSamplingScalar(axis, max),
+  };
 }
 
 /** Snap one XY coordinate to the viewport guide grid when it is close enough. */
@@ -454,6 +469,26 @@ function snapXY(
   return { value: result.value, snapped: close };
 }
 
+/** Snap an XY pointer only when it is close to a full guide intersection. */
+function snapXYPoint(
+  raw: { x: number; y: number },
+  settings: SamplingSettings,
+  projection: SamplingProjection,
+): { point: { x: number; y: number }; snapped: boolean } {
+  const x = snapXY("x", raw.x, settings, xyTolerance("x", projection));
+  const y = snapXY("y", raw.y, settings, xyTolerance("y", projection));
+  if (x.snapped && y.snapped) {
+    return { point: { x: x.value, y: y.value }, snapped: true };
+  }
+  return {
+    point: {
+      x: normalizeSamplingScalar("x", raw.x),
+      y: normalizeSamplingScalar("y", raw.y),
+    },
+    snapped: false,
+  };
+}
+
 /** Convert a client pointer to the sample for the active axis. */
 export function sampleSamplingPointer(
   clientX: number,
@@ -467,23 +502,27 @@ export function sampleSamplingPointer(
   const stageX = clientX - bounds.left;
   const stageY = clientY - bounds.top;
   if (isScalarAxis(axis)) {
-    const raw = stageYToScalar(axis, stageY, viewport);
+    const raw = stageXToScalar(axis, stageX, viewport);
     const result = snapSamplingScalar(axis, raw, settings, scalarTolerance(axis, viewport));
-    const y = scalarToStageY(axis, result.value, viewport);
+    const x = scalarToStageX(axis, result.value, viewport);
+    const point = chartPointOf(stageX, stageY, projection);
     return {
-      value: { axis, scalar: result.value },
-      stage: { x: rulerXOf(viewport), y },
+      value: { axis, scalar: result.value, point },
+      stage: { x, y: stageY },
       snapped: result.snapped,
     };
   }
 
   const raw = chartPointOf(stageX, stageY, projection);
-  const x = snapXY("x", raw.x, settings, xyTolerance("x", projection));
-  const y = snapXY("y", raw.y, settings, xyTolerance("y", projection));
+  const snapped = snapXYPoint(raw, settings, projection);
   return {
-    value: { axis, scalar: axis === "x" ? x.value : y.value, point: { x: x.value, y: y.value } },
-    stage: stagePointOf(x.value, y.value, projection),
-    snapped: axis === "x" ? x.snapped : y.snapped,
+    value: {
+      axis,
+      scalar: axis === "x" ? snapped.point.x : snapped.point.y,
+      point: snapped.point,
+    },
+    stage: stagePointOf(snapped.point.x, snapped.point.y, projection),
+    snapped: snapped.snapped,
   };
 }
 
@@ -491,7 +530,6 @@ export function sampleSamplingPointer(
 export function anchorStagePoint(
   value: SamplingValue,
   projection: SamplingProjection,
-  geometry: SamplingGeometry,
 ): { x: number; y: number } {
   if (value.axis === "x") {
     return stagePointOf(value.scalar, value.point?.y ?? 0, projection);
@@ -500,8 +538,12 @@ export function anchorStagePoint(
     return stagePointOf(value.point?.x ?? 0, value.scalar, projection);
   }
   const viewport = viewportOf(projection);
+  const y =
+    value.point && Number.isFinite(value.point.y)
+      ? stagePointOf(0, value.point.y, projection).y
+      : projection.lineY;
   return {
-    x: geometry.ruler?.x ?? rulerXOf(viewport),
-    y: scalarToStageY(value.axis, value.scalar, viewport),
+    x: scalarToStageX(value.axis, value.scalar, viewport),
+    y: Number.isFinite(y) ? y : viewport.top + viewport.height / 2,
   };
 }

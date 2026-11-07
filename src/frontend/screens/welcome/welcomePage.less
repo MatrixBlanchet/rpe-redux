@@ -3,7 +3,7 @@
 // and library share every pixel the window offers; the selected cover is also
 // supplied to the window-level welcome backdrop by the owning Shell.
 
-.redux-app-root #home {
+.redux-app-root .redux-home-page {
   position: relative;
   flex: 1;
   min-height: 0;
@@ -15,9 +15,9 @@
   background: var(--surface);
 }
 
-// `#home` sets `display` itself, which outranks the shared `[hidden]` rule; the
+// `.redux-home-page` sets `display` itself, which outranks the shared `[hidden]` rule; the
 // guard keeps the editor/home visibility seam intact.
-.redux-app-root #home:not([hidden]) {
+.redux-app-root .redux-home-page:not([hidden]) {
   display: flex;
   flex-direction: column;
 }
@@ -45,8 +45,8 @@
   min-height: var(--control-height);
 }
 
-.redux-app-root #home .redux-welcome-settings,
-.redux-app-root #home .redux-welcome-more {
+.redux-app-root .redux-home-page .redux-welcome-settings,
+.redux-app-root .redux-home-page .redux-welcome-more {
   color: var(--foreground-muted);
 
   .redux-icon {
@@ -58,7 +58,7 @@
   }
 }
 
-.redux-app-root #home .redux-welcome-more {
+.redux-app-root .redux-home-page .redux-welcome-more {
   flex: none;
   width: var(--control-height-icon);
   height: var(--control-height-icon);
@@ -204,7 +204,7 @@ dialog.redux-welcome-import-dialog {
 }
 
 @media (max-width: 1100px) {
-  .redux-app-root #home {
+  .redux-app-root .redux-home-page {
     padding-inline: clamp(18px, 3vw, 40px);
   }
 
@@ -234,7 +234,7 @@ dialog.redux-welcome-import-dialog {
     flex: none;
   }
 
-  .redux-app-root #home .redux-welcome-library {
+  .redux-app-root .redux-home-page .redux-welcome-library {
     flex: 1 1 auto;
     min-height: clamp(260px, 36vh, 380px);
   }

@@ -11,6 +11,7 @@ import { Input } from "../input/Input.tsx";
 import { bezier } from "../../../core/utils/easing.ts";
 import { clamp01 } from "../../../core/utils/numbers.ts";
 import { t, type MessageKey } from "../../../i18n/index.ts";
+import { EASING_CANVAS_HEIGHT, EASING_CANVAS_WIDTH, resizeEasingCanvas } from "./easingCanvas.ts";
 
 interface BezierEditorProps {
   points: readonly number[];
@@ -21,8 +22,8 @@ interface BezierEditorProps {
   label: string;
 }
 
-const WIDTH = 260;
-const HEIGHT = 100;
+const WIDTH = EASING_CANVAS_WIDTH;
+const HEIGHT = EASING_CANVAS_HEIGHT;
 const LEFT = 10;
 const TOP = 20;
 const BOTTOM = 80;
@@ -109,20 +110,19 @@ export function BezierEditor({ points, commit, preview, label }: BezierEditorPro
     const rect = canvas.getBoundingClientRect();
     const cssWidth = Math.max(1, rect.width || WIDTH);
     const cssHeight = Math.max(1, rect.height || HEIGHT);
-    const pixelScale = Math.min(2, Math.max(1, globalThis.devicePixelRatio || 1));
-    const pixelWidth = Math.max(2, Math.round(cssWidth * pixelScale));
-    const pixelHeight = Math.max(2, Math.round(cssHeight * pixelScale));
-    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
-      canvas.width = pixelWidth;
-      canvas.height = pixelHeight;
-    }
-    const scaleX = pixelWidth / WIDTH;
-    const scaleY = pixelHeight / HEIGHT;
+    const { pixelWidth, pixelHeight, scaleX, scaleY } = resizeEasingCanvas(
+      canvas,
+      cssWidth,
+      cssHeight,
+    );
     const draft = draftPoints.current;
     draw.setTransform(1, 0, 0, 1, 0, 0);
     draw.clearRect(0, 0, pixelWidth, pixelHeight);
     draw.setTransform(scaleX, 0, 0, scaleY, 0, 0);
     draw.strokeStyle = token("--foreground-muted");
+    draw.lineWidth = 1;
+    draw.setLineDash([2, 3]);
+    draw.strokeRect(LEFT, TOP, PLOT_WIDTH, PLOT_HEIGHT);
     draw.setLineDash([3, 3]);
     draw.beginPath();
     draw.moveTo(LEFT, BOTTOM);
