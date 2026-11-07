@@ -93,9 +93,9 @@ export default {
   "editor.overlap.title": "选择重叠物件",
   "editor.dialogs.exportDialog.title": "导出谱面",
   "editor.dialogs.exportDialog.format": "格式",
-  "editor.dialogs.exportDialog.formatPez": "RPE 包（PEZ）",
-  "editor.dialogs.exportDialog.formatOfficial": "Phigros 官谱 JSON",
-  "editor.dialogs.exportDialog.formatPec": "PhiEdit PEC",
+  "editor.dialogs.exportDialog.formatPez": "RPE 格式（PEZ）",
+  "editor.dialogs.exportDialog.formatOfficial": "Phigros 官方格式（JSON）",
+  "editor.dialogs.exportDialog.formatPec": "PhiEdit 格式（PEC）",
   "editor.dialogs.exportDialog.warnings": "已导出，包含 {count} 条损失警告；部分 RPE 特性被省略。",
   "editor.dialogs.exportDialog.export": "导出",
 

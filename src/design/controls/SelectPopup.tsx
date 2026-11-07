@@ -46,7 +46,7 @@ function commitSelection(element: HTMLSelectElement, index: number) {
  */
 export function SelectPopup({ state }: { state: SelectPopupState }) {
   const { t } = useTranslation();
-  const { element, anchor, forceDown } = state;
+  const { element, anchor } = state;
   const options = optionsOf(element);
   const [active, setActive] = useState(() => Math.max(0, element.selectedIndex));
 
@@ -147,7 +147,7 @@ export function SelectPopup({ state }: { state: SelectPopupState }) {
     clampHeight: true,
     flipThreshold: Math.min(naturalHeight, 120),
     preferLargerSide: true,
-    forceDown,
+    placement: "below",
   });
 
   return (

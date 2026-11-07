@@ -94,9 +94,9 @@ export default {
   "editor.overlap.title": "Choose overlapping object",
   "editor.dialogs.exportDialog.title": "Export chart",
   "editor.dialogs.exportDialog.format": "Format",
-  "editor.dialogs.exportDialog.formatPez": "RPE package (PEZ)",
-  "editor.dialogs.exportDialog.formatOfficial": "Phigros official JSON",
-  "editor.dialogs.exportDialog.formatPec": "PhiEdit PEC",
+  "editor.dialogs.exportDialog.formatPez": "RPE Format (PEZ)",
+  "editor.dialogs.exportDialog.formatOfficial": "Phigros Official Format (JSON)",
+  "editor.dialogs.exportDialog.formatPec": "PhiEdit Format (PEC)",
   "editor.dialogs.exportDialog.warnings":
     "Exported with {count} loss warning(s). Some RPE features were omitted.",
   "editor.dialogs.exportDialog.export": "Export",

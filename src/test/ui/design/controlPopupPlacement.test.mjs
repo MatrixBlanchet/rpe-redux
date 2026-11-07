@@ -121,7 +121,7 @@ test("the select policy flips when the space below is too small", () => {
   assert.equal(style["--control-origin-y"], "400px");
 });
 
-test("a forced-down select stays below when the space above is larger", () => {
+test("a below-placed select stays below when the space above is larger", () => {
   const { style, flipUp } = placeControlPopup({
     anchor: { left: 100, top: 600, bottom: 790, width: 80 },
     panelWidth: 300,
@@ -130,7 +130,7 @@ test("a forced-down select stays below when the space above is larger", () => {
     clampHeight: true,
     flipThreshold: 120,
     preferLargerSide: true,
-    forceDown: true,
+    placement: "below",
   });
 
   assert.equal(flipUp, false);

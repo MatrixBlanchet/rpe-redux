@@ -58,13 +58,12 @@ function ExportBody({ request, open }: { request: ExportPrompt; open: boolean })
       <label className="redux-export-format">
         <span>{t("editor.dialogs.exportDialog.format")}</span>
         <Select
-          forceDown
           value={format}
           onChange={(event) => setFormat(event.target.value as ChartExportFormat)}
         >
           <option value="pez">{t("editor.dialogs.exportDialog.formatPez")}</option>
-          <option value="official">{t("editor.dialogs.exportDialog.formatOfficial")}</option>
           <option value="pec">{t("editor.dialogs.exportDialog.formatPec")}</option>
+          <option value="official">{t("editor.dialogs.exportDialog.formatOfficial")}</option>
         </Select>
       </label>
     </PromptDialog>
