@@ -11,7 +11,7 @@ Inside either language section the notes may use two inline annotations:
 active theme, so write the name rather than a hex value. GitHub drops the unknown
 tag, so the release page still reads as plain words.
 
-## 1.0.2 (2026-11-07)
+## 1.0.3 (2026-11-07)
 
 ### 中文
 
@@ -29,6 +29,7 @@ tag, so the release page still reads as plain words.
 
 **修复**
 
+- Linux 安装包恢复构建：修复了 Linux 网络状态检测中的 Rust 编译错误，该错误导致 1.0.2 的 Linux 构建失败。
 - 导出对话框简化格式选择：移除格式说明段落并压缩布局。
 - 时间线音符尺寸按时间线在画布中的宽度占比缩放，切换事件栏或调整栏宽后不再突然变化。
 - 窄窗口下自由相机数值框保持可读宽度，不再被压扁。
@@ -79,6 +80,7 @@ tag, so the release page still reads as plain words.
 
 **Fixes**
 
+- Linux installers build again: fixed the Rust compile errors in the Linux network-status detection that broke the 1.0.2 Linux build.
 - The export dialog streamlines format selection: the format hint paragraph is removed and the layout is more compact.
 - Timeline note size scales from the timeline's width share of the canvas, so toggling the event field or resizing panels no longer changes note size abruptly.
 - Free-camera number fields keep a readable width on narrow windows.
