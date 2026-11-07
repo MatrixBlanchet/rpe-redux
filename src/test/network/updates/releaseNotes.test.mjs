@@ -7,6 +7,7 @@ import {
   parseReleaseNoteBlocks,
   parseReleaseNoteInline,
   selectChangelogRelease,
+  selectUpdateChangelogRelease,
   selectLanguageNotes,
 } from "../../../frontend/screens/settings/updates/releaseNotes.ts";
 
@@ -197,7 +198,7 @@ test("selects the running version's release when it has notes", () => {
   assert.doesNotMatch(current?.notes ?? "", /Fix one/u);
 });
 
-test("falls back to the newest release with readable notes", () => {
+test("selects the newest future release with readable notes", () => {
   const releases = [
     {
       version: "1.0.3",
@@ -206,9 +207,25 @@ test("falls back to the newest release with readable notes", () => {
     },
     { version: "1.0.2", publishedAt: "2026-11-07T00:00:00Z", notes: BILINGUAL },
   ];
-  const fallback = selectChangelogRelease(releases, "9.9.9", "en");
-  assert.equal(fallback?.version, "1.0.2");
-  assert.match(fallback?.notes ?? "", /Fix one/u);
+  const future = selectUpdateChangelogRelease(releases, "1.0.1", "zh");
+  assert.equal(future?.version, "1.0.3");
+  assert.match(future?.notes ?? "", /甲/u);
+});
+
+test("does not show a future release as the current changelog", () => {
+  const releases = [{ version: "1.0.3", publishedAt: "2026-11-08T00:00:00Z", notes: BILINGUAL }];
+  assert.equal(selectChangelogRelease(releases, "1.0.1", "en"), null);
+});
+
+test("selects the newest future release for an update changelog", () => {
+  const releases = [
+    { version: "1.0.3", publishedAt: "2026-11-08T00:00:00Z", notes: BILINGUAL },
+    { version: "1.0.2", publishedAt: "2026-11-07T00:00:00Z", notes: BILINGUAL },
+    { version: "1.0.1", publishedAt: "2026-11-06T00:00:00Z", notes: BILINGUAL },
+  ];
+  const update = selectUpdateChangelogRelease(releases, "1.0.1", "en");
+  assert.equal(update?.version, "1.0.3");
+  assert.match(update?.notes ?? "", /Fix one/u);
 });
 
 test("returns null when no release has notes for the language", () => {
