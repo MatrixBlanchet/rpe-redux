@@ -43,6 +43,9 @@ import { CATALOGS } from "../../../i18n/messages/index.ts";
 import { values } from "../../../core/state/values.ts";
 import { settingsPageFor } from "./settingsContributions.ts";
 import { syncRuntimePortSetting } from "../../platform/desktop/runtimePorts.ts";
+import { deleteCustomBackground } from "../../platform/desktop/customBackground.ts";
+import { isDesktop } from "../../../core/platform/environment.ts";
+import { replacedApplicationDataReference } from "./applicationDataLifecycle.ts";
 import { matchesSettingsSearch } from "./settingsSearch.ts";
 import { useSettingVisibility } from "./useSetting.ts";
 import { developerReveal } from "../../../core/state/developerReveal.ts";
@@ -355,8 +358,18 @@ export function SettingsWindow({
 
   /** Commit one setting value to the shared value store. */
   const commit = (field: Field, value: SettingValue) => {
+    const previous =
+      field.control === "file" && field.storage === "application-data" && values.byId.has(field.key)
+        ? values.byId.get<unknown>(field.key)
+        : undefined;
     values.byId.set(field.key, value);
     syncRuntimePortSetting(field.key, value);
+    const replaced = replacedApplicationDataReference(previous, value);
+    if (replaced && isDesktop()) {
+      void deleteCustomBackground(replaced).catch((error: unknown) => {
+        console.error("Could not remove the replaced settings image", error);
+      });
+    }
   };
   const closeSettings = () => setOpen(false);
   const activeCategory = categories.find((entry) => entry.key === category);

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Product entry for the React shell: starts the owned backend and local service,
  * applies theme preferences, installs design-system hosts and editor surface
  * providers, and gates the shell behind startup readiness.
@@ -11,6 +11,7 @@ import { ControlHost } from "../../design/controls/ControlHost.tsx";
 import { SettingsWindow } from "../screens/settings/SettingsWindow.tsx";
 import { initializeUpdates } from "../screens/settings/updates/updateStore.ts";
 import { preferences } from "../../core/state/preferences.ts";
+import { values } from "../../core/state/values.ts";
 
 import { DEFAULT_THEME } from "../../core/theme/themes.ts";
 import { activeTheme, setActiveTheme, subscribeActiveTheme } from "../../core/theme/activeTheme.ts";
@@ -28,6 +29,7 @@ import {
 } from "../platform/desktop/runtimePorts.ts";
 import { NOTE_SKIN_EVENT, installNoteSkinBridge } from "../platform/noteSkinBridge.ts";
 import { prepareBackendInstance, startBackend } from "../../core/platform/desktop/backend.ts";
+import { cleanupCustomBackgrounds } from "../platform/desktop/customBackground.ts";
 import { StartupView } from "../screens/startup/StartupView.tsx";
 import { StartupBoundary } from "../screens/startup/StartupBoundary.tsx";
 import type { StartupFailureSource } from "../screens/startup/startupDiagnostics.ts";
@@ -202,6 +204,18 @@ function AppContent() {
         const found = await localService({ refresh: true });
         if (found) {
           await preferences.attach(createDesktopPreferenceClient(found.library));
+          // A crash between saving a replacement image and committing its
+          // setting can leave an unreferenced file behind. Reconcile the
+          // dedicated folder once the stored value is readable; a failed read
+          // must never be mistaken for "no background is configured".
+          if (preferences.status().durable) {
+            const activeReference = values.byId.has("custom-background")
+              ? String(values.byId.get("custom-background") ?? "")
+              : "";
+            void cleanupCustomBackgrounds(activeReference).catch((error: unknown) => {
+              console.error("Could not clean unused settings images", error);
+            });
+          }
           // Extension consent is kept in durable preferences, so package
           // discovery runs only after the preference store attaches.
           await loadPackagedExtensions();

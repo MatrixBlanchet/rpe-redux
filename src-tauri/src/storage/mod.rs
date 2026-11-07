@@ -216,6 +216,49 @@ pub fn read_custom_background(app: AppHandle, reference: String) -> Result<Vec<u
     std::fs::read(path).map_err(|e| e.to_string())
 }
 
+/// Remove one settings background after its preference stops referring to it.
+#[tauri::command]
+pub fn delete_custom_background(app: AppHandle, reference: String) -> Result<(), String> {
+    let path = custom_background_path(&app, &reference)?;
+    match std::fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error.to_string()),
+    }
+}
+
+/// Remove saved backgrounds that are no longer referenced by the settings value.
+#[tauri::command]
+pub fn cleanup_custom_backgrounds(app: AppHandle, active_reference: String) -> Result<(), String> {
+    let active_path = if active_reference.trim().is_empty() {
+        None
+    } else {
+        Some(custom_background_path(&app, &active_reference)?)
+    };
+    let directory = data_dir(&app)?.join(CUSTOM_BACKGROUND_DIR);
+    let entries = match std::fs::read_dir(&directory) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error.to_string()),
+    };
+    for entry in entries {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let path = entry.path();
+        if !entry
+            .file_type()
+            .map_err(|error| error.to_string())?
+            .is_file()
+        {
+            continue;
+        }
+        if active_path.as_ref().is_some_and(|active| active == &path) {
+            continue;
+        }
+        std::fs::remove_file(path).map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
 /// Keep the browser profile separate from durable application data.
 /// Isolated smoke runs intentionally use one shared root for both.
 pub fn webview_data_dir() -> Result<PathBuf, String> {
