@@ -1,6 +1,6 @@
 # RPE Redux code-cell guide
 
-This is the runtime guide for one-shot code cells. A cell is an async JavaScript function body that reads the open document, can apply atomic chart transactions, and returns one JSON value. The runtime and profiles live in `src/core/codecell/`; the HTTP routes live in the local service. Read this guide once, then write short cells instead of a long sequence of transport calls.
+This is the runtime guide for one-shot code cells. A cell is an async JavaScript function body that reads the open document, can apply atomic chart transactions, and returns one JSON value. The runtime and profiles are part of the desktop application, while the HTTP routes live in the local service. Read this guide once, then write short cells instead of a long sequence of transport calls.
 
 ## Before you start
 
@@ -39,8 +39,6 @@ HTTP status `200` means the cell finished; inspect `ok` inside the result. `400`
 
 `expected` may pin `chartFingerprint`, `diskSnapshot`, or `generation`; a mismatch returns `stale_read`. The same start snapshot is checked again before every `transaction.preview` and `transaction.apply`: if the user edits the chart, switches documents, or the disk snapshot changes during the run, the write returns `rejected` with issue `stale_read` and is not committed. The request may also set `timeoutMs` within the limit below.
 
-The MCP `code.run` method follows the same rule: `disabled`, `invalid_request`, and `stale_read` are outer tool errors, while every other cell outcome — including `ok: false`, `busy`, `timeout`, `cancelled`, `syntax`, `exception`, `capabilityDenied`, and `runtime` — is returned as a successful tool result whose `value` is the cell result envelope. Inspect `value.ok` before treating the call as successful.
-
 ## What a cell is
 
 ```js
@@ -51,7 +49,7 @@ return { summary: state.name || "untitled" };
 ```
 
 - `redux` is the asynchronous editor facade. Every call crosses the sandbox bridge and returns a promise; always `await` it, even for synchronous host methods such as `redux.document.state()`.
-- `input` is the request's `args` value (normally an object or array), or `undefined` when omitted. The HTTP/MCP adapter accepts `null` and objects; primitives are rejected with `invalid_request`.
+- `input` is the request's `args` value (normally an object or array), or `undefined` when omitted. The HTTP adapter accepts `null` and objects; primitives are rejected with `invalid_request`.
 - `console.log/info/warn/error` is captured and returned in `logs` (bounded); `console.debug` is captured at level `log`. `atMs` is milliseconds since the cell started.
 - `return` a JSON-safe value. `BigInt` becomes a string with an `n` suffix (`1n` becomes `"1n"`); `Uint8Array` becomes a number array; functions and symbols are omitted.
 - The request `profile` is `"write"` by default or `"read"`; any other value is rejected before the sandbox starts. `read` can only read the document, chart, and selection; it cannot reach transactions, library, playback, or any write handle.
@@ -278,7 +276,7 @@ The source receives exactly `redux`, `input`, and `console`. There is no `ui`, `
 
 ### Exact signatures
 
-All methods cross the asynchronous bridge, so `await` every call except the synchronous `redux.version` string. `capabilities()` is cell-only; the SDK exports the `CodeCellApi` type, and the host implementation is `RestrictedCodeCellApi` in `src/core/codecell/restrictedApi.ts`.
+All methods cross the asynchronous bridge, so `await` every call except the synchronous `redux.version` string. `capabilities()` is cell-only; the SDK exports the `CodeCellApi` type, and the host implementation is the restricted Code Cell host implementation.
 
 Chart object ids are `ChartObjectId` (`string & { readonly __chartObjectId: unique symbol }`) in the SDK; runtime values are UUID-shaped strings. Read ids from `chart.lines()`, `chart.notes()`, and `chart.events()` and pass them back; do not synthesize them. `redux.chart.snapshot()` returns a recursively frozen detached chart. `redux.chart.read()` pages and the `redux.chart.lines()/notes()/events()` arrays are detached read-only views; do not mutate them. `redux.document.snapshot()` returns a detached mutable copy.
 
@@ -604,7 +602,7 @@ The `cursor` is an opaque token. Only pass back a `nextCursor` you received; nev
 
 ### Chart shapes
 
-The authoritative TypeScript definitions live in `src/core/global/chart/chart.ts` and `src/core/edit/chart/api.ts`. The stable cell-facing shape is:
+The authoritative TypeScript definitions live in the public chart and transaction types. The stable cell-facing shape is:
 
 ```ts
 type Beat = [number, number, number]; // [whole, numerator, denominator]
@@ -1286,7 +1284,7 @@ return { summary: "assets updated", added: added.asset.name, removed };
 
 | `error.code` | when | message example |
 | --- | --- | --- |
-| `disabled` | code execution is off, or the MCP code host is absent | `Code execution is disabled` |
+| `disabled` | code execution is off, or the Code Cell host is absent | `Code execution is disabled` |
 | `busy` | another cell is running; not queued | `A code cell is already running` |
 | `stale_read` | an `expected` field no longer matches the start revision, or preview/apply ran after the start snapshot moved on | `Code cell base revision is stale: chartFingerprint` |
 | `invalid_request` | source empty/whitespace/non-string or over 100,000 UTF-8 bytes; unknown profile; invalid args/timeout at the adapter | `Unknown code cell profile: admin` |
@@ -1321,7 +1319,7 @@ try {
 - `chart.read` cursors are opaque. Only pass back a `nextCursor`; never parse, construct, or reuse it across fingerprints. Re-read `chart.state()` for a new cursor.
 - `paintEvents`, shader events, and unknown extension fields are defined by the chart format. This guide guarantees they are preserved, not that their payload is constructible. Reuse an existing value or ask the user to edit it in the application.
 - Transaction `issues[].code` is an open set. Inspect `status`, `issues[].path`, and `issues[].message`; do not enumerate a fixed list.
-- Full chart and library objects can gain fields. The stable fields and TypeScript types are in this guide and in `src/core/global/chart/chart.ts`, `src/core/edit/chart/api.ts`, and `src/core/global/library/client.ts`.
+- Full chart and library objects can gain fields. The stable fields and TypeScript types are defined in this guide and the public SDK declarations.
 - `redux.capabilities()` and `result.capabilities` are the only dynamic capability source. Do not test permissions by calling write methods.
 - Only one unused preview exists per editor session. A second `preview` replaces the first; applying the replaced id returns `preview.notFound` rather than `ai.preview.unknown`. Keep one preview at a time or apply the request directly.
 - `apply()` with no argument is rejected with `ai.preview.unknown`; it never applies the most recent preview implicitly.
@@ -1329,7 +1327,6 @@ try {
 - A capability denial usually carries `name: "Error"` after the bridge. Only `error.code` is stable; do not branch on the name.
 - A collaboration viewer can plan a preview but its commit is rejected with `commit.rejected`, not `editor.readOnly`. Check the room role before treating a successful preview as permission to apply.
 - A timeout returns the logs streamed before termination and `truncated: true`; the returned value is unavailable. A log produced after termination begins may be lost. Put anything you must keep in the returned value, or finish before the budget.
-- The MCP `redux_code_run` `tools/list` schema currently lists `source`, `args`, `expected`, and `timeoutMs` but not `profile`. The `cell.run`/`code.run` runtime still accepts `profile`; pass it explicitly through the HTTP body or the method when you need `read`. Adding `profile` to the backend schema is a separate fix.
 
 ## Authoring checklist
 
