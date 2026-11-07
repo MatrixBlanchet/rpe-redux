@@ -3,19 +3,34 @@
  *
  * Notes are the published GitHub release body, the same external source the
  * release page shows. The body already lists Chinese first and English second,
- * so this surface selects the section for the active language. It shows nothing
- * else: no version cards, update controls, or release history.
+ * so this surface selects the section for the active language. Current-release
+ * notes and update notes are separate modes; only the latter owns update actions.
  */
+import { Button } from "../../../../design/components/button/Button.tsx";
 import { useTranslation } from "../../../../i18n/react.ts";
 import { ReleaseNotesBody } from "./ReleaseNotesBody.tsx";
-import { formatReleaseDate, selectChangelogRelease } from "./releaseNotes.ts";
+import {
+  formatReleaseDate,
+  selectChangelogRelease,
+  selectUpdateChangelogRelease,
+} from "./releaseNotes.ts";
 import { useUpdateState } from "./useUpdateState.ts";
 
+/** Which release-note concept the modal is presenting. */
+export type ChangelogMode = "current" | "update";
+
 /** The changelog modal body. */
-export function ChangelogContent(): React.JSX.Element {
+export function ChangelogContent({
+  mode = "current",
+}: {
+  mode?: ChangelogMode;
+}): React.JSX.Element {
   const { t, language } = useTranslation();
   const state = useUpdateState();
-  const release = selectChangelogRelease(state.releases, state.currentVersion, language);
+  const release =
+    mode === "update"
+      ? selectUpdateChangelogRelease(state.releases, state.currentVersion, language)
+      : selectChangelogRelease(state.releases, state.currentVersion, language);
 
   if (!release) {
     return (
@@ -41,10 +56,17 @@ export function ChangelogContent(): React.JSX.Element {
  * It subscribes to the update store because the notes are fetched after the
  * modal opens, so the heading gains its facts as soon as the release arrives.
  */
-export function ChangelogTitleMeta(): React.JSX.Element | null {
+export function ChangelogTitleMeta({
+  mode = "current",
+}: {
+  mode?: ChangelogMode;
+}): React.JSX.Element | null {
   const { t, language } = useTranslation();
   const state = useUpdateState();
-  const release = selectChangelogRelease(state.releases, state.currentVersion, language);
+  const release =
+    mode === "update"
+      ? selectUpdateChangelogRelease(state.releases, state.currentVersion, language)
+      : selectChangelogRelease(state.releases, state.currentVersion, language);
   if (!release) {
     return null;
   }
@@ -53,5 +75,31 @@ export function ChangelogTitleMeta(): React.JSX.Element | null {
     <span className="redux-changelog-title-meta">
       {date ? t("chrome.changelog.titleMeta", { version: release.version, date }) : release.version}
     </span>
+  );
+}
+
+/** Footer actions for an available update, ordered from secondary to primary. */
+export function ChangelogUpdateActions({
+  onSkip,
+  onLater,
+  onUpdate,
+}: {
+  onSkip(): void;
+  onLater(): void;
+  onUpdate(): void;
+}): React.JSX.Element {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Button variant="outlined" onClick={onSkip}>
+        {t("chrome.changelog.skipVersion")}
+      </Button>
+      <Button variant="outlined" onClick={onLater}>
+        {t("chrome.changelog.later")}
+      </Button>
+      <Button variant="solid" onClick={onUpdate}>
+        {t("chrome.changelog.updateNow")}
+      </Button>
+    </>
   );
 }

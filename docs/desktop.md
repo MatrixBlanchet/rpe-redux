@@ -174,7 +174,10 @@ Two consequences matter when publishing the first signed release:
   `releases/latest/download/<manifest>` without credentials.
 
 Help → Changelog opens a modal with the running version's published GitHub
-release notes, rendered in the interface language. The release workflow publishes
+release notes, rendered in the interface language. An available-update badge
+opens a separate future-release notes mode; it shows the selected newer release
+and offers Skip this version, Later, and Update now actions in the footer. The
+release workflow publishes
 the matching section of `CHANGELOG.md`, which holds only the current release's
 notes, as the GitHub release body; that file lists Chinese first and English
 second. The modal title names the shown release's version and date, and the notes

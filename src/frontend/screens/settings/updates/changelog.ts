@@ -11,8 +11,19 @@ import { t } from "../../../../i18n/index.ts";
 import { dismissModal, MODAL_PRIORITY, presentModal } from "../../../overlays/modals/modalQueue.ts";
 import { requestConfirm } from "../../../overlays/modals/prompts.ts";
 import { bindChangelogLauncher } from "./changelogLauncher.ts";
-import { ChangelogContent, ChangelogTitleMeta } from "./ChangelogContent.tsx";
-import { checkForUpdates, getUpdateState, refreshUpdateSettings } from "./updateStore.ts";
+import {
+  ChangelogContent,
+  ChangelogTitleMeta,
+  ChangelogUpdateActions,
+  type ChangelogMode,
+} from "./ChangelogContent.tsx";
+import {
+  checkForUpdates,
+  getUpdateState,
+  installUpdate,
+  refreshUpdateSettings,
+  skipUpdateVersion,
+} from "./updateStore.ts";
 import { bindUpdatePromptLauncher } from "./updatePromptLauncher.ts";
 
 const CHANGELOG_ID = "help.changelog";
@@ -22,8 +33,8 @@ export function changelogAvailable(): boolean {
   return Boolean(getUpdateState().repo);
 }
 
-/** Open the read-only release modal; returns whether it opened. */
-export function openChangelog(): boolean {
+/** Open either the current-release notes or the available-update notes. */
+export function openChangelog(mode: ChangelogMode = "current"): boolean {
   refreshUpdateSettings();
   if (!changelogAvailable()) {
     return false;
@@ -34,14 +45,36 @@ export function openChangelog(): boolean {
     void checkForUpdates();
   }
   const close = () => dismissModal(CHANGELOG_ID);
+  const state = getUpdateState();
+  const updateVersion = mode === "update" && state.available ? state.latest?.version : undefined;
   presentModal(CHANGELOG_ID, {
-    label: t("chrome.menu.help.changelog"),
-    titleMeta: createElement(ChangelogTitleMeta),
+    label: mode === "update" ? t("chrome.changelog.updateTitle") : t("chrome.menu.help.changelog"),
+    titleMeta: createElement(ChangelogTitleMeta, { mode }),
     className: "redux-changelog-dialog",
     onClose: close,
-    children: createElement(ChangelogContent),
+    children: createElement(ChangelogContent, { mode }),
+    ...(updateVersion
+      ? {
+          actions: createElement(ChangelogUpdateActions, {
+            onSkip: () => {
+              skipUpdateVersion(updateVersion);
+              close();
+            },
+            onLater: close,
+            onUpdate: () => {
+              close();
+              void installUpdate();
+            },
+          }),
+        }
+      : {}),
   });
   return true;
+}
+
+/** Open the future-release notes attached to the update badge. */
+export function openUpdateChangelog(): boolean {
+  return openChangelog("update");
 }
 
 bindChangelogLauncher(openChangelog);
