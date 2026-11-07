@@ -48,6 +48,8 @@ export interface SamplingDraft {
 export interface SamplingSessionState {
   target: SamplingTarget | null;
   draft: SamplingDraft;
+  /** Original event anchors restored when the current sampling attempt is cancelled. */
+  initialAnchors: Pick<SamplingDraft, "start" | "end">;
   /** Easing id kept beside the draft so a surface can show the selected curve. */
   easingType: number;
   /** True once a completed drag produced both anchors. */
@@ -61,6 +63,7 @@ const EMPTY_DRAFT: SamplingDraft = { start: null, end: null, curve: {} };
 const EMPTY_SESSION: SamplingSessionState = {
   target: null,
   draft: EMPTY_DRAFT,
+  initialAnchors: { start: null, end: null },
   easingType: 1,
   locked: false,
   dragging: false,
@@ -161,13 +164,16 @@ export function startSamplingForEvent(
     axis,
   };
   const curve = anchorCurve(event);
+  const initialStart = anchorValue(event, "start", axis);
+  const initialEnd = anchorValue(event, "end", axis);
   samplingSession.set({
     target,
     draft: {
-      start: anchorValue(event, "start", axis),
-      end: anchorValue(event, "end", axis),
+      start: initialStart,
+      end: initialEnd,
       curve,
     },
+    initialAnchors: { start: initialStart, end: initialEnd },
     easingType: curve.easingType ?? 1,
     locked: false,
     dragging: false,
@@ -232,6 +238,24 @@ export function endSamplingDrag(): void {
     ...current,
     dragging: false,
     locked: Boolean(current.draft.start && current.draft.end),
+  });
+}
+
+/** Restore the event's original anchors after cancelling the current sample. */
+export function cancelSamplingDrag(): void {
+  const current = samplingSession.get();
+  if (!current.target) {
+    return;
+  }
+  samplingSession.set({
+    ...current,
+    draft: {
+      ...current.draft,
+      start: current.initialAnchors.start,
+      end: current.initialAnchors.end,
+    },
+    locked: false,
+    dragging: false,
   });
 }
 

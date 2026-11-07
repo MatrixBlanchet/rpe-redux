@@ -20,14 +20,39 @@ import {
 } from "../../../core/edit/sampling/sampling.ts";
 import { EditorSession } from "../../../core/edit/session/session.ts";
 import {
+  anchorStagePoint,
   buildSamplingGeometry,
+  nearestGuideKey,
+  sampleSamplingPointer,
   samplingGuideOpacity,
   samplingGuideSegments,
+  scalarToStageX,
   viewportOf,
 } from "../../../frontend/screens/editor/workspace/stage/sampling/samplingGuides.ts";
 
 /** Settings with snapping and XY binding available but not required by the caller. */
 const plainSettings = { ...DEFAULT_SAMPLING_SETTINGS, xyBinding: false };
+
+/** A 1000x800 stage projection used by the scalar and XY mapping tests. */
+function projectionWith(overrides = {}) {
+  return {
+    stageWidth: 1000,
+    stageHeight: 800,
+    canvasLeft: 0,
+    canvasTop: 0,
+    centerX: 500,
+    centerY: 400,
+    scaleX: 1,
+    scaleY: 1,
+    viewportLeft: 100,
+    viewportTop: 100,
+    viewportWidth: 800,
+    viewportHeight: 600,
+    lineX: 500,
+    lineY: 400,
+    ...overrides,
+  };
+}
 
 /** A session with one event on the named track. */
 function sessionWithEvent(type, event) {
@@ -73,8 +98,7 @@ test("event tracks map to their workspace sampling axis, including speed", () =>
   assert.equal(samplingAxisForEventType("colorEvents"), null);
   assert.equal(samplingAxisForEventType("textEvents"), null);
 });
-
-test("sampling ranges expose unbounded XY and bounded scalar axes", () => {
+test("sampling ranges expose unbounded XY and linear scalar base domains", () => {
   assert.deepEqual(samplingRangeOf("x"), {
     min: Number.NEGATIVE_INFINITY,
     max: Number.POSITIVE_INFINITY,
@@ -83,7 +107,7 @@ test("sampling ranges expose unbounded XY and bounded scalar axes", () => {
     min: Number.NEGATIVE_INFINITY,
     max: Number.POSITIVE_INFINITY,
   });
-  assert.deepEqual(samplingRangeOf("rotation"), { min: 0, max: 360 });
+  assert.deepEqual(samplingRangeOf("rotation"), { min: -180, max: 180 });
   assert.deepEqual(samplingRangeOf("alpha"), { min: 0, max: 255 });
   assert.deepEqual(samplingRangeOf("speed"), { min: 0, max: 20 });
 });
@@ -99,20 +123,20 @@ function steppedValues(minimum, maximum, step) {
   }
   return values;
 }
-
 test("guide values follow each axis guide step and include both bounded ends", () => {
   const rotation = samplingGuideValues("rotation", DEFAULT_SAMPLING_SETTINGS);
-  assert.deepEqual(rotation, steppedValues(0, 330, 30));
-  assert.equal(rotation.length, 12);
-  assert.equal(rotation.includes(360), false);
+  assert.deepEqual(rotation, steppedValues(-180, 180, 30));
+  assert.equal(rotation.length, 13);
+  assert.equal(rotation.includes(-180), true);
+  assert.equal(rotation.includes(180), true);
 
   const fineRotation = samplingGuideValues("rotation", {
     ...DEFAULT_SAMPLING_SETTINGS,
     angleGuideStep: 15,
   });
-  assert.equal(fineRotation.length, 24);
-  assert.deepEqual(fineRotation.slice(0, 4), [0, 15, 30, 45]);
-  assert.equal(fineRotation.at(-1), 345);
+  assert.equal(fineRotation.length, 25);
+  assert.deepEqual(fineRotation.slice(0, 4), [-180, -165, -150, -135]);
+  assert.equal(fineRotation.at(-1), 180);
 
   assert.deepEqual(
     samplingGuideValues("alpha", DEFAULT_SAMPLING_SETTINGS),
@@ -148,7 +172,6 @@ test("guide values follow each axis guide step and include both bounded ends", (
   assert.deepEqual(samplingGuideValues("x", DEFAULT_SAMPLING_SETTINGS), []);
   assert.deepEqual(samplingGuideValues("y", DEFAULT_SAMPLING_SETTINGS), []);
 });
-
 test("sampling guides extend beyond the preview and reveal outside pixels near the pointer", () => {
   const projection = {
     stageWidth: 1600,
@@ -165,20 +188,17 @@ test("sampling guides extend beyond the preview and reveal outside pixels near t
     viewportHeight: 900,
     lineX: 800,
     lineY: 550,
-    lineRotation: 0,
   };
   const viewport = viewportOf(projection);
   const geometry = buildSamplingGeometry(projection, "x", DEFAULT_SAMPLING_SETTINGS);
   assert.ok(geometry.vertical.some((line) => line.position < viewport.left));
   assert.ok(geometry.vertical.some((line) => line.position > viewport.right));
-
   assert.equal(samplingGuideOpacity(800, 550, viewport, null), 1);
   assert.equal(samplingGuideOpacity(800, 1270, viewport, null), 1);
   assert.ok(Math.abs(samplingGuideOpacity(800, 1405, viewport, null) - 0.5) < 1e-9);
   assert.equal(samplingGuideOpacity(800, 1540, viewport, null), 0);
   assert.equal(samplingGuideOpacity(800, 1300, viewport, { x: 800, y: 1300 }), 1);
   assert.ok(Math.abs(samplingGuideOpacity(800, 1600, viewport, { x: 800, y: 1465 }) - 0.5) < 1e-9);
-
   const segments = samplingGuideSegments(
     800,
     "vertical",
@@ -190,20 +210,140 @@ test("sampling guides extend beyond the preview and reveal outside pixels near t
   assert.ok(segments.some((segment) => segment.opacity === 1));
   assert.ok(segments.some((segment) => segment.opacity === 0));
 });
+test("cursor reveal adds to the existing outside fade", () => {
+  const projection = {
+    stageWidth: 1600,
+    stageHeight: 1800,
+    canvasLeft: 0,
+    canvasTop: 0,
+    centerX: 800,
+    centerY: 750,
+    scaleX: 1,
+    scaleY: 1,
+    viewportLeft: 125,
+    viewportTop: 100,
+    viewportWidth: 1350,
+    viewportHeight: 900,
+    lineX: 800,
+    lineY: 550,
+  };
+  const viewport = viewportOf(projection);
 
-test("normalization wraps angles, clamps opacity, and rounds scalar axes", () => {
-  assert.equal(normalizeSamplingScalar("rotation", -15), 345);
-  assert.equal(normalizeSamplingScalar("rotation", 360), 0);
-  assert.equal(normalizeSamplingScalar("rotation", 725), 5);
-  assert.equal(normalizeSamplingScalar("alpha", -4), 0);
-  assert.equal(normalizeSamplingScalar("alpha", 999), 255);
+  assert.ok(Math.abs(samplingGuideOpacity(800, 1405, viewport, { x: 800, y: 1270 }) - 1) < 1e-9);
+});
+test("scalar sampling uses vertical guides across the bounded horizontal range", () => {
+  const projection = projectionWith();
+  const viewport = viewportOf(projection);
+  const geometry = buildSamplingGeometry(projection, "alpha", DEFAULT_SAMPLING_SETTINGS);
+  assert.equal(geometry.scalar.minValue, 0);
+  assert.equal(geometry.scalar.maxValue, 255);
+  assert.equal(geometry.horizontal.length, 0);
+  assert.equal(
+    geometry.vertical.find((line) => line.value === 0).position,
+    projection.viewportLeft,
+  );
+  assert.equal(
+    geometry.vertical.find((line) => line.value === 255).position,
+    projection.viewportLeft + projection.viewportWidth,
+  );
+  const bounds = { left: 0, top: 0 };
+  const leftSample = sampleSamplingPointer(
+    projection.viewportLeft,
+    projection.viewportTop + projection.viewportHeight / 2,
+    bounds,
+    projection,
+    "alpha",
+    DEFAULT_SAMPLING_SETTINGS,
+  );
+  const rightSample = sampleSamplingPointer(
+    projection.viewportLeft + projection.viewportWidth,
+    projection.viewportTop + projection.viewportHeight / 2,
+    bounds,
+    projection,
+    "alpha",
+    DEFAULT_SAMPLING_SETTINGS,
+  );
+  assert.equal(leftSample.value.scalar, 0);
+  assert.equal(rightSample.value.scalar, 255);
+  assert.equal(scalarToStageX("alpha", 0, viewport), projection.viewportLeft);
+  assert.equal(
+    scalarToStageX("alpha", 255, viewport),
+    projection.viewportLeft + projection.viewportWidth,
+  );
+  assert.ok(geometry.vertical.some((line) => line.position < viewport.left));
+  assert.ok(geometry.vertical.some((line) => line.position > viewport.right));
+  const outsideLeft = sampleSamplingPointer(
+    0,
+    projection.viewportTop + projection.viewportHeight / 2,
+    bounds,
+    projection,
+    "alpha",
+    DEFAULT_SAMPLING_SETTINGS,
+  );
+  const outsideRight = sampleSamplingPointer(
+    projection.stageWidth,
+    projection.viewportTop + projection.viewportHeight / 2,
+    bounds,
+    projection,
+    "alpha",
+    DEFAULT_SAMPLING_SETTINGS,
+  );
+  assert.equal(outsideLeft.value.scalar, -32);
+  assert.equal(outsideRight.value.scalar, 287);
+  assert.ok(Math.abs(scalarToStageX("alpha", -20, viewport) - 37.25490196078431) < 1e-9);
+});
+test("the nearest guide is the only cursor-highlight candidate", () => {
+  const lines = [
+    { key: "v:0", value: 0, position: 100, major: true },
+    { key: "v:1", value: 1, position: 200, major: false },
+    { key: "v:2", value: 2, position: 300, major: false },
+  ];
+
+  assert.equal(nearestGuideKey(lines, 207), "v:1");
+  assert.equal(nearestGuideKey(lines, 250), null);
+});
+
+test("XY snapping requires a guide intersection instead of one guide line", () => {
+  const projection = projectionWith();
+  const bounds = { left: 0, top: 0 };
+  const nearXOnly = sampleSamplingPointer(552, 383, bounds, projection, "x", plainSettings);
+  assert.equal(nearXOnly.value.scalar, 52);
+  assert.equal(nearXOnly.snapped, false);
+
+  const nearIntersection = sampleSamplingPointer(552, 352, bounds, projection, "x", plainSettings);
+  assert.equal(nearIntersection.value.scalar, 50);
+  assert.deepEqual(nearIntersection.value.point, { x: 50, y: 50 });
+  assert.equal(nearIntersection.snapped, true);
+});
+
+test("scalar anchors preserve the pointer Y while sampling only the horizontal value", () => {
+  const projection = projectionWith({ lineY: 275 });
+  const sample = sampleSamplingPointer(
+    500,
+    245,
+    { left: 0, top: 0 },
+    projection,
+    "alpha",
+    plainSettings,
+  );
+  const point = anchorStagePoint(sample.value, projection);
+  assert.equal(sample.stage.y, 245);
+  assert.equal(point.y, 245);
+});
+
+test("normalization keeps scalar values linear without circular wrapping or clamping", () => {
+  assert.equal(normalizeSamplingScalar("rotation", -200), -200);
+  assert.equal(normalizeSamplingScalar("rotation", 360), 360);
+  assert.equal(normalizeSamplingScalar("rotation", 725), 725);
+  assert.equal(normalizeSamplingScalar("alpha", -4), -4);
+  assert.equal(normalizeSamplingScalar("alpha", 999), 999);
   assert.equal(normalizeSamplingScalar("alpha", 127.6), 128);
-  assert.equal(normalizeSamplingScalar("speed", -1), 0);
+  assert.equal(normalizeSamplingScalar("speed", -1), -1);
   assert.equal(normalizeSamplingScalar("speed", 1.234), 1.23);
   assert.equal(normalizeSamplingScalar("speed", 1.005), 1.01);
   assert.equal(normalizeSamplingScalar("speed", 15), 15);
-  assert.equal(normalizeSamplingScalar("speed", 25), 20);
-  assert.equal(normalizeSamplingScalar("speed", 20.006), 20);
+  assert.equal(normalizeSamplingScalar("speed", 25), 25);
+  assert.equal(normalizeSamplingScalar("speed", 20.006), 20.01);
   assert.equal(normalizeSamplingScalar("x", 12.345), 12.35);
   assert.equal(normalizeSamplingScalar("y", -14.567), -14.57);
   assert.equal(normalizeSamplingScalar("x", Number.NaN), 0);
@@ -217,8 +357,15 @@ test("snapping only applies within the tolerance of a guide", () => {
     value: 37,
     snapped: false,
   });
-  assert.deepEqual(snapSamplingScalar("rotation", 359, settings, 2), { value: 0, snapped: true });
-  assert.deepEqual(snapSamplingScalar("rotation", 360, settings, 0), { value: 0, snapped: true });
+  assert.deepEqual(snapSamplingScalar("rotation", 359, settings, 2), { value: 360, snapped: true });
+  assert.deepEqual(snapSamplingScalar("rotation", 360, settings, 0), {
+    value: 360,
+    snapped: true,
+  });
+  assert.deepEqual(snapSamplingScalar("rotation", -179, settings, 2), {
+    value: -180,
+    snapped: true,
+  });
 
   assert.deepEqual(snapSamplingScalar("alpha", 60, settings, 5), { value: 60, snapped: true });
   assert.deepEqual(snapSamplingScalar("alpha", 30, settings, 5), { value: 30, snapped: false });
@@ -228,6 +375,10 @@ test("snapping only applies within the tolerance of a guide", () => {
   assert.deepEqual(snapSamplingScalar("speed", 1.5, settings, 0.2), { value: 1.5, snapped: false });
   assert.deepEqual(snapSamplingScalar("speed", 19.9, settings, 0.2), { value: 20, snapped: true });
   assert.deepEqual(snapSamplingScalar("speed", 20, settings, 0), { value: 20, snapped: true });
+  assert.deepEqual(snapSamplingScalar("alpha", -15, settings, 5), {
+    value: -20,
+    snapped: true,
+  });
 
   assert.deepEqual(snapSamplingScalar("x", 47, settings, 5), { value: 47, snapped: false });
   assert.deepEqual(snapSamplingScalar("y", 37, settings, 5), { value: 37, snapped: false });
@@ -276,7 +427,7 @@ test("a hook event receives the start scalar on both anchors", () => {
   assert.equal(next.end, 3);
 });
 
-test("speed sampling clamps both anchors without an XY counterpart", () => {
+test("speed sampling keeps both anchors outside its base domain without an XY counterpart", () => {
   const event = createEvent(1, 2, 0, 2);
   const session = sessionWithEvent("speedEvents", event);
   const result = applySamplingAnchors(
@@ -290,7 +441,7 @@ test("speed sampling clamps both anchors without an XY counterpart", () => {
   assert.equal(result.createdCounterpart, false);
   const next = firstEvent(session, "speedEvents");
   assert.equal(next.start, 1.23);
-  assert.equal(next.end, 0);
+  assert.equal(next.end, -1);
 });
 
 test("sampling a read-only chart reports the read-only error", () => {
@@ -564,6 +715,7 @@ test("sampling settings default to one guide density per axis", () => {
   assert.equal(DEFAULT_SAMPLING_SETTINGS.speedGuideStep, 2);
   assert.equal(DEFAULT_SAMPLING_SETTINGS.xyBinding, true);
   assert.equal(DEFAULT_SAMPLING_SETTINGS.guideOpacity, 50);
+  assert.equal("showAnchorGuides" in DEFAULT_SAMPLING_SETTINGS, false);
 });
 
 test("sampler preferences migrate the old grid field names", () => {
@@ -581,7 +733,6 @@ test("sampler preferences migrate the old grid field names", () => {
     assert.equal(migrated.alphaGuideStep, 20);
     assert.equal(migrated.speedGuideStep, 2);
     assert.equal(migrated.xyBinding, true);
-    assert.equal(migrated.showAnchorGuides, true);
     assert.equal(migrated.guideOpacity, 50);
 
     writePreference(PREFERENCE_SECTIONS.sampler, {
@@ -593,7 +744,6 @@ test("sampler preferences migrate the old grid field names", () => {
       angleGuideStep: 25,
       alphaGuideStep: 35,
       speedGuideStep: 0.5,
-      showAnchorGuides: false,
       guideOpacity: 75,
     });
     const current = readSamplingSettings();
@@ -602,7 +752,6 @@ test("sampler preferences migrate the old grid field names", () => {
     assert.equal(current.angleGuideStep, 25);
     assert.equal(current.alphaGuideStep, 35);
     assert.equal(current.speedGuideStep, 0.5);
-    assert.equal(current.showAnchorGuides, false);
     assert.equal(current.guideOpacity, 75);
   } finally {
     writePreference(PREFERENCE_SECTIONS.sampler, previous);
@@ -619,7 +768,6 @@ test("settings updates clamp every guide step and persist the new shape", () => 
       alphaGuideStep: 0,
       speedGuideStep: 9,
       xyBinding: false,
-      showAnchorGuides: false,
       guideOpacity: -10,
     });
     assert.equal(next.guidesEnabled, false);
@@ -628,7 +776,6 @@ test("settings updates clamp every guide step and persist the new shape", () => 
     assert.equal(next.alphaGuideStep, 1);
     assert.equal(next.speedGuideStep, 9);
     assert.equal(next.xyBinding, false);
-    assert.equal(next.showAnchorGuides, false);
     assert.equal(next.guideOpacity, 0);
     assert.deepEqual(readPreference(PREFERENCE_SECTIONS.sampler, null), next);
     assert.deepEqual(readSamplingSettings(), next);

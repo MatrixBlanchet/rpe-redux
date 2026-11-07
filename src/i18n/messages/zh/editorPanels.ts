@@ -627,7 +627,6 @@ export default {
   "editorPanels.sampling.xyBinding": "XY 绑定",
   "editorPanels.sampling.xyBindingHint":
     "开启后，创建或删除 X/Y 事件时，会同步创建或删除另一轴上时间区间完全相同的事件。",
-  "editorPanels.sampling.showAnchorGuides": "显示首尾辅助线",
   "editorPanels.sampling.guideOpacity": "辅助线透明度",
   "editorPanels.sampling.shiftHint": "按住 Shift 临时隐藏辅助线",
   "editorPanels.sampling.samplingHint": "按住并拖动确定首尾值，松手后可选择缓动",

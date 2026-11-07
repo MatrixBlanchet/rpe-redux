@@ -67,8 +67,6 @@ export interface SamplingSettings {
   speedGuideStep: number;
   /** Whether sampling one horizontal or vertical event creates its counterpart. */
   xyBinding: boolean;
-  /** Whether the workspace paints guides for the event's two anchor values. */
-  showAnchorGuides: boolean;
   /** Opacity percentage applied to sampler and trajectory helper lines. */
   guideOpacity: number;
 }
@@ -81,7 +79,6 @@ export const DEFAULT_SAMPLING_SETTINGS: SamplingSettings = {
   alphaGuideStep: 20,
   speedGuideStep: 2,
   xyBinding: true,
-  showAnchorGuides: true,
   guideOpacity: 50,
 };
 
@@ -100,7 +97,7 @@ export interface SamplingTarget {
 export interface SamplingValue {
   axis: SamplingAxis;
   scalar: number;
-  /** Chart-space point for an XY sample; absent for the other axes. */
+  /** Chart-space pointer location retained for the rendered anchor; writes use only the active axis. */
   point?: { x: number; y: number };
 }
 
@@ -152,7 +149,7 @@ export function samplingRangeOf(axis: SamplingAxis): { min: number; max: number 
     case "y":
       return { min: Number.NEGATIVE_INFINITY, max: Number.POSITIVE_INFINITY };
     case "rotation":
-      return { min: 0, max: 360 };
+      return { min: -180, max: 180 };
     case "alpha":
       return { min: 0, max: 255 };
     case "speed":
@@ -259,7 +256,7 @@ export function samplingGuideValues(axis: SamplingAxis, settings: SamplingSettin
         SAMPLING_ANGLE_MAX,
         DEFAULT_SAMPLING_SETTINGS.angleGuideStep,
       );
-      return steppedGuides(0, 360, step, false);
+      return steppedGuides(-180, 180, step, true);
     }
     case "speed": {
       const step = boundedSetting(
@@ -273,28 +270,25 @@ export function samplingGuideValues(axis: SamplingAxis, settings: SamplingSettin
   }
 }
 
-/** Clamp an axis value to the range the chart model accepts. */
+/** Normalize an axis value while retaining scalar values outside the guide domain. */
 export function normalizeSamplingScalar(axis: SamplingAxis, raw: number): number {
   const value = Number.isFinite(raw) ? raw : 0;
   switch (axis) {
     case "x":
     case "y":
       return roundTo(value, 2);
-    case "rotation": {
-      const wrapped = ((value % 360) + 360) % 360;
-      return wrapped === 360 || Object.is(wrapped, -0) ? 0 : wrapped;
-    }
+    case "rotation":
+      return value;
     case "alpha":
-      return Math.round(clamp(value, 0, 255));
+      return Math.round(value);
     case "speed":
-      return roundTo(clamp(value, 0, 20), 2);
+      return roundTo(value, 2);
   }
 }
 
-/** Shortest angular distance between two degree values. */
+/** Linear distance between two degree values; 0° and 360° are distinct. */
 function angleDistance(left: number, right: number): number {
-  const delta = Math.abs(left - right) % 360;
-  return Math.min(delta, 360 - delta);
+  return Math.abs(left - right);
 }
 
 /** The guide nearest one scalar value, or null for an axis the overlay guides itself. */
@@ -310,9 +304,13 @@ function nearestSamplingGuide(
   if (!guides.length) {
     return null;
   }
-  let nearest = guides[0];
+  const { min, max } = samplingRangeOf(axis);
+  const nextGuide = guides.find((guide) => guide > min);
+  const step = Math.max(Number.EPSILON, (nextGuide ?? max) - min);
+  const extendedGuide = min + Math.round((value - min) / step) * step;
+  let nearest = extendedGuide;
   let nearestDistance = Number.POSITIVE_INFINITY;
-  for (const guide of guides) {
+  for (const guide of [...guides, extendedGuide]) {
     const distance = axis === "rotation" ? angleDistance(value, guide) : Math.abs(value - guide);
     if (distance < nearestDistance) {
       nearest = guide;
@@ -396,12 +394,6 @@ export function readSamplingSettings(): SamplingSettings {
       DEFAULT_SAMPLING_SETTINGS.speedGuideStep,
     ),
     xyBinding: storedBoolean(record, "xyBinding", undefined, DEFAULT_SAMPLING_SETTINGS.xyBinding),
-    showAnchorGuides: storedBoolean(
-      record,
-      "showAnchorGuides",
-      undefined,
-      DEFAULT_SAMPLING_SETTINGS.showAnchorGuides,
-    ),
     guideOpacity: storedNumber(
       record,
       "guideOpacity",
@@ -467,10 +459,6 @@ export function updateSamplingSettings(patch: Partial<SamplingSettings>): Sampli
             current.speedGuideStep,
           ),
     xyBinding: typeof patch.xyBinding === "boolean" ? patch.xyBinding : current.xyBinding,
-    showAnchorGuides:
-      typeof patch.showAnchorGuides === "boolean"
-        ? patch.showAnchorGuides
-        : current.showAnchorGuides,
     guideOpacity:
       patch.guideOpacity === undefined
         ? current.guideOpacity

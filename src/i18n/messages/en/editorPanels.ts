@@ -672,7 +672,6 @@ export default {
   "editorPanels.sampling.xyBinding": "XY binding",
   "editorPanels.sampling.xyBindingHint":
     "Sync the matching time span on the other axis while sampling to reduce repeated edits. The global X/Y binding setting takes over when enabled.",
-  "editorPanels.sampling.showAnchorGuides": "Show start and end guides",
   "editorPanels.sampling.guideOpacity": "Guide opacity",
   "editorPanels.sampling.samplingHint":
     "Press and drag to pick the start and end values; release to choose easing",
