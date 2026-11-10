@@ -286,14 +286,6 @@ export default {
   "workspace.collaboration.updatePassword": "Update password",
   "workspace.collaboration.showSecret": "Show",
   "workspace.collaboration.hideSecret": "Hide",
-  "workspace.collaboration.exitTitle": "Exit while in a room?",
-  "workspace.collaboration.exitBody":
-    "Exiting disconnects you from the room. Other members may be affected if you are the host.",
-  "workspace.collaboration.exitConfirm": "Exit anyway",
-  "workspace.collaboration.exitTemporaryTitle": "Exit and delete the room chart?",
-  "workspace.collaboration.exitTemporaryBody":
-    "This temporary room chart and its unsaved changes will be deleted. Export the chart first if you need to keep a copy.",
-  "workspace.collaboration.exitTemporaryConfirm": "Exit and delete",
   "workspace.collaboration.password": "Room password",
   "workspace.collaboration.invalidServerUrl": "Enter a ws:// or wss:// server address.",
   "workspace.collaboration.hostFailed": "Could not create the room: {detail}",
@@ -376,8 +368,15 @@ export default {
   "workspace.collaboration.connectionFailed": "Could not connect to the collaboration server.",
   "workspace.collaboration.versionMismatch":
     "Both devices must run the same RPE Redux version to join this room.",
+  "workspace.collaboration.versionNewerThanHost":
+    "Your RPE Redux version is newer than the host's. Ask the host to update RPE Redux, or use the host's version to join.",
+  "workspace.collaboration.versionOlderThanHost":
+    "Your RPE Redux version is older than the host's. Update RPE Redux to join this room.",
   "workspace.collaboration.hostMustClose":
     "The host cannot leave the room. Close the room instead.",
+  "workspace.collaboration.roomLimit":
+    "This device has reached its collaboration room limit. Close an old room and try again.",
+  "workspace.collaboration.roomFull": "This room is full.",
   "workspace.collaboration.removed": "You were dismissed from the room.",
   "workspace.collaboration.left": "Left the room. The temporary room chart was deleted.",
   "workspace.collaboration.connectionTimeout":

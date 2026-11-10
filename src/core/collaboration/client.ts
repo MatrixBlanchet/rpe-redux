@@ -28,6 +28,7 @@ import {
   type EncryptedPayload,
 } from "./e2e.ts";
 import { EMPTY_COLLABORATION_STATE } from "./ui.ts";
+import { versionMismatchCode, versionMismatchMessage } from "./version.ts";
 import {
   type ClientMessage,
   type CollaborationProfile,
@@ -915,6 +916,19 @@ export class CollaborationClient {
       this.scheduleReconnect();
       return;
     }
+    // A create/join can lose its socket before the first welcome. Retry the
+    // retained create/join intent a few times instead of failing the whole
+    // operation on one transient close.
+    if (
+      !hasRoom &&
+      this.reconnectWanted &&
+      this.options.reconnect !== false &&
+      this.reconnectBackoff.attempts < 3
+    ) {
+      this.setState({ status: "connecting", error: "" });
+      this.scheduleReconnect();
+      return;
+    }
     this.failInitial(
       "The collaboration connection closed before the room was ready.",
       "connection_closed",
@@ -1094,10 +1108,9 @@ export class CollaborationClient {
       case "welcome": {
         const roomVersion = message.appVersion?.trim() ?? "";
         if (roomVersion !== this.appVersion) {
-          const version = (value: string) => value || "unknown";
           this.failInitial(
-            `This room uses RPE Redux ${version(roomVersion)}; this client is ${version(this.appVersion)}. Both copies must use the same version.`,
-            "version_mismatch",
+            versionMismatchMessage(roomVersion, this.appVersion),
+            versionMismatchCode(roomVersion, this.appVersion),
           );
           return;
         }
@@ -1186,7 +1199,9 @@ export class CollaborationClient {
           "bad_resume",
           "no_room",
           "bad_invite",
-          "version_mismatch",
+          "version_mismatch_client_newer",
+          "version_mismatch_client_older",
+          "version_mismatch_unknown",
         ].includes(message.reason);
         if (terminal) {
           this.manualClose = true;
