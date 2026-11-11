@@ -44,14 +44,17 @@ function ReviewBody({ request, open }: { request: RpeImportReviewRequest; open: 
   const { t } = useTranslation();
   const settingsHeading = useId();
   const chartsHeading = useId();
+  // Unmapped rows explain what the source carried; they are never selectable.
+  const selectableRows = request.settings.filter((row) => row.kind !== "unmapped");
+  const unmappedRows = request.settings.filter((row) => row.kind === "unmapped");
   const [selected, setSelected] = useState<ReadonlySet<string>>(
     () =>
       new Set([
-        ...request.settings.map((row) => row.id),
+        ...selectableRows.map((row) => row.id),
         ...request.charts.map((chart) => chart.path),
       ]),
   );
-  const settingIds = request.settings.map((row) => row.id);
+  const settingIds = selectableRows.map((row) => row.id);
   const chartIds = request.charts.map((chart) => chart.path);
   const settingState = groupState(settingIds, selected);
   const chartState = groupState(chartIds, selected);
@@ -110,10 +113,14 @@ function ReviewBody({ request, open }: { request: RpeImportReviewRequest; open: 
     <Modal
       open={open}
       onClose={() => answerRpeImportReview(null)}
-      label={t("workspace.welcome.rpe.review.title")}
+      label={t(
+        request.scan.source === "phiediter"
+          ? "workspace.welcome.pe.review.title"
+          : "workspace.welcome.rpe.review.title",
+      )}
       description={t("workspace.welcome.rpe.review.description", {
         charts: request.charts.length,
-        settings: request.settings.length,
+        settings: selectableRows.length,
       })}
       className="rpe-review-dialog"
       actions={
@@ -143,15 +150,21 @@ function ReviewBody({ request, open }: { request: RpeImportReviewRequest; open: 
             state={settingState}
             onToggle={(checked) => toggleGroup(settingIds, checked)}
           />
-          {request.settings.length ? (
+          {selectableRows.length || unmappedRows.length ? (
             <div className="rpe-review-rows">
-              {request.settings.map((row) => (
+              {selectableRows.map((row) => (
                 <SettingRow
                   key={row.id}
                   row={row}
                   checked={selected.has(row.id)}
                   onToggle={(checked) => toggle(row.id, checked)}
                 />
+              ))}
+              {unmappedRows.length > 0 && (
+                <p className="rpe-review-subhead">{t("workspace.welcome.rpe.review.unmapped")}</p>
+              )}
+              {unmappedRows.map((row) => (
+                <UnmappedRow key={row.id} row={row} />
               ))}
             </div>
           ) : (
@@ -245,6 +258,20 @@ function SettingRow({
         onChange={(event) => onToggle(event.currentTarget.checked)}
       />
     </label>
+  );
+}
+
+/** One detected field with no destination: name, source value, and the reason. */
+function UnmappedRow({ row }: { row: RpeReviewSetting }) {
+  const { t } = useTranslation();
+  return (
+    <div className="rpe-review-row rpe-review-row-unmapped">
+      <span className="rpe-review-row-copy">
+        <span className="rpe-review-row-label">{row.label}</span>
+        <span className="rpe-review-row-source">{row.value}</span>
+      </span>
+      <span className="rpe-review-row-note">{t("workspace.welcome.rpe.review.unmappedNote")}</span>
+    </div>
   );
 }
 

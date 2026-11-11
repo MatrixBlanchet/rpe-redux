@@ -15,10 +15,10 @@ import type {
 
 /** One settings row in the review list. */
 export interface RpeReviewSetting {
-  /** Stable row id: a setting key, `shortcuts`, or `language`. */
+  /** Stable row id: a setting key, `shortcuts`, `language`, or `unmapped:<field>`. */
   readonly id: string;
   /** The source of the value, so submission can keep the three kinds apart. */
-  readonly kind: "setting" | "shortcuts" | "language";
+  readonly kind: "setting" | "shortcuts" | "language" | "unmapped";
   /** Localized field label. */
   readonly label: string;
   /** Human-readable value the import would write. */
@@ -101,6 +101,17 @@ export function answerRpeImportReview(selection: RpeImportSelection | null): voi
   review.get()?.settle(selection);
 }
 
+/** Event-wheel channels in the order `scrollValueIncrement` stores them. */
+const EVENT_WHEEL_CHANNELS = [
+  "x",
+  "y",
+  "rotation",
+  "opacity",
+  "speed",
+  "scaleX",
+  "scaleY",
+] as const;
+
 /** Build the settings list from the plan the parser produced. */
 export function buildSettingRows(plan: RpeMigrationPlan): readonly RpeReviewSetting[] {
   const rows: RpeReviewSetting[] = plan.settings.map((setting) => ({
@@ -129,6 +140,16 @@ export function buildSettingRows(plan: RpeMigrationPlan): readonly RpeReviewSett
       value: LANGUAGE_NAMES[plan.language],
     });
   }
+  // Rows without a destination stay visible after the importable ones so the
+  // review accounts for every setting the file carried.
+  for (const field of plan.unmapped) {
+    rows.push({
+      id: `unmapped:${field.key}`,
+      kind: "unmapped",
+      label: rpeFieldLabel(field.key),
+      value: settingValueText(field.key, field.value),
+    });
+  }
   return Object.freeze(rows);
 }
 
@@ -152,11 +173,49 @@ function settingLabel(key: string): string {
   if (label !== messageKey) {
     return label;
   }
+  if (key === "event-wheel-increments") {
+    return t("workspace.welcome.rpe.review.wheelIncrements");
+  }
+  // Hit-sound offsets register their label per kind instead of one field key.
+  const offsetKind = /^hitsound-offset-(tap|drag|flick|custom)$/u.exec(key);
+  if (offsetKind) {
+    return tRaw(`settings.hitsound.offset.${offsetKind[1]}`);
+  }
   return key
     .split("-")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+/**
+ * Render the seven event-wheel increments as labelled lines.
+ *
+ * RPE's `scrollValueIncrement` is one array; the review names each channel so
+ * the value is readable without knowing the array order.
+ */
+function eventWheelValue(text: string): string {
+  let steps: unknown;
+  try {
+    steps = JSON.parse(text);
+  } catch {
+    return text;
+  }
+  if (!Array.isArray(steps)) {
+    return text;
+  }
+  return EVENT_WHEEL_CHANNELS.map((channel, index) => {
+    const label = tRaw(`workspace.welcome.rpe.review.wheel.${channel}`);
+    const step = steps[index];
+    return `${label} ${step === undefined ? "—" : String(step)}`;
+  }).join("\n");
+}
+
+/** Resolve the label for an RPE source field this editor has no setting for. */
+function rpeFieldLabel(key: string): string {
+  const messageKey = `workspace.welcome.rpe.field.${key}.label`;
+  const label = tRaw(messageKey);
+  return label === messageKey ? key : label;
 }
 
 /** Render one setting value through the same labels the settings page uses. */
@@ -167,6 +226,9 @@ function settingValueText(key: string, value: string | boolean | number): string
     );
   }
   const text = String(value);
+  if (key === "event-wheel-increments") {
+    return eventWheelValue(text);
+  }
   if (key === "render-fps") {
     const optionKey = `settings.option.render-fps.${text}`;
     const option = tRaw(optionKey);

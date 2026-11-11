@@ -27,6 +27,7 @@ import {
   editorLineSelection,
   editorPreviewRatio,
   editorRealtimePreviewEnabled,
+  editorSnapX,
 } from "../../../../../../core/edit/state/publishedValues.ts";
 import { formatLineSelection } from "../../../../../../core/edit/state/lineSelectionInput.ts";
 import { displayValues } from "../../../../settings/editorDisplaySettings.ts";
@@ -220,8 +221,11 @@ export function bindEditorInteractions(groups: EditorBindingDependencies) {
   deps.scope.add(setProgressSeekHandler(deps.progress, (seconds) => deps.playback.seek(seconds)));
   deps.scope.add(
     bindPlaybackControls({
-      setVolume: deps.audio.setVolume,
-      setHitSoundVolume: deps.hitSounds.setSoundVolume,
+      // Keep the transport as the receiver: the playback owners are class
+      // instances, so passing their prototype methods unbound throws when a
+      // settings write (for example an RPE migration) reaches the listener.
+      setVolume: (value) => deps.audio.setVolume(value),
+      setHitSoundVolume: (kind, value) => deps.hitSounds.setSoundVolume?.(kind, value),
       setRealtimeAlpha: (value) => {
         deps.realtimePreview.opacity = value;
       },
@@ -303,6 +307,23 @@ export function bindEditorInteractions(groups: EditorBindingDependencies) {
     clearClipboard: () => deps.selectionClipboard.clearClipboard(),
     selectEventLayer: (layer) => selectEventLayer(deps.timeline, deps.getSession(), layer),
     togglePlayback: deps.togglePlayback,
+    startPlayback: () => {
+      transport.startPlayback();
+      return Promise.resolve();
+    },
+    stopPlayback: () => transport.stopPlayback(),
+    stopPlaybackStay: () => transport.stopPlaybackStay(),
+    replayPlayback: () => {
+      transport.replayPlayback();
+      return Promise.resolve();
+    },
+    toggleTimeSnap: () => {
+      const enabled = !deps.timeline.viewport.snapX;
+      deps.timeline.viewport.snapX = enabled;
+      editorSnapX.set(enabled);
+      deps.persistEditor();
+      deps.invalidate();
+    },
     showLineInfo: deps.showLineInfo,
     sampleSelection: () => startSamplingForSelection(deps.getSession()),
     resetCamera: deps.resetCamera,
