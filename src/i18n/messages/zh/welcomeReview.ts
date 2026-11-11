@@ -29,6 +29,7 @@ export default {
   "workspace.welcome.rpe.review.wheel.speed": "速度",
   "workspace.welcome.rpe.review.wheel.scaleX": "故事板横向伸缩",
   "workspace.welcome.rpe.review.wheel.scaleY": "故事板纵向伸缩",
+  "workspace.welcome.rpe.review.divisionColor": "{division} 分音颜色",
   "workspace.welcome.rpe.review.chartsEmpty": "Resources 下没有找到谱面文件夹。",
   "workspace.welcome.rpe.review.apply": "导入所选内容",
 

@@ -335,6 +335,29 @@ test("the review labels hit-sound offsets and names every wheel channel", () => 
   }
 });
 
+test("RPE division_color.txt maps supported beat lines and reports the rest", () => {
+  const division = `# comment line
+4: 255, 0, 0, 1.0 // red
+8: 128, 128, 255, 0.5
+16: 0, 255, 0
+24: 10, 20, 30, 1
+not a colour line
+`;
+  const plan = createRpeMigrationPlan("", "", "", division);
+  const values = Object.fromEntries(plan.settings.map((setting) => [setting.key, setting.value]));
+  assert.equal(values["timeline-grid-color-4"], "#FF0000");
+  assert.equal(values["timeline-grid-color-8"], "#8080FF80");
+  assert.equal(values["timeline-grid-color-16"], "#00FF00");
+  assert.equal(values["timeline-grid-color-24"], undefined);
+  assert.deepEqual(plan.unmapped, [{ key: "division-color-24", value: "#0A141E" }]);
+
+  const rows = buildSettingRows(plan);
+  const unmapped = rows.find((row) => row.id === "unmapped:division-color-24");
+  assert.equal(unmapped.label, "24 division color");
+  assert.equal(unmapped.value, "#0A141E");
+  assert.equal(unmapped.swatch, "#0A141E");
+});
+
 test("the review keeps only checked settings, shortcuts, and language", () => {
   const plan = createRpeMigrationPlan(
     JSON.stringify({ FpsLimit: 120, NoteSize: 175, Language: "zh.txt" }),

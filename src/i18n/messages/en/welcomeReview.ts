@@ -31,6 +31,7 @@ export default {
   "workspace.welcome.rpe.review.wheel.speed": "Speed",
   "workspace.welcome.rpe.review.wheel.scaleX": "Storyboard horizontal stretch",
   "workspace.welcome.rpe.review.wheel.scaleY": "Storyboard vertical stretch",
+  "workspace.welcome.rpe.review.divisionColor": "{division} division color",
   "workspace.welcome.rpe.review.chartsEmpty": "No chart folders were found below Resources.",
   "workspace.welcome.rpe.review.apply": "Import selected",
 

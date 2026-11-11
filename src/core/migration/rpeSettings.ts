@@ -603,17 +603,21 @@ function settingValueText(value: unknown): string | boolean | number | undefined
  *
  * RPE installations without colour entries keep the editor's current palette:
  * writing RPE's defaults would overwrite a user's custom grid and playhead
- * colours even though `Settings.json` never named them.
+ * colours even though `Settings.json` never named them. `division_color.txt`
+ * wins over the older `UI.txt` and `Settings.json` aliases because it is the
+ * dedicated file RPE writes for subdivision colours.
  */
 export function appearanceWrites(
   settingsRaw: Record<string, unknown>,
   uiText: string | null | undefined,
+  divisionColorText?: string | null,
 ): RpeSettingWrite[] {
   const fromSettings = readColorEntries(
     collectColorEntries(settingsRaw, { beat: [], playhead: [] }),
   );
   const fromUi = readColorEntries(parseColorText(uiText));
-  const colors = { ...fromSettings.beat, ...fromUi.beat };
+  const fromDivision = readDivisionColors(divisionColorText);
+  const colors = { ...fromSettings.beat, ...fromUi.beat, ...fromDivision.colors };
   const writes: RpeSettingWrite[] = [];
   for (const [denominator] of TIMELINE_GRID_COLORS) {
     const color = colors[denominator];
@@ -626,4 +630,63 @@ export function appearanceWrites(
     writes.push(Object.freeze({ key: "timeline-playhead-color", value: playhead }));
   }
   return writes;
+}
+
+/** One parsed division colour file: supported denominators and unsupported rows. */
+export interface RpeDivisionColorScan {
+  /** Colours keyed by an editor beat-line denominator. */
+  readonly colors: Readonly<Record<string, string>>;
+  /** Divisions this editor has no beat-line colour for, in source order. */
+  readonly unmapped: readonly RpeUnmappedField[];
+}
+
+/**
+ * Read RPE's dedicated `division_color.txt` subdivision palette.
+ *
+ * Each active line is `<division>: R, G, B[, A]`, where `division` is the
+ * denominator RPE shows in the timeline and A is a 0–1 transparency multiplier.
+ * Divisions the editor's fixed beat-line table covers become colour writes; the
+ * rest stay visible as unmapped rows so the review never drops them.
+ */
+export function readDivisionColors(text: string | null | undefined): RpeDivisionColorScan {
+  const colors: Record<string, string> = {};
+  const unsupported = new Map<string, string>();
+  if (!text?.trim()) {
+    return { colors: Object.freeze(colors), unmapped: Object.freeze([]) };
+  }
+  const supported = new Set<string>(TIMELINE_GRID_COLORS.map(([denominator]) => denominator));
+  for (const rawLine of text.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+    // RPE allows `//` descriptions after the value; `#` starts a comment line.
+    const line = rawLine.replace(/\/\/.*$/u, "").trim();
+    if (!line || line.startsWith("#") || line.startsWith(";")) {
+      continue;
+    }
+    const match = /^(\d+)\s*:\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([0-9]*\.?[0-9]+))?$/u.exec(
+      line,
+    );
+    if (!match) {
+      continue;
+    }
+    const channels = [match[2], match[3], match[4]].map(Number);
+    const alpha = match[5] === undefined ? 1 : Number(match[5]);
+    if (
+      channels.some((channel) => !Number.isFinite(channel) || channel < 0 || channel > 255) ||
+      !Number.isFinite(alpha) ||
+      alpha < 0 ||
+      alpha > 1
+    ) {
+      continue;
+    }
+    const color = rgbHex(channels, alpha);
+    const division = match[1];
+    if (supported.has(division)) {
+      colors[division] = color;
+    } else {
+      unsupported.set(`division-color-${division}`, color);
+    }
+  }
+  return {
+    colors: Object.freeze(colors),
+    unmapped: Object.freeze([...unsupported].map(([key, value]) => Object.freeze({ key, value }))),
+  };
 }

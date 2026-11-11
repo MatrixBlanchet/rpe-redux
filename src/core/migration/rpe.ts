@@ -9,7 +9,12 @@
  * are reported through `RpeMigrationPlan.unmapped` so the review can show
  * everything the file carries instead of dropping fields silently.
  */
-import { appearanceWrites, parseSettings, unmappedSettings } from "./rpeSettings.ts";
+import {
+  appearanceWrites,
+  parseSettings,
+  readDivisionColors,
+  unmappedSettings,
+} from "./rpeSettings.ts";
 import type { RpeSettingWrite, RpeUnmappedField } from "./rpeSettings.ts";
 import { canonicalText, normalizeShortcutKey, parseShortcut } from "../shortcuts/keys.ts";
 import type { Modifier, Shortcut } from "../shortcuts/types.ts";
@@ -79,6 +84,8 @@ export interface RpeFolderScan {
   readonly hotkeysText: string | null;
   /** Editor appearance sidecar (`UI.txt`) when the installation writes one. */
   readonly uiText?: string | null;
+  /** Beat-line palette (`division_color.txt`) when RPE writes one. */
+  readonly divisionColorText?: string | null;
   readonly charts: readonly RpeChartFolder[];
   readonly warnings: readonly string[];
 }
@@ -310,14 +317,19 @@ export function createRpeMigrationPlan(
   settingsText: string | null | undefined,
   hotkeysText: string | null | undefined,
   uiText?: string | null,
+  divisionColorText?: string | null,
 ): RpeMigrationPlan {
   const raw = settingsObject(settingsText);
+  const division = readDivisionColors(divisionColorText);
   return Object.freeze({
-    settings: Object.freeze([...parseSettings(raw), ...appearanceWrites(raw, uiText)]),
+    settings: Object.freeze([
+      ...parseSettings(raw),
+      ...appearanceWrites(raw, uiText, divisionColorText),
+    ]),
     shortcuts: Object.freeze(parseRpeHotkeys(hotkeysText)),
     hotkeys: readRpeHotkeys(hotkeysText),
     language: languageValue(raw.Language),
-    unmapped: Object.freeze(unmappedSettings(raw)),
+    unmapped: Object.freeze([...unmappedSettings(raw), ...division.unmapped]),
     warnings: Object.freeze([]),
   });
 }

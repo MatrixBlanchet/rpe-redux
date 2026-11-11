@@ -148,6 +148,9 @@ export function buildSettingRows(plan: RpeMigrationPlan): readonly RpeReviewSett
       kind: "unmapped",
       label: rpeFieldLabel(field.key),
       value: settingValueText(field.key, field.value),
+      ...(typeof field.value === "string" && isColorValue(field.value)
+        ? { swatch: field.value }
+        : {}),
     });
   }
   return Object.freeze(rows);
@@ -215,7 +218,15 @@ function eventWheelValue(text: string): string {
 function rpeFieldLabel(key: string): string {
   const messageKey = `workspace.welcome.rpe.field.${key}.label`;
   const label = tRaw(messageKey);
-  return label === messageKey ? key : label;
+  if (label !== messageKey) {
+    return label;
+  }
+  // Division colours the editor's fixed beat-line table lacks keep their
+  // denominator in the row label instead of the raw source key.
+  const division = /^division-color-(\d+)$/u.exec(key);
+  return division
+    ? t("workspace.welcome.rpe.review.divisionColor", { division: division[1] })
+    : key;
 }
 
 /** Render one setting value through the same labels the settings page uses. */
