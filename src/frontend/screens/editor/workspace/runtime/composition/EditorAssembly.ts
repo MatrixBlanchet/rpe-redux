@@ -789,6 +789,7 @@ export function createEditorAssembly(
       }
     },
     resetEditClock: () => editClock.reset(),
+    currentEditSeconds: () => editClock.seconds,
     setHasDocument,
     hasDocument,
     setHome: workspaceNavigation.setHome,
