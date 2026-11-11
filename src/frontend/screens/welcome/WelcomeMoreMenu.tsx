@@ -29,7 +29,7 @@ export function WelcomeMoreMenu() {
   const { t } = useTranslation();
   const menu = useSyncExternalStore(moreMenu.subscribe, moreMenu.get, moreMenu.get);
 
-  /** Anchor the menu below the trigger and align the menu's right edge to it. */
+  /** Anchor the menu below the trigger, aligned to its leading edge. */
   const openMenu = (event: MouseEvent<HTMLButtonElement>) => {
     // The capture handler owns the close half of the toggle, so opening never
     // replaces an existing snapshot and replays the native popover's motion.
@@ -62,9 +62,9 @@ export function WelcomeMoreMenu() {
       : null;
     moreMenu.set({
       owner: event.currentTarget,
-      x: rect.right,
+      x: rect.left,
       y: rect.bottom + 4,
-      align: "end",
+      align: "start",
       actions: [
         ...(rpeAction ? [rpeAction] : []),
         ...(dataFolderAction ? [dataFolderAction] : []),
