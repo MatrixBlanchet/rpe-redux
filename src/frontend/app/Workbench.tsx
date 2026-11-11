@@ -7,8 +7,9 @@
  * placement is host-owned rather than a theme choice.
  */
 import { Sidebar } from "../chrome/sidebar/Sidebar.tsx";
-import "../screens/global/drawerPanes.ts";
+import "../screens/global/pages.ts";
 import { activeSurface } from "./modeRegistry.ts";
+import { useActiveWorkspaceModeId } from "../screens/editor/workspace/container/workspaceModes.ts";
 
 /**
  * Composes the middle window seam. The `atHome` input hides the assembled
@@ -16,13 +17,22 @@ import { activeSurface } from "./modeRegistry.ts";
  */
 export function Workbench({ atHome }: { atHome: boolean }) {
   const surface = activeSurface;
+  const workspaceMode = useActiveWorkspaceModeId();
   const WorkspaceSurface = surface.workspace;
   const InspectorSurface = surface.inspector;
 
   return (
-    <div className="workbench" hidden={atHome}>
+    <div
+      className="workbench"
+      hidden={atHome}
+      data-workspace-mode={workspaceMode ? "true" : undefined}
+    >
       <div className="workbench-body">
-        <div className="workbench-workspace">
+        <div
+          className="workbench-workspace"
+          aria-hidden={workspaceMode ? true : undefined}
+          inert={workspaceMode ? true : undefined}
+        >
           <WorkspaceSurface />
         </div>
         {InspectorSurface && (
