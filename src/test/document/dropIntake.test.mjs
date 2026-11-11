@@ -32,6 +32,28 @@ test("an RPE installation opens the review before any importer runs", () => {
   );
 });
 
+test("a PhiEditer installation opens its own review", () => {
+  const route = dropRoute({
+    path: "D:/PhiEditer v0.1.9.2",
+    kind: "chart",
+    format: "pec",
+    entry: "D:/PhiEditer v0.1.9.2/PhiEditer v0.1.9.2",
+    peInstallation: true,
+    peDetails: {
+      root: "D:/PhiEditer v0.1.9.2/PhiEditer v0.1.9.2",
+      installation: true,
+      settingsText: "BGMVolume: 0.6",
+      charts: [],
+      warnings: [],
+    },
+    valid: true,
+  });
+  assert.deepEqual(route, {
+    action: "pe-installation",
+    path: "D:/PhiEditer v0.1.9.2",
+  });
+});
+
 test("official and PEC charts route to the external importer", () => {
   assert.deepEqual(
     dropRoute({
