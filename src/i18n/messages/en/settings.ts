@@ -499,7 +499,7 @@ export default {
   "settings.hitsound.slot.drag": "Drag volume",
   "settings.hitsound.slot.flick": "Flick volume",
   "settings.hitsound.slot.custom": "Custom hit sound volume",
-  "settings.hitsound.offset.tap": "Tap hit-sound offset (ms)",
+  "settings.hitsound.offset.tap": "Tap / Hold hit-sound offset (ms)",
   "settings.hitsound.offset.drag": "Drag hit-sound offset (ms)",
   "settings.hitsound.offset.flick": "Flick hit-sound offset (ms)",
   "settings.hitsound.offset.custom": "Custom hit-sound offset (ms)",

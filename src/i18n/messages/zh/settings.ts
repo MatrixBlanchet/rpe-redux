@@ -427,7 +427,7 @@ export default {
   "settings.hitsound.slot.drag": "Drag 音量",
   "settings.hitsound.slot.flick": "Flick 音量",
   "settings.hitsound.slot.custom": "自定义音效音量",
-  "settings.hitsound.offset.tap": "Tap 打击音效延迟 (ms)",
+  "settings.hitsound.offset.tap": "Tap / Hold 音效偏移 (ms)",
   "settings.hitsound.offset.drag": "Drag 打击音效延迟 (ms)",
   "settings.hitsound.offset.flick": "Flick 打击音效延迟 (ms)",
   "settings.hitsound.offset.custom": "自定义打击音效延迟 (ms)",

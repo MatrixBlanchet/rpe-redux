@@ -319,7 +319,7 @@ test("the review labels hit-sound offsets and names every wheel channel", () => 
     );
     const rows = buildSettingRows(plan);
     const offset = rows.find((row) => row.id === "hitsound-offset-tap");
-    assert.equal(offset.label, "Tap 打击音效延迟 (ms)");
+    assert.equal(offset.label, "Tap / Hold 音效偏移 (ms)");
     const wheel = rows.find((row) => row.id === "event-wheel-increments");
     assert.equal(wheel.label, "滚轮微调事件数值");
     assert.deepEqual(wheel.value.split("\n"), [
