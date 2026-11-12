@@ -108,7 +108,11 @@ import { canvasShortcutTarget } from "../input/canvasShortcutTarget.ts";
 import type { CanvasShortcutTarget } from "../../../../../platform/shortcuts/canvasShortcuts.ts";
 import type { PrefixDigitSequenceSubmission } from "../../../../../../core/shortcuts/prefixDigitSequence.ts";
 import { bindEditorLanguageRefresh } from "../bindings/languageRefresh.ts";
-import { createHitTestPicker, createPreviewGeometryReader } from "../bindings/hitTestBindings.ts";
+import {
+  createHitTestPicker,
+  createHitTestTimeQuery,
+  createPreviewGeometryReader,
+} from "../bindings/hitTestBindings.ts";
 import { createPreviewApiHost } from "../bindings/previewBindings.ts";
 import { createLayoutApiHost } from "../bindings/layoutBindings.ts";
 import { bindPreviewSelection } from "../../preview/interaction/previewSelection.ts";
@@ -306,6 +310,7 @@ export function createEditorAssembly(
   scope.add(
     connectHitTestApi({
       pick: createHitTestPicker({ preview: realtimePreview, timeline }),
+      queryAt: createHitTestTimeQuery({ preview: realtimePreview, timeline }),
       getPreviewGeometry: createPreviewGeometryReader({ preview: realtimePreview }),
     }),
   );
