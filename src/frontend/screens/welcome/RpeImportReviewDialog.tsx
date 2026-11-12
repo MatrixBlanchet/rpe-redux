@@ -44,9 +44,7 @@ function ReviewBody({ request, open }: { request: RpeImportReviewRequest; open: 
   const { t } = useTranslation();
   const settingsHeading = useId();
   const chartsHeading = useId();
-  // Unmapped rows explain what the source carried; they are never selectable.
-  const selectableRows = request.settings.filter((row) => row.kind !== "unmapped");
-  const unmappedRows = request.settings.filter((row) => row.kind === "unmapped");
+  const selectableRows = request.settings;
   const [selected, setSelected] = useState<ReadonlySet<string>>(
     () =>
       new Set([
@@ -150,7 +148,7 @@ function ReviewBody({ request, open }: { request: RpeImportReviewRequest; open: 
             state={settingState}
             onToggle={(checked) => toggleGroup(settingIds, checked)}
           />
-          {selectableRows.length || unmappedRows.length ? (
+          {selectableRows.length ? (
             <div className="rpe-review-rows">
               {selectableRows.map((row) => (
                 <SettingRow
@@ -159,12 +157,6 @@ function ReviewBody({ request, open }: { request: RpeImportReviewRequest; open: 
                   checked={selected.has(row.id)}
                   onToggle={(checked) => toggle(row.id, checked)}
                 />
-              ))}
-              {unmappedRows.length > 0 && (
-                <p className="rpe-review-subhead">{t("workspace.welcome.rpe.review.unmapped")}</p>
-              )}
-              {unmappedRows.map((row) => (
-                <UnmappedRow key={row.id} row={row} />
               ))}
             </div>
           ) : (
@@ -258,20 +250,6 @@ function SettingRow({
         onChange={(event) => onToggle(event.currentTarget.checked)}
       />
     </label>
-  );
-}
-
-/** One detected field with no destination: name, source value, and the reason. */
-function UnmappedRow({ row }: { row: RpeReviewSetting }) {
-  const { t } = useTranslation();
-  return (
-    <div className="rpe-review-row rpe-review-row-unmapped">
-      <span className="rpe-review-row-copy">
-        <span className="rpe-review-row-label">{row.label}</span>
-        <span className="rpe-review-row-source">{row.value}</span>
-      </span>
-      <span className="rpe-review-row-note">{t("workspace.welcome.rpe.review.unmappedNote")}</span>
-    </div>
   );
 }
 

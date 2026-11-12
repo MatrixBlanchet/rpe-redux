@@ -141,44 +141,6 @@
   border-radius: 999px;
 }
 
-// The subheading separates importable rows from the source fields this editor
-// has no setting for, so the trailing note reads as "not importable", not "off".
-.rpe-review-subhead {
-  margin: 0;
-  padding: var(--space-2) var(--space-4) var(--space-1);
-  border-top: 1px solid var(--edge-divider);
-  background: var(--surface-muted);
-  color: var(--foreground-muted);
-  font-size: var(--type-micro);
-  font-weight: 600;
-}
-
-.rpe-review-row-unmapped {
-  grid-template-columns: minmax(0, 1fr) auto;
-  cursor: var(--app-cursor-default);
-}
-
-.rpe-review-row-unmapped:hover {
-  background: transparent;
-}
-
-.rpe-review-row-unmapped .rpe-review-row-label {
-  color: var(--foreground-muted);
-}
-
-.rpe-review-row-source {
-  color: var(--foreground-muted);
-  font-size: var(--type-caption);
-  overflow-wrap: anywhere;
-}
-
-.rpe-review-row-note {
-  align-self: start;
-  color: var(--foreground-muted);
-  font-size: var(--type-micro);
-  white-space: nowrap;
-}
-
 .rpe-review-chart-title {
   color: var(--foreground);
   font-size: var(--type-label);

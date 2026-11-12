@@ -282,7 +282,7 @@ test("RPE hotkey parsing is a pure sidecar reader", () => {
   ]);
 });
 
-test("the review keeps detected but unmapped fields after the importable rows", () => {
+test("the review lists only rows the import can apply", () => {
   const plan = createRpeMigrationPlan(
     JSON.stringify({ density: true, AttachTime: false, fastEdit: false }),
     "",
@@ -290,14 +290,15 @@ test("the review keeps detected but unmapped fields after the importable rows", 
   const rows = buildSettingRows(plan);
   assert.deepEqual(
     rows.map((row) => row.kind),
-    ["setting", "unmapped", "unmapped"],
+    ["setting"],
   );
   assert.equal(rows[0].label, "Show timeline overview bars");
-  assert.equal(rows[1].label, "Keep time attached to beat lines");
-  assert.equal(rows[1].value, "Off");
-  assert.equal(rows[2].label, "Fast edit");
-  assert.equal(rows[2].value, "Off");
-  // Unmapped rows are display-only: filtering a review selection drops them.
+  // Unmapped fields are still detected for diagnostics, but the review does
+  // not render them.
+  assert.deepEqual(
+    plan.unmapped.map((field) => field.key),
+    ["AttachTime", "fastEdit"],
+  );
   const filtered = filterRpeMigrationPlan(plan, {
     settingKeys: ["timeline-density-bars-enabled"],
     applyShortcuts: false,
@@ -352,10 +353,10 @@ not a colour line
   assert.deepEqual(plan.unmapped, [{ key: "division-color-24", value: "#0A141E" }]);
 
   const rows = buildSettingRows(plan);
-  const unmapped = rows.find((row) => row.id === "unmapped:division-color-24");
-  assert.equal(unmapped.label, "24 division color");
-  assert.equal(unmapped.value, "#0A141E");
-  assert.equal(unmapped.swatch, "#0A141E");
+  assert.equal(
+    rows.some((row) => row.id.startsWith("unmapped:")),
+    false,
+  );
 });
 
 test("the review keeps only checked settings, shortcuts, and language", () => {

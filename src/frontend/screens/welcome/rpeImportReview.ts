@@ -15,10 +15,10 @@ import type {
 
 /** One settings row in the review list. */
 export interface RpeReviewSetting {
-  /** Stable row id: a setting key, `shortcuts`, `language`, or `unmapped:<field>`. */
+  /** Stable row id: a setting key, `shortcuts`, or `language`. */
   readonly id: string;
-  /** The source of the value, so submission can keep the three kinds apart. */
-  readonly kind: "setting" | "shortcuts" | "language" | "unmapped";
+  /** The source of the value, so submission can keep the kinds apart. */
+  readonly kind: "setting" | "shortcuts" | "language";
   /** Localized field label. */
   readonly label: string;
   /** Human-readable value the import would write. */
@@ -140,19 +140,6 @@ export function buildSettingRows(plan: RpeMigrationPlan): readonly RpeReviewSett
       value: LANGUAGE_NAMES[plan.language],
     });
   }
-  // Rows without a destination stay visible after the importable ones so the
-  // review accounts for every setting the file carried.
-  for (const field of plan.unmapped) {
-    rows.push({
-      id: `unmapped:${field.key}`,
-      kind: "unmapped",
-      label: rpeFieldLabel(field.key),
-      value: settingValueText(field.key, field.value),
-      ...(typeof field.value === "string" && isColorValue(field.value)
-        ? { swatch: field.value }
-        : {}),
-    });
-  }
   return Object.freeze(rows);
 }
 
@@ -214,20 +201,7 @@ function eventWheelValue(text: string): string {
   }).join("\n");
 }
 
-/** Resolve the label for an RPE source field this editor has no setting for. */
-function rpeFieldLabel(key: string): string {
-  const messageKey = `workspace.welcome.rpe.field.${key}.label`;
-  const label = tRaw(messageKey);
-  if (label !== messageKey) {
-    return label;
-  }
-  // Division colours the editor's fixed beat-line table lacks keep their
-  // denominator in the row label instead of the raw source key.
-  const division = /^division-color-(\d+)$/u.exec(key);
-  return division
-    ? t("workspace.welcome.rpe.review.divisionColor", { division: division[1] })
-    : key;
-}
+/** Render one setting value through the same labels the settings page uses. */
 
 /** Render one setting value through the same labels the settings page uses. */
 function settingValueText(key: string, value: string | boolean | number): string {
