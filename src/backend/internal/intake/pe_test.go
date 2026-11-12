@@ -7,49 +7,33 @@ import (
 	"testing"
 )
 
-const peSettingsFixture = `WindowSize: 2048 1400
-BGMVolume: 0.6
-SEVolume: 0.5
-MouseScrollSpeed: 5.6
-AnchorLineAmount: 31
-
-#
-Name: Chart One
-Song: one.mp3
-Picture: one.jpg
-Chart: one.pec
-Level: IN Lv.11
-Composer: Composer One
-Charter: Charter One
-
-#
-Name: Chart Two
-Song: two.ogg
-Picture: two.png
-Chart: two.pec
-Level: IN Lv.12
-Composer: Composer Two
-Charter: Charter Two
-`
-
-func writePeFixture(t *testing.T, root string) {
+// peFixtureDir returns the checked-in PhiEditer installation this suite reads.
+func peFixtureDir(t *testing.T) string {
 	t.Helper()
-	writeFile(t, root, "PhiEditer.exe", "exe")
-	writeFile(t, root, "Settings.txt", peSettingsFixture)
-	writeFile(t, root, "one.pec", "bp 0.000 180.000")
-	writeFile(t, root, "two.pec", "bp 0.000 150.000")
-	writeFile(t, root, "loose.pec", "bp 0.000 120.000")
-	writeFile(t, root, "AutoSave_loose.pec", "bp 0.000 120.000")
-	writeFile(t, root, "Resources/one.mp3", "mp3")
-	writeFile(t, root, "Resources/one.jpg", "jpg")
-	writeFile(t, root, "Resources/two.ogg", "ogg")
-	writeFile(t, root, "Resources/TWO.png", "png")
-	writeFile(t, root, "Resources/loose.mp3", "mp3")
+	root, err := filepath.Abs(filepath.Join("..", "..", "..", "test", "fixtures", "pe"))
+	if err != nil {
+		t.Fatalf("fixture path: %v", err)
+	}
+	info, err := os.Stat(root)
+	if err != nil || !info.IsDir() {
+		t.Fatalf("fixture missing: %v", err)
+	}
+	return root
+}
+
+// copyPeFixture copies the installation into a temp directory for tests that
+// need a disposable root.
+func copyPeFixture(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	if err := os.CopyFS(root, os.DirFS(peFixtureDir(t))); err != nil {
+		t.Fatalf("copy fixture: %v", err)
+	}
+	return root
 }
 
 func TestReadPeFolderReadsSettingsIndexAndMedia(t *testing.T) {
-	root := t.TempDir()
-	writePeFixture(t, root)
+	root := copyPeFixture(t)
 
 	scan, err := ReadPeFolder(root)
 	if err != nil {
@@ -91,7 +75,12 @@ func TestReadPeFolderReadsSettingsIndexAndMedia(t *testing.T) {
 func TestReadPeFolderFindsAWrapperChild(t *testing.T) {
 	root := t.TempDir()
 	inner := filepath.Join(root, "PhiEditer v0.1.9.2")
-	writePeFixture(t, inner)
+	if err := os.MkdirAll(inner, 0o755); err != nil {
+		t.Fatalf("wrapper folder: %v", err)
+	}
+	if err := os.CopyFS(inner, os.DirFS(peFixtureDir(t))); err != nil {
+		t.Fatalf("copy fixture: %v", err)
+	}
 
 	scan, err := ReadPeFolder(root)
 	if err != nil {
@@ -119,8 +108,7 @@ func TestReadPeFolderRejectsNonFolders(t *testing.T) {
 }
 
 func TestClassifyPhiEditerRootOpensItsReview(t *testing.T) {
-	root := t.TempDir()
-	writePeFixture(t, root)
+	root := copyPeFixture(t)
 
 	item := Classify(root)
 	if item.Kind != KindChart || !item.PEInstallation || item.RPEInstallation {

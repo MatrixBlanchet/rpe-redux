@@ -1,7 +1,11 @@
 /** Route policy for paths classified by the backend drop intake. */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { dropRoute } from "../../core/global/document/dropIntake.ts";
+
+const PE_ROOT = fileURLToPath(new URL("../fixtures/pe", import.meta.url));
 
 test("an RPE chart keeps its folder and chart entry", () => {
   const route = dropRoute({
@@ -34,15 +38,15 @@ test("an RPE installation opens the review before any importer runs", () => {
 
 test("a PhiEditer installation opens its own review", () => {
   const route = dropRoute({
-    path: "D:/PhiEditer v0.1.9.2",
+    path: PE_ROOT,
     kind: "chart",
     format: "pec",
-    entry: "D:/PhiEditer v0.1.9.2/PhiEditer v0.1.9.2",
+    entry: PE_ROOT,
     peInstallation: true,
     peDetails: {
-      root: "D:/PhiEditer v0.1.9.2/PhiEditer v0.1.9.2",
+      root: PE_ROOT,
       installation: true,
-      settingsText: "BGMVolume: 0.6",
+      settingsText: readFileSync(new URL("../fixtures/pe/Settings.txt", import.meta.url), "utf8"),
       charts: [],
       warnings: [],
     },
@@ -50,7 +54,7 @@ test("a PhiEditer installation opens its own review", () => {
   });
   assert.deepEqual(route, {
     action: "pe-installation",
-    path: "D:/PhiEditer v0.1.9.2",
+    path: PE_ROOT,
   });
 });
 

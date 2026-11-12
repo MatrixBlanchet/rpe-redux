@@ -1,27 +1,11 @@
 /** PhiEditer preference mapping used by the folder import review. */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createPeMigrationPlan, peChartMediaNames } from "../../../core/migration/pe.ts";
 
-const SETTINGS = `WindowSize: 2048 1400
-TempoLineDroppingSpeed: 8.0
-BGMVolume: 0.6
-SEVolume: 0.5
-MultiNoteHint: 1
-LineWidth: 0.5
-NoteSize: 0.500
-MouseScrollSpeed: 5.6
-AnchorLineAmount: 31
-
-#
-Name: Chart One
-Song: one.mp3
-Picture: one.jpg
-Chart: one.pec
-Level: IN Lv.11
-Composer: Composer One
-Charter: Charter One
-`;
+const FIXTURE_ROOT = new URL("../../fixtures/pe/", import.meta.url);
+const SETTINGS = readFileSync(new URL("Settings.txt", FIXTURE_ROOT), "utf8");
 
 test("PE preferences map to the settings the editor owns", () => {
   const plan = createPeMigrationPlan(SETTINGS);
