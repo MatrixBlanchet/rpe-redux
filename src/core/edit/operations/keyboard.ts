@@ -13,6 +13,7 @@ import {
   shiftSelectionLine,
 } from "../selection/control.ts";
 import { nudgeSelection } from "../selection/edits.ts";
+import { leaveMultiLineEditing } from "../multiLine/multiLineEdit.ts";
 import { MAX_BASE_EVENT_LAYERS } from "../../global/chart/chartVocabulary.ts";
 import type { EditorSession } from "../session/session.ts";
 import type { TimelineArea } from "../timeline/types.ts";
@@ -318,12 +319,25 @@ export async function runEditorKeyboardAction(
       event.preventDefault();
       deps.beginPreviewAudition(action === "view.previewAudition");
     } else if (action === "workspace.multiLine.toggle") {
-      // Selecting multiple lines already owns the mode. The shortcut opens the
-      // settings surface and re-asserts the current mode.
-      if (session.multiLineIndices.length >= 2) {
-        session.setMultiLineEnabled(true, session.focus === "events" ? "events" : "notes");
+      if (session.multiLineActive) {
+        // J is a switch, not an opener: remember the shared list, leave
+        // multi-line editing, and keep the active line as the ordinary target.
+        leaveMultiLineEditing(session);
+      } else {
+        const lineCount = session.chart.judgeLineList?.length ?? 0;
+        const remembered = session.multiLineRestore.filter(
+          (index) => Number.isInteger(index) && index >= 0 && index < lineCount,
+        );
+        const mode = session.focus === "events" ? "events" : "notes";
+        if (remembered.length >= 2) {
+          // Reopening restores the list chosen before the last close.
+          session.setMultiLineSelection(remembered);
+          session.setMultiLineMode(mode);
+        } else if (session.multiLineIndices.length >= 2) {
+          session.setMultiLineEnabled(true, mode);
+        }
+        deps.openMultiLinePanel();
       }
-      deps.openMultiLinePanel();
     } else if (action === "workspace.multiLine.switchMode" && session.multiLineActive) {
       session.setMultiLineMode(session.multiLineMode === "events" ? "notes" : "events");
     } else if (

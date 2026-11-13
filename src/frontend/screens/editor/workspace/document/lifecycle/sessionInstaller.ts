@@ -30,6 +30,8 @@ export interface DocumentInstallOptions {
   resetEditClock(): void;
   hitSounds: Pick<HitSounds, "setProject">;
   images: Pick<ProjectImages, "load">;
+  /** Re-applies editor preferences to the new session before the first frame. */
+  applySettings(): void;
 }
 
 /** Own the listener transfer and new document setup; getters follow later replacements. */
@@ -62,5 +64,9 @@ export function createSessionInstaller(options: DocumentInstallOptions) {
     if (replacement.loadImages) {
       options.images.load(replacement.chart, replacement.assets, replacement.name);
     }
+    // A replacement session starts from constructor defaults; adopt the
+    // editor-wide preferences (multi-line merge, cut density, history limit)
+    // before the first frame, or the panel switches disagree with the document.
+    options.applySettings();
   };
 }

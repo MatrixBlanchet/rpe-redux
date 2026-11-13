@@ -28,7 +28,13 @@ export function createLineSwitcher(
   stage: HTMLElement,
   getContext: () => LineSwitcherContext,
   state: LineSwitcherViewState,
-  { select = () => {} }: { select?: (index: number) => unknown } = {},
+  {
+    select = () => {},
+    stepSelect,
+  }: {
+    select?: (index: number) => unknown;
+    stepSelect?: (index: number) => unknown;
+  } = {},
 ): LineSwitcher {
   let switcher: LineSwitcher | null = null;
   const actions: LineSwitcherActions = {
@@ -56,6 +62,7 @@ export function createLineSwitcher(
   };
   const controller = new LineSwitcher(stage, getContext, {
     select,
+    stepSelect,
     renderView: (snapshot) => {
       if (switcher) {
         state.presentation.set({ snapshot, actions });

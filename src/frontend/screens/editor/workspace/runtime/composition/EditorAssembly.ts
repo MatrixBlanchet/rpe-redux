@@ -77,6 +77,7 @@ import {
   getEditorVisibility,
   setEditorVisibility,
 } from "../../../../../../core/edit/state/visibility.ts";
+import { leaveMultiLineEditing } from "../../../../../../core/edit/multiLine/multiLineEdit.ts";
 import { displayValues } from "../../../../settings/editorDisplaySettings.ts";
 import { values } from "../../../../../../core/state/values.ts";
 import {
@@ -152,6 +153,25 @@ export function createEditorAssembly(
   scope.add(() => disposeProperties(ui.notes));
   scope.add(() => ui.events.clear());
   scope.add(() => ui.curve.fields.set(null));
+  // The multi-line Inspector page is the mode's own surface: closing it leaves
+  // multi-line editing, so the page and the workspace cannot disagree. A later
+  // J press restores the remembered line list.
+  let multiLinePaneOpen = ui.activeInspector.get() === "multi-line";
+  scope.add(
+    ui.activeInspector.subscribe(() => {
+      const next = ui.activeInspector.get();
+      if (multiLinePaneOpen && next === "") {
+        // Switching panes closes the previous pane and opens the next in one
+        // turn; only a close that stays closed should leave multi-line editing.
+        queueMicrotask(() => {
+          if (ui.activeInspector.get() === "" && session.current.multiLineActive) {
+            leaveMultiLineEditing(session.current);
+          }
+        });
+      }
+      multiLinePaneOpen = next === "multi-line";
+    }),
+  );
   const documentState = {
     /** Assets decoded for the open chart, keyed by chart resource name. */
     assets: new Map() as AssetMap,
@@ -289,6 +309,7 @@ export function createEditorAssembly(
     editEvent,
     openTimelineContextMenu,
     selectOverviewLine,
+    selectStepLine: selectActiveLine,
     atHome,
     hasDocument,
   });
@@ -543,6 +564,25 @@ export function createEditorAssembly(
     editorLine.set(String(index));
     return true;
   }
+  /**
+   * Moves the active line without dissolving a multi-line set.
+   *
+   * Ctrl+wheel steps the line being edited; the shared line list stays, so the
+   * line field keeps its union and only the `(active)` annotation changes.
+   */
+  function selectActiveLine(index: number) {
+    if (!Number.isInteger(index) || !session.current.chart.judgeLineList?.[index]) {
+      return false;
+    }
+    batchControls.cancel();
+    timeline.cancelPlacement();
+    if (!session.current.multiLineActive) {
+      editorLineSelection.set([index]);
+    }
+    session.current.selectLine(index);
+    editorLine.set(String(index));
+    return true;
+  }
   /** Resolves a passive line-jump submission through the overview selection path. */
   function handleLineJump(submission: PrefixDigitSequenceSubmission): void {
     if (submission.kind === "invalid") {
@@ -749,6 +789,8 @@ export function createEditorAssembly(
       setEditorVisibility({ ...current, dirty, readOnly });
     }
   }
+  /** Late-bound settings pass a replacement session adopts on install. */
+  const sessionSettings = { apply: null as null | (() => void) };
   const documentRuntime = createDocumentRuntime({
     scope,
     documents,
@@ -756,6 +798,7 @@ export function createEditorAssembly(
     // external import pipeline instead of surfacing `pez_chart_missing`.
     openExternalChart: (path) => home.importExternalChartFile(path),
     session,
+    applySessionSettings: () => sessionSettings.apply?.(),
     ui,
     document: documentState,
     resources: {
@@ -990,6 +1033,10 @@ export function createEditorAssembly(
     metrics: playbackMetrics,
   });
   applyDisplaySettings();
+  // The settings pass above only covered the session mounted at boot. Document
+  // installs replace the session with one that starts from constructor
+  // defaults, so the installer re-runs this same pass for the new document.
+  sessionSettings.apply = applyDisplaySettings;
   viewControls.applyRegionVisibility();
   renderSession();
   workspaceNavigation.setHome(true);

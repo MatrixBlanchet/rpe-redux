@@ -8,9 +8,13 @@
  */
 import { setLanguage } from "../../i18n/index.ts";
 import { shortcutRegistry } from "../shortcuts/registry.ts";
+import { canonicalText } from "../shortcuts/keys.ts";
 import { PREFERENCE_SECTIONS, writePreference } from "../state/preferences.ts";
 import { values } from "../state/values.ts";
 import type { RpeMigrationPlan } from "./rpe.ts";
+
+/** Wheel and pointer gestures are Redux defaults; RPE's Hotkey.txt only lists keys. */
+const POINTER_BINDING = /^(?:WHEEL|MOUSE)/u;
 
 /** Counts and non-fatal problems from applying a plan. */
 export interface RpeApplyResult {
@@ -45,7 +49,17 @@ export function applyRpeMigrationPlan(plan: RpeMigrationPlan): RpeApplyResult {
       warnings.push(`Shortcut is not registered in this build: ${shortcut.id}`);
       continue;
     }
-    const result = shortcutRegistry.replaceAllBindings(shortcut.id, shortcut.bindings);
+    // RPE describes keyboard bindings only. Redux actions such as "next judge
+    // line" also carry wheel gestures, so an import must not drop them: replace
+    // the key bindings and keep the pointer gestures the action already has.
+    const pointerBindings = shortcutRegistry
+      .bindingsOf(shortcut.id)
+      .filter((binding) => POINTER_BINDING.test(binding.key))
+      .map(canonicalText);
+    const result = shortcutRegistry.replaceAllBindings(shortcut.id, [
+      ...shortcut.bindings,
+      ...pointerBindings,
+    ]);
     if (result.ok) {
       shortcuts += 1;
     } else {

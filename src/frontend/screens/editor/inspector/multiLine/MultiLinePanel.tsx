@@ -36,7 +36,7 @@ import {
   editorLineSelection,
 } from "../../../../../core/edit/state/publishedValues.ts";
 import {
-  formatLineSelection,
+  formatLineSelectionDisplay,
   parseLineSelectionInput,
 } from "../../../../../core/edit/state/lineSelectionInput.ts";
 import {
@@ -160,7 +160,9 @@ export function MultiLinePanelView({ session, timeline, renderSession }: MultiLi
     return `${Math.max(1, String(highest).length)}ch`;
   }, [lineOptions]);
   const lines = session.chart.judgeLineList ?? [];
-  const lineText = formatLineSelection(session.multiLineIndices) || String(session.lineIndex);
+  const lineText =
+    formatLineSelectionDisplay(session.multiLineIndices, session.lineIndex) ||
+    String(session.lineIndex);
 
   /** Applies a parsed line-selection expression to the session. */
   const commitLines = (raw: string, input: HTMLInputElement) => {
@@ -172,7 +174,9 @@ export function MultiLinePanelView({ session, timeline, renderSession }: MultiLi
       input.value = lineText;
       return;
     }
-    const focus = parsed.lines.at(-1) ?? session.lineIndex;
+    // The parenthesized annotation is the active line; text without one keeps
+    // the historical focus on the last selected line.
+    const focus = parsed.current ?? parsed.lines.at(-1) ?? session.lineIndex;
     editorLineSelection.set(parsed.lines);
     editorLine.set(String(focus));
     renderSession();

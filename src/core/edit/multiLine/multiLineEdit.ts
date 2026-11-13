@@ -8,7 +8,21 @@
 import { t } from "../../../i18n/index.ts";
 import { groupLineIndices, groupNames } from "../../global/chart/line/lineGroups.ts";
 import type { Chart } from "../../global/chart/chart.ts";
+import type { EditorSession } from "../session/session.ts";
 import type { EditorShortcutDefinition } from "../shortcuts/declarations.ts";
+
+/**
+ * Leaves multi-line editing and remembers the shared line list.
+ *
+ * The workspace returns to the active line's ordinary timeline; the next toggle
+ * restores the remembered list. Both the J shortcut and closing the multi-line
+ * Inspector page take this path, so the timeline and the page agree.
+ */
+export function leaveMultiLineEditing(session: EditorSession): void {
+  session.multiLineRestore = [...session.multiLineIndices];
+  session.setMultiLineEnabled(false);
+  session.setMultiLineSelection([session.lineIndex]);
+}
 
 /** Keeps valid unique line indices in ascending order. */
 export function normalizeLineIndices(
@@ -20,6 +34,17 @@ export function normalizeLineIndices(
       (indices ?? []).filter((index) => Number.isInteger(index) && index >= 0 && index < lineCount),
     ),
   ].sort((a, b) => a - b);
+}
+
+/** Keeps the field multi-line editing opens on: an exclusive visible field, else the field being edited. */
+export function multiLineEntryMode(
+  visible: { readonly notes: boolean; readonly events: boolean },
+  focus: "notes" | "events",
+): "notes" | "events" {
+  if (visible.notes === visible.events) {
+    return focus;
+  }
+  return visible.notes ? "notes" : "events";
 }
 
 /** Parses indices, inclusive ranges, and group names; throws on invalid tokens. */
