@@ -29,7 +29,8 @@ import {
   editorRealtimePreviewEnabled,
   editorSnapX,
 } from "../../../../../../core/edit/state/publishedValues.ts";
-import { formatLineSelection } from "../../../../../../core/edit/state/lineSelectionInput.ts";
+import { formatLineSelectionDisplay } from "../../../../../../core/edit/state/lineSelectionInput.ts";
+import { multiLineEntryMode } from "../../../../../../core/edit/multiLine/multiLineEdit.ts";
 import { displayValues } from "../../../../settings/editorDisplaySettings.ts";
 import { values } from "../../../../../../core/state/values.ts";
 import {
@@ -163,10 +164,15 @@ export function bindEditorInteractions(groups: EditorBindingDependencies) {
     }),
   );
   // The field is the one place the toolbar shows the line set; multi-line
-  // selections are written in their compact form (`0-2,5`).
+  // selections are written in their compact form with the active line
+  // (`0-2,5 (3)`).
   const syncLineInput = () => {
     const selection = editorLineSelection.get();
-    editorLineInput.set(selection.length > 1 ? formatLineSelection(selection) : editorLine.get());
+    editorLineInput.set(
+      selection.length > 1
+        ? formatLineSelectionDisplay(selection, Number(editorLine.get()))
+        : editorLine.get(),
+    );
   };
   deps.scope.add(
     editorLine.subscribeKey(() => {
@@ -199,15 +205,14 @@ export function bindEditorInteractions(groups: EditorBindingDependencies) {
       // selected lines appear where the user is working.
       session.setMultiLineSelection(next);
       if (!wasActive && session.multiLineActive) {
-        const notes = displayValues.showNotes.get();
-        const events = displayValues.showEvents.get();
-        // Preserve the last chosen mode when both fields are visible; only an
-        // exclusive field decides the mode for the user.
-        if (!notes && events) {
-          session.setMultiLineMode("events");
-        } else if (notes && !events) {
-          session.setMultiLineMode("notes");
-        }
+        // Open on the field being edited; only an exclusive region switch picks
+        // the field for the user. The call also moves the session focus onto the
+        // field multi-line editing is about to show.
+        const mode = multiLineEntryMode(
+          { notes: displayValues.showNotes.get(), events: displayValues.showEvents.get() },
+          session.focus,
+        );
+        session.setMultiLineMode(mode);
       }
       deps.invalidate();
     }),

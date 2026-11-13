@@ -216,6 +216,8 @@ export function createDocumentRuntime(options: {
    */
   openExternalChart?: (path: string) => Promise<boolean>;
   session: Pick<EditorSessionRuntime, "current" | "replace">;
+  /** Re-applies editor preferences a replacement session does not inherit. */
+  applySessionSettings?: () => void;
   ui: Pick<EditorUiState, "progress">;
   document: WorkspaceDocumentState;
   resources: DocumentRuntimeResources;
@@ -343,6 +345,7 @@ export function createDocumentRuntime(options: {
       resetEditClock: options.resetEditClock,
       hitSounds: preview.hitSounds,
       images: preview.images,
+      applySettings: options.applySessionSettings ?? (() => {}),
     }),
     synchronize: createDocumentPresentation({
       timeline: timeline.timeline,

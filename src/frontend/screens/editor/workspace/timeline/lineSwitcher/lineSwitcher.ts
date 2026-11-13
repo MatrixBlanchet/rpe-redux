@@ -33,6 +33,8 @@ export class LineSwitcher {
   overlayEnabled: boolean;
   active: boolean;
   select: (index: number) => unknown;
+  /** Stepping keeps the editor's multi-line set; omitted steps behave like `select`. */
+  stepSelect?: (index: number) => unknown;
   browseRow: number | null;
   animation: number | null;
   cache: Map<string, LineOverviewIndex>;
@@ -60,10 +62,12 @@ export class LineSwitcher {
     getContext: () => LineSwitcherContext,
     {
       select = () => {},
+      stepSelect,
       renderView,
       disposeView,
     }: {
       select?: (index: number) => unknown;
+      stepSelect?: (index: number) => unknown;
       renderView?: (snapshot: LineSwitcherSnapshot) => void;
       disposeView?: () => void;
     } = {},
@@ -74,6 +78,7 @@ export class LineSwitcher {
     this.overlayEnabled = true;
     this.active = false;
     this.select = select;
+    this.stepSelect = stepSelect;
     this.renderView = renderView;
     this.disposeView = disposeView;
     this.browseRow = null;
@@ -177,7 +182,7 @@ export class LineSwitcher {
   step(direction: number): unknown {
     const context = this.getContext();
     const index = stepOverviewLine(context.selected, direction, this.filteredLines(context));
-    return index === null ? false : this.select(index);
+    return index === null ? false : (this.stepSelect ?? this.select)(index);
   }
 
   /** Close the switcher and cancel any scroll animation. */

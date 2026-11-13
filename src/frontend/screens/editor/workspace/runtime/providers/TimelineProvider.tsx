@@ -177,6 +177,8 @@ export function createTimelineRuntime(options: {
   editEvent: ConstructorParameters<typeof Timeline>[6];
   openTimelineContextMenu: ConstructorParameters<typeof Timeline>[11];
   selectOverviewLine(index: number): boolean;
+  /** Steps the active line for Ctrl+wheel; a multi-line set keeps its union. */
+  selectStepLine?: (index: number) => boolean;
   atHome(): boolean;
   hasDocument(): boolean;
 }): TimelineRuntime {
@@ -303,7 +305,7 @@ export function createTimelineRuntime(options: {
       visible: options.hasDocument() && !options.atHome() && !hasOpenModal(),
     }),
     options.ui.lineSwitcher,
-    { select: options.selectOverviewLine },
+    { select: options.selectOverviewLine, stepSelect: options.selectStepLine },
   );
   options.scope.add(() => lineSwitcher.dispose());
 

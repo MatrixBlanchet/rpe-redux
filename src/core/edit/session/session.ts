@@ -121,6 +121,8 @@ export class EditorSession extends EventTarget {
   multiLineMode: MultiLineMode;
   multiLineMerge: boolean;
   multiLineIndices: number[];
+  /** Shared line list the J switch restores after a single-line pause. */
+  multiLineRestore: number[];
   private targetLineIndicesCache: number[] | null;
   private targetLineIndicesCacheSource: number[] | null;
   private targetLineIndicesCacheLine: number;
@@ -193,6 +195,7 @@ export class EditorSession extends EventTarget {
     this.multiLineMode = "notes";
     this.multiLineMerge = true;
     this.multiLineIndices = [];
+    this.multiLineRestore = [];
     this.targetLineIndicesCache = null;
     this.targetLineIndicesCacheSource = null;
     this.targetLineIndicesCacheLine = -1;
@@ -311,6 +314,12 @@ export class EditorSession extends EventTarget {
   /** Selects whether multi-line editing targets notes or events. */
   setMultiLineMode(mode: MultiLineMode): void {
     this.multiLineMode = mode === "events" ? "events" : "notes";
+    // Multi-line editing shows one field at a time, so the visible field is the
+    // one being edited. Focus follows it; otherwise the inspector keeps routing
+    // the hidden field's selection (and keyboard commands act on that field).
+    if (this.multiLineActive) {
+      this.focus = this.multiLineMode;
+    }
     this.notify();
   }
   /** Drops invalid line indices and disables multi-line below two lines. */
