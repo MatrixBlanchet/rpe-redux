@@ -420,3 +420,28 @@ test("applying a plan writes only declared settings and shortcuts", () => {
     dispose();
   }
 });
+
+test("migrated key bindings keep the action's wheel gestures", () => {
+  const dispose = shortcutRegistry.registerShortcut({
+    id: "rpe.migration.wheel",
+    category: "test",
+    title: "test",
+    scope: "editor",
+    defaults: [{ key: "WHEELUP", modifiers: ["CTRL"] }],
+  });
+  try {
+    const result = applyRpeMigrationPlan({
+      settings: [],
+      shortcuts: [{ id: "rpe.migration.wheel", bindings: ["ALT+1"] }],
+      language: null,
+      warnings: [],
+    });
+    assert.equal(result.shortcuts, 1);
+    assert.deepEqual(shortcutRegistry.bindingsOf("rpe.migration.wheel"), [
+      { key: "1", modifiers: ["ALT"] },
+      { key: "WHEELUP", modifiers: ["CTRL"] },
+    ]);
+  } finally {
+    dispose();
+  }
+});
