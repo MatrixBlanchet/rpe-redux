@@ -25,6 +25,8 @@ import {
   installContextLossHandlers,
   linkProgram,
 } from "./webgl.ts";
+
+const ROTATION_CACHE_LIMIT = 512;
 /** Resolved Hold textures and skin-specific cap ratios for the current skin. */
 interface HoldTextureSet {
   body: TextureDescriptor | null;
@@ -88,6 +90,7 @@ export class NoteBatch {
   ];
   private readonly holdDirection = { x: 0, y: 1 };
   private readonly holdLayout = createHoldLayoutScratch();
+  /** Reuse note rotation trigonometry across frames; add() keeps it bounded. */
   private readonly rotationCache = new Map<number, readonly [number, number]>();
   private readonly uploadState = createNoteBatchUploadState();
   private instanceBufferCapacity = 0;
@@ -366,7 +369,6 @@ export class NoteBatch {
       this.resetTextureCache();
     }
     this.groups.reset();
-    this.rotationCache.clear();
     if (this.isContextLost()) {
       this.contextLost = true;
       this.active = false;
@@ -787,6 +789,9 @@ export class NoteBatch {
     let rotationValues = this.rotationCache.get(rotation);
     if (!rotationValues) {
       rotationValues = [Math.cos(rotation), Math.sin(rotation)];
+      if (this.rotationCache.size >= ROTATION_CACHE_LIMIT) {
+        this.rotationCache.clear();
+      }
       this.rotationCache.set(rotation, rotationValues);
     }
     const [cosine, sine] = rotationValues;
