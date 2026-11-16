@@ -1,10 +1,4 @@
-/**
- * Draws the note field: backdrop grid, note bars and holds, selection state,
- * lane labels, multi-line panels, and the playhead.
- *
- * It owns canvas painting; note filtering, geometry, and hit rules come from core
- * and the viewport.
- */
+/** Draws note timelines, their multi-line panels, and the moving playhead. */
 import { noteAlpha } from "../../../../../../core/global/chart/optionalFeatures.ts";
 import {
   fallbackCanvasPixelRatio,
@@ -46,6 +40,7 @@ import { drawEventOverlapFilter } from "../events/eventSelectionDrawing.ts";
 import { selectedNoteIndices } from "./noteSelectionDrawing.ts";
 import { noteOverlapRotation } from "./noteRotation.ts";
 import { drawNoteLanes } from "./noteLaneDrawing.ts";
+import { drawNoteTimelineCues } from "./noteOffscreenCueDrawing.ts";
 
 interface MultiLineNoteScratch {
   readonly lineLabelCuller: TimelineLabelCuller;
@@ -294,6 +289,7 @@ export function draw(this: TimelineNoteDrawingReceiver, playBeat: number): void 
     measurement,
     noteBatchActive || solidBatchActive ? undefined : fallbackCanvasPixelRatio(),
   );
+  const cueCanvas = prepareCanvas(this.notesCue, true, measurement, fallbackCanvasPixelRatio());
   this.viewport.syncMultiLineChrome("notes", width);
   // The note backdrop is anchored to the live viewport, so repaint it with the
   // frame rather than keeping a translated bitmap.
@@ -524,6 +520,9 @@ export function draw(this: TimelineNoteDrawingReceiver, playBeat: number): void 
   }
   this.noteBatch.finish();
   this.noteSolidBatch.finish();
+  // Paint the edge cue after note batches so it remains visible above every
+  // note layer while staying clipped to the current note's vertical span.
+  drawNoteTimelineCues(this, cueCanvas.context, palette, width, height, noteProjectionFor);
   if (!(session.multiLineActive && session.multiLineMode === "notes")) {
     this.drawEvents(playBeat);
   }
@@ -732,6 +731,5 @@ export function drawMultiLineNotes(
       }
     }
   }
-  context.globalAlpha = 1;
   context.restore();
 }
