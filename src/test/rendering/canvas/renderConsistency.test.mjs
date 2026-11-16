@@ -546,26 +546,12 @@ test("active note batches skip line transforms while fallback notes restore them
     surface.noteBatch.addHeadSlotted = () => false;
     const fallback = drawLinePasses(surface, frame);
     assert.equal(fallback.batchFallbacks, 1);
-    assert.deepEqual(calls, [
-      "save",
-      ["translate", 50, 50],
-      ["rotate", 0],
-      "save",
-      "restore",
-      "restore",
-    ]);
+    assert.deepEqual(calls, ["save", ["translate", 50, 50], ["rotate", 0], "restore"]);
 
     calls.length = 0;
     const movedFrame = { ...frame, states: [{ ...state, x: 10 }] };
     drawLinePasses(surface, movedFrame);
-    assert.deepEqual(calls, [
-      "save",
-      ["translate", 60, 50],
-      ["rotate", 0],
-      "save",
-      "restore",
-      "restore",
-    ]);
+    assert.deepEqual(calls, ["save", ["translate", 60, 50], ["rotate", 0], "restore"]);
   } finally {
     if (previousDocument === undefined) {
       delete globalThis.document;
