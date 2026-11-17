@@ -1,10 +1,6 @@
 /**
  * Pointer interaction for the event field: hit testing, placement, selection,
- * and rectangle selection.
- *
- * Direct drags on an event bar are deliberately absent: moving or resizing an
- * event goes through the batch shortcuts. Gestures are translated into core
- * event commands; chart data is never stored here.
+ * and edge trimming. Gestures become event commands; chart data stays outside.
  */
 import type { TimelineRuntimeSurface } from "../drawing/timelineReceiver.ts";
 import {
@@ -41,6 +37,7 @@ import {
   type OverlapMenuAction,
 } from "../../../../../overlays/overlap/overlapMenu.ts";
 import { lockSweepArea, timelineSweepMode } from "../selection/sweepSelection.ts";
+import { eventEdgeAt, eventEdgeDragFor } from "./eventEdgeDrag.ts";
 import { drawPendingEvent } from "./eventOverlayDrawing.ts";
 
 type EventTimeline = Pick<
@@ -250,10 +247,7 @@ export class EventInteraction implements EventInteractionHandle {
 
   /**
    * Arm placement of a new event, or commit it when placement is already pending.
-   *
-   * R and Q share this path. The key's `inst` flag rides on the pending span, so
-   * Q started or finished placement makes a hook event while R alone places a
-   * normal one; the span length is always the previewed one.
+   * Q makes a hook event and R alone a normal one; the span is the preview.
    */
   place(type?: string | null, beat?: number, easingType?: number | null, inst = false): boolean {
     const session = this.timeline.getSession();
@@ -358,6 +352,35 @@ export class EventInteraction implements EventInteractionHandle {
     const sweepMode = timelineSweepEnabled({ multiLineActive: multiMode, panelCount })
       ? timelineSweepMode(session, event, "events")
       : null;
+    // Ctrl + right drag trims the tail; it wins over the right-button sweep.
+    if (event.ctrlKey && event.button === 2 && rectangle) {
+      const lineIndex = rectangle.lineIndex ?? session.lineIndex;
+      const key = eventKey(rectangle.type, rectangle.index);
+      session.focus = "events";
+      if (
+        session.multiLineActive &&
+        session.multiLineMode === "events" &&
+        session.multiEventSelection
+      ) {
+        session.multiEventSelection.set(lineIndex, new Set([key]));
+      }
+      session.eventSelection = new Set([key]);
+      session.selectionMode = "single";
+      const edgeDrag = eventEdgeDragFor(
+        this.timeline,
+        rectangle,
+        point,
+        "endTime",
+        event.pointerId,
+      );
+      if (edgeDrag) {
+        this.drag = edgeDrag;
+        this.canvas.setPointerCapture(event.pointerId);
+        session.notify();
+        this.timeline.changed();
+        return;
+      }
+    }
     if (
       sweepMode &&
       (event.button === 2 ||
@@ -533,6 +556,8 @@ export class EventInteraction implements EventInteractionHandle {
       };
     } else if (rectangle && event.button === 0) {
       const key = eventKey(rectangle.type, rectangle.index);
+      // A Ctrl edge press keeps the selection so the edge drag can commit.
+      const ctrlEdge = event.ctrlKey ? eventEdgeAt(rectangle, point) : null;
       if (
         session.multiLineActive &&
         session.multiLineMode === "events" &&
@@ -541,7 +566,7 @@ export class EventInteraction implements EventInteractionHandle {
         const selected = new Set<string>(
           session.multiEventSelection.get(rectangle.lineIndex ?? session.lineIndex) ?? [],
         );
-        if (event.ctrlKey) {
+        if (event.ctrlKey && !ctrlEdge) {
           if (selected.has(key)) {
             selected.delete(key);
           } else {
@@ -556,12 +581,14 @@ export class EventInteraction implements EventInteractionHandle {
           session.eventSelection = new Set(selected);
         }
       } else {
-        if (event.ctrlKey) {
+        if (event.ctrlKey && !ctrlEdge) {
           if (session.eventSelection.has(key)) {
             session.eventSelection.delete(key);
           } else {
             session.eventSelection.add(key);
           }
+        } else if (ctrlEdge) {
+          session.eventSelection.add(key);
         } else if (!session.eventSelection.has(key)) {
           session.eventSelection = new Set([key]);
         }
@@ -570,28 +597,19 @@ export class EventInteraction implements EventInteractionHandle {
         session.eventSelection.size > 0 ||
         [...session.multiEventSelection.values()].some((selection) => selection.size > 0);
       session.selectionMode = !hasSelection ? "none" : event.ctrlKey ? "multi" : "single";
-      // RPE drag prekey: Z + left drag edits the selected event's head instead
-      // of merely selecting it. The commit path reuses the batch start-time
-      // shift, so several selected events move their heads together.
-      if (dragPrekey) {
-        const targetLine = rectangle.lineIndex ?? session.lineIndex;
-        const target = eventListAt(session, targetLine, rectangle.type, session.eventLayer)[
-          rectangle.index
-        ];
-        if (target) {
-          this.drag = {
-            kind: "startTime",
-            type: rectangle.type,
-            anchor: target.startTime,
-            lineIndex: targetLine,
-            pointerId: event.pointerId,
-            start: point,
-            current: point,
-            originSeconds: this.timeline.viewport.tempo.seconds(
-              this.timeline.viewport.origin,
-              this.timeline.viewport.factorForLine(targetLine),
-            ),
-          };
+      // Z trims the head from anywhere; Ctrl+left trims the head of an edge
+      // press; a plain press near an edge trims the edge under the pointer.
+      const edgeKind = dragPrekey || ctrlEdge ? "startTime" : eventEdgeAt(rectangle, point);
+      if (edgeKind) {
+        const edgeDrag = eventEdgeDragFor(
+          this.timeline,
+          rectangle,
+          point,
+          edgeKind,
+          event.pointerId,
+        );
+        if (edgeDrag) {
+          this.drag = edgeDrag;
         }
       }
     }

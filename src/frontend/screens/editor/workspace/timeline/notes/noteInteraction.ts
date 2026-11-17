@@ -205,9 +205,9 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
     tool: Boolean(this.gestures.tool),
     pending: Boolean(this.gestures.pendingHold),
   });
-  // RPE drag prekey: Z + right drag edits a Hold tail, even when the pointer is
-  // not within the ordinary edge handle.
-  if (dragPrekey && hit?.item.type === 2 && event.button === 2) {
+  // RPE drag prekey: Z or Ctrl + right drag edits a Hold tail, even when the
+  // pointer is not within the ordinary edge handle.
+  if ((dragPrekey || event.ctrlKey) && hit?.item.type === 2 && event.button === 2) {
     const lineIndex = hit.lineIndex ?? session.lineIndex;
     if (lineIndex !== session.lineIndex) {
       session.selectLine(lineIndex);
@@ -231,6 +231,44 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
     session.notify();
     this.changed();
     return;
+  }
+  // A Ctrl+left press on a Hold head trims the head instead of opening the
+  // curve quick pick; elsewhere Ctrl+left keeps starting the quick pick.
+  if (
+    event.button === 0 &&
+    event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey &&
+    hit?.item.type === 2
+  ) {
+    const lineIndex = hit.lineIndex ?? session.lineIndex;
+    const startY = session.multiLineActive
+      ? this.viewport.noteVerticalForLine(hit.start, lineIndex, this.notesCanvas.clientHeight)
+      : this.viewport.vertical(hit.start);
+    if (Math.abs(position.y - startY) <= 8) {
+      if (lineIndex !== session.lineIndex) {
+        session.selectLine(lineIndex);
+      }
+      session.selection.clear();
+      session.selection.add(hit.index);
+      session.selectionMode = "single";
+      session.focus = "notes";
+      this.gestures.drag = {
+        kind: "startTime",
+        start: position,
+        current: position,
+        anchor: hit.index,
+        lineIndex,
+        originSeconds: this.viewport.tempo.seconds(
+          this.viewport.origin,
+          this.viewport.noteFactorForLine(lineIndex),
+        ),
+      };
+      this.notesCanvas.setPointerCapture(event.pointerId);
+      session.notify();
+      this.changed();
+      return;
+    }
   }
   // A Ctrl+click on a note is the curve-note quick pick; it must win over the
   // ordinary additive selection and any sweep shortcut bound to the same press.
