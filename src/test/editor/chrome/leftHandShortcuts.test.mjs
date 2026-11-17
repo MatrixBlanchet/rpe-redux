@@ -56,7 +56,7 @@ test("event-edge defaults have left-hand chords before the brackets", () => {
   assert.equal(bindingOf("selection.event.start.earlier", 1), "LEFTBRACKET");
 });
 
-test("R follows the hovered timeline while other note types stay note-only", () => {
+test("R follows the hovered timeline while Q places a Tap or anchor event", () => {
   const dispose = registerEditorShortcuts();
   try {
     const shortcutContext = {
@@ -81,7 +81,7 @@ test("R follows the hovered timeline while other note types stay note-only", () 
       );
       assert.equal(
         matchEditorShortcut({ key }, { area: "events", hasSelection: false }, shortcutContext),
-        key === "R" ? "event.place" : undefined,
+        key === "R" ? "event.place" : key === "Q" ? "note.place.tap" : undefined,
       );
     }
   } finally {

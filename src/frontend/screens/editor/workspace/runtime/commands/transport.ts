@@ -188,36 +188,55 @@ export function endAudition(): void {
 }
 
 /**
- * Start playback and hide the authoring regions (RPE's start key).
+ * Toggle RPE's playback preview and start playback when idle.
  *
- * When already playing the key only ensures the preview layout is active, so it
- * cannot restart or rewind a running playback.
+ * The first press opens the preview from the editor and starts playing; a press
+ * while the preview is already open closes it and pauses, so the key is a
+ * preview toggle rather than a one-way entrance.
  */
 export function startPlayback(): void {
   const bound = transportBindings.value();
   if (!bound || auditionAnchor !== null) {
     return;
   }
+  if (viewControls.playbackPreviewActive()) {
+    exitPlaybackPreview();
+    bound.playback.pause();
+    bound.invalidate();
+    return;
+  }
   if (bound.playback.audio.playing || bound.playback.pending) {
     enterPlaybackPreview();
+    bound.invalidate();
     return;
   }
   playFromCurrent(bound);
 }
 
 /**
- * RPE's restore key: start playback when idle, otherwise show the editor again
- * and jump back to where playback began.
+ * RPE's restore key: open the preview while the editor is playing, and restore
+ * the editor (ending playback) when the preview is already open.
+ *
+ * A playing editor only hides its authoring regions; it never stops the clock,
+ * so the first press keeps the chart running. The second press seeks back to the
+ * position playback began and closes the preview.
  */
 export function stopPlayback(): void {
   const bound = transportBindings.value();
   if (!bound || auditionAnchor !== null) {
     return;
   }
-  if (bound.playback.audio.playing || bound.playback.pending) {
-    const anchor = playbackAnchor ?? bound.playback.audio.time;
-    bound.playback.seek(anchor);
+  const previewing = viewControls.playbackPreviewActive();
+  if (previewing) {
+    if (bound.playback.audio.playing || bound.playback.pending) {
+      bound.playback.seek(playbackAnchor ?? bound.playback.audio.time);
+    }
     exitPlaybackPreview();
+    bound.invalidate();
+    return;
+  }
+  if (bound.playback.audio.playing || bound.playback.pending) {
+    enterPlaybackPreview();
     bound.invalidate();
     return;
   }

@@ -447,9 +447,27 @@ export function drawEvents(this: TimelineEventDrawingReceiver, playBeat: number)
     const ranges = cached.ranges[channel];
     const drawCurves =
       this.appearance.eventCurvesEnabled !== false && shouldDrawEventCurves(entries.length, height);
+    const edgeDrag = this.gestures.eventInteraction.drag;
+    const edgeDelta =
+      edgeDrag && ["move", "startTime", "endTime"].includes(edgeDrag.kind)
+        ? this.gestures.eventInteraction.delta()
+        : 0;
     for (const entry of entries) {
-      const vertical = verticalAt(entry.end);
-      const bottom = verticalAt(entry.start);
+      const selected = selectedIndexes.has(entry.index);
+      let start = entry.start;
+      let end = entry.end;
+      if (edgeDelta && selected && edgeDrag) {
+        if (edgeDrag.kind === "move") {
+          start += edgeDelta;
+          end += edgeDelta;
+        } else if (edgeDrag.kind === "startTime") {
+          start = Math.min(start + edgeDelta, end);
+        } else {
+          end = Math.max(end + edgeDelta, start);
+        }
+      }
+      const vertical = verticalAt(end);
+      const bottom = verticalAt(start);
       if (bottom < 0 || vertical > height) {
         continue;
       }
@@ -461,7 +479,6 @@ export function drawEvents(this: TimelineEventDrawingReceiver, playBeat: number)
         entry.index,
         type,
       );
-      const selected = selectedIndexes.has(entry.index);
       const hovered = this.gestures.isEventOverlapHovered(session.lineIndex, type, entry.index);
       const highlightSelection = hovered || (!overlapSelectionSuppressed && selected);
       if (highlightSelection) {

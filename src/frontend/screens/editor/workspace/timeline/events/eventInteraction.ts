@@ -1,10 +1,6 @@
 /**
  * Pointer interaction for the event field: hit testing, placement, selection,
- * and rectangle selection.
- *
- * Direct drags on an event bar are deliberately absent: moving or resizing an
- * event goes through the batch shortcuts. Gestures are translated into core
- * event commands; chart data is never stored here.
+ * and edge trimming. Gestures become event commands; chart data stays outside.
  */
 import type { TimelineRuntimeSurface } from "../drawing/timelineReceiver.ts";
 import {
@@ -13,7 +9,11 @@ import {
   timelineEmptyPanPress,
   timelineSweepEnabled,
 } from "../../../../../../core/edit/timeline/selection.ts";
-import { eventDragDelta } from "../../../../../../core/edit/timeline/dragPreview.ts";
+import {
+  eventDragDelta,
+  eventEdgePointerDelta,
+} from "../../../../../../core/edit/timeline/dragPreview.ts";
+import { dragPrekeyHeld } from "../../../../../../core/edit/timeline/dragPrekey.ts";
 import {
   beatValue,
   compareBeats,
@@ -40,6 +40,7 @@ import {
   type OverlapMenuAction,
 } from "../../../../../overlays/overlap/overlapMenu.ts";
 import { lockSweepArea, timelineSweepMode } from "../selection/sweepSelection.ts";
+import { eventEdgeAt, eventEdgeDragFor, selectEventEdgeTarget } from "./eventEdgeDrag.ts";
 import { drawPendingEvent } from "./eventOverlayDrawing.ts";
 
 type EventTimeline = Pick<
@@ -69,6 +70,7 @@ type EventTimeline = Pick<
     | "overlapHover"
     | "overlapMenuOpen"
     | "isEventOverlapHovered"
+    | "suppressNextContextMenu"
   >;
   viewport: Pick<
     TimelineRuntimeSurface["viewport"],
@@ -233,13 +235,15 @@ export class EventInteraction implements EventInteractionHandle {
    * the canvas preview keeps converting the same displacement to pixels.
    */
   beatDelta(): Beat {
-    return eventDragDelta(
-      this.drag,
-      this.timeline.viewport,
-      this.timeline.viewport.factorForLine(
-        this.drag?.lineIndex ?? this.timeline.getSession().lineIndex,
-      ),
+    const drag = this.drag;
+    const factor = this.timeline.viewport.factorForLine(
+      drag?.lineIndex ?? this.timeline.getSession().lineIndex,
     );
+    // An edge drag follows the pointer row; a body drag follows its own delta.
+    if (drag && ["startTime", "endTime"].includes(drag.kind) && drag.currentSeconds !== undefined) {
+      return eventEdgePointerDelta(drag, this.timeline.viewport, factor);
+    }
+    return eventDragDelta(drag, this.timeline.viewport, factor);
   }
 
   /** The drag displacement as a number, for drawing. */
@@ -247,7 +251,10 @@ export class EventInteraction implements EventInteractionHandle {
     return beatValue(this.beatDelta());
   }
 
-  /** Arm placement of a new event, or commit it when placement is already pending. */
+  /**
+   * Arm placement of a new event, or commit it when placement is already pending.
+   * Q makes a hook event and R alone a normal one; the span is the preview.
+   */
   place(type?: string | null, beat?: number, easingType?: number | null, inst = false): boolean {
     const session = this.timeline.getSession();
     if (!session.editable || !session.line) {
@@ -296,7 +303,7 @@ export class EventInteraction implements EventInteractionHandle {
           from: { beat: this.pending.beat, positionX: 0 },
           to: { beat: at, positionX: 0 },
         },
-        payload: { easingType: easingType ?? undefined, instant: this.pending.inst },
+        payload: { easingType: easingType ?? undefined, instant: inst || this.pending.inst },
       });
       if (result.status === "rejected") {
         const issue = result.issues?.[0];
@@ -332,6 +339,7 @@ export class EventInteraction implements EventInteractionHandle {
     }
     const point = this.timeline.viewport.point(event, this.canvas);
     const rectangle = this.hit(point);
+    const dragPrekey = dragPrekeyHeld();
     const multiMode = session.multiLineActive;
     const panelCount = this.timeline.viewport.panelCount("events");
     const multiPanel = multiMode && panelCount > 1;
@@ -350,6 +358,25 @@ export class EventInteraction implements EventInteractionHandle {
     const sweepMode = timelineSweepEnabled({ multiLineActive: multiMode, panelCount })
       ? timelineSweepMode(session, event, "events")
       : null;
+    // Ctrl or Z + right drag trims the tail; it wins over the right-button sweep.
+    if ((event.ctrlKey || dragPrekey) && event.button === 2 && rectangle) {
+      selectEventEdgeTarget(session, rectangle);
+      const edgeDrag = eventEdgeDragFor(
+        this.timeline,
+        rectangle,
+        point,
+        "endTime",
+        event.pointerId,
+      );
+      if (edgeDrag) {
+        this.drag = edgeDrag;
+        this.timeline.gestures.suppressNextContextMenu();
+        this.canvas.setPointerCapture(event.pointerId);
+        session.notify();
+        this.timeline.changed();
+        return;
+      }
+    }
     if (
       sweepMode &&
       (event.button === 2 ||
@@ -525,6 +552,8 @@ export class EventInteraction implements EventInteractionHandle {
       };
     } else if (rectangle && event.button === 0) {
       const key = eventKey(rectangle.type, rectangle.index);
+      // A Ctrl edge press keeps the selection so the edge drag can commit.
+      const ctrlEdge = event.ctrlKey ? eventEdgeAt(rectangle, point) : null;
       if (
         session.multiLineActive &&
         session.multiLineMode === "events" &&
@@ -533,7 +562,7 @@ export class EventInteraction implements EventInteractionHandle {
         const selected = new Set<string>(
           session.multiEventSelection.get(rectangle.lineIndex ?? session.lineIndex) ?? [],
         );
-        if (event.ctrlKey) {
+        if (event.ctrlKey && !ctrlEdge) {
           if (selected.has(key)) {
             selected.delete(key);
           } else {
@@ -548,12 +577,14 @@ export class EventInteraction implements EventInteractionHandle {
           session.eventSelection = new Set(selected);
         }
       } else {
-        if (event.ctrlKey) {
+        if (event.ctrlKey && !ctrlEdge) {
           if (session.eventSelection.has(key)) {
             session.eventSelection.delete(key);
           } else {
             session.eventSelection.add(key);
           }
+        } else if (ctrlEdge) {
+          session.eventSelection.add(key);
         } else if (!session.eventSelection.has(key)) {
           session.eventSelection = new Set([key]);
         }
@@ -562,8 +593,21 @@ export class EventInteraction implements EventInteractionHandle {
         session.eventSelection.size > 0 ||
         [...session.multiEventSelection.values()].some((selection) => selection.size > 0);
       session.selectionMode = !hasSelection ? "none" : event.ctrlKey ? "multi" : "single";
-      // An event is selected here, never dragged: body, start, and end moves all
-      // go through the batch shortcuts so a click cannot reshape it by accident.
+      // Z trims the head from anywhere; Ctrl+left trims the head of an edge
+      // press; a plain press near an edge trims the edge under the pointer.
+      const edgeKind = dragPrekey || ctrlEdge ? "startTime" : eventEdgeAt(rectangle, point);
+      if (edgeKind) {
+        const edgeDrag = eventEdgeDragFor(
+          this.timeline,
+          rectangle,
+          point,
+          edgeKind,
+          event.pointerId,
+        );
+        if (edgeDrag) {
+          this.drag = edgeDrag;
+        }
+      }
     }
     session.notify();
   }

@@ -173,7 +173,10 @@ export function placedEvent(
 ): JudgeLineEvent | PlacedShaderEvent | null {
   const start = Math.min(first, second);
   const end = Math.max(first, second);
-  if (end - start < 0.001) {
+  // The instant flag is the only path that may keep a zero-length span;
+  // ordinary spans still need a visible duration, while hook events may have any
+  // length because their value pair, not their time span, is locked.
+  if (end - start < 0.001 && !inst) {
     return null;
   }
   const events = eventListAt(session, lineIndex, type, options.eventLayer ?? session.eventLayer);
@@ -743,8 +746,10 @@ export const eventLayerShortcuts: readonly EditorShortcutDefinition[] = [
  * Placing a note or an event.
  *
  * R is two commands, not one: it places a Hold over the notes timeline and an
- * event over the event area, which is what `enabledFor` decides here. The other
- * note types stay note-only and never place through the event timeline.
+ * event over the event area, which is what `enabledFor` decides here. Q places a
+ * Tap over the notes timeline and an anchor event over the event area, so it is
+ * available in both areas. The other note types stay note-only and never place
+ * through the event timeline.
  */
 export const eventShortcuts: readonly EditorShortcutDefinition[] = [
   {
@@ -753,7 +758,6 @@ export const eventShortcuts: readonly EditorShortcutDefinition[] = [
     title: "shortcuts.editor.addTap",
     scope: "editor",
     defaults: [{ key: "Q" }],
-    enabledFor: (context) => context.area !== "events",
   },
   {
     id: "note.place.drag",

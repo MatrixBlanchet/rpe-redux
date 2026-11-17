@@ -52,13 +52,17 @@ export function applyRpeMigrationPlan(plan: RpeMigrationPlan): RpeApplyResult {
     // RPE describes keyboard bindings only. Redux actions such as "next judge
     // line" also carry wheel gestures, so an import must not drop them: replace
     // the key bindings and keep the pointer gestures the action already has.
-    const pointerBindings = shortcutRegistry
-      .bindingsOf(shortcut.id)
+    // A profile written by an older migration may already have lost those
+    // gestures, so the definition's defaults are part of the source too.
+    const pointerBindings = [
+      ...shortcutRegistry.bindingsOf(shortcut.id),
+      ...(shortcutRegistry.definition(shortcut.id)?.defaults ?? []),
+    ]
       .filter((binding) => POINTER_BINDING.test(binding.key))
       .map(canonicalText);
     const result = shortcutRegistry.replaceAllBindings(shortcut.id, [
       ...shortcut.bindings,
-      ...pointerBindings,
+      ...new Set(pointerBindings),
     ]);
     if (result.ok) {
       shortcuts += 1;
