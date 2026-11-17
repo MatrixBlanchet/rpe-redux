@@ -464,6 +464,8 @@ export function createEditorViewControls(
     endPreviewOnlyHold,
     enterPlaybackPreview,
     exitPlaybackPreview,
+    /** Whether the RPE-style playback preview currently hides the editor. */
+    playbackPreviewActive: () => playbackPreviewSnapshot !== null,
     toggleRegion,
     toggleRegions,
     resetCamera,
@@ -500,6 +502,8 @@ export const viewControls = Object.freeze({
   endPreviewOnlyHold: (): void => viewControlsBinding.value()?.endPreviewOnlyHold(),
   enterPlaybackPreview: (): void => viewControlsBinding.value()?.enterPlaybackPreview(),
   exitPlaybackPreview: (): void => viewControlsBinding.value()?.exitPlaybackPreview(),
+  playbackPreviewActive: (): boolean =>
+    viewControlsBinding.value()?.playbackPreviewActive() ?? false,
   toggleRegion: (region: "showNotes" | "showEvents"): void =>
     viewControlsBinding.value()?.toggleRegion(region),
   toggleRegions: (): void => viewControlsBinding.value()?.toggleRegions(),

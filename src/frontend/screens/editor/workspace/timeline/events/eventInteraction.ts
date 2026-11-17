@@ -14,6 +14,7 @@ import {
   timelineSweepEnabled,
 } from "../../../../../../core/edit/timeline/selection.ts";
 import { eventDragDelta } from "../../../../../../core/edit/timeline/dragPreview.ts";
+import { dragPrekeyHeld } from "../../../../../../core/edit/timeline/dragPrekey.ts";
 import {
   beatValue,
   compareBeats,
@@ -247,7 +248,13 @@ export class EventInteraction implements EventInteractionHandle {
     return beatValue(this.beatDelta());
   }
 
-  /** Arm placement of a new event, or commit it when placement is already pending. */
+  /**
+   * Arm placement of a new event, or commit it when placement is already pending.
+   *
+   * R and Q share this path. The key's `inst` flag rides on the pending span, so
+   * Q started or finished placement makes a hook event while R alone places a
+   * normal one; the span length is always the previewed one.
+   */
   place(type?: string | null, beat?: number, easingType?: number | null, inst = false): boolean {
     const session = this.timeline.getSession();
     if (!session.editable || !session.line) {
@@ -296,7 +303,7 @@ export class EventInteraction implements EventInteractionHandle {
           from: { beat: this.pending.beat, positionX: 0 },
           to: { beat: at, positionX: 0 },
         },
-        payload: { easingType: easingType ?? undefined, instant: this.pending.inst },
+        payload: { easingType: easingType ?? undefined, instant: inst || this.pending.inst },
       });
       if (result.status === "rejected") {
         const issue = result.issues?.[0];
@@ -332,6 +339,7 @@ export class EventInteraction implements EventInteractionHandle {
     }
     const point = this.timeline.viewport.point(event, this.canvas);
     const rectangle = this.hit(point);
+    const dragPrekey = dragPrekeyHeld();
     const multiMode = session.multiLineActive;
     const panelCount = this.timeline.viewport.panelCount("events");
     const multiPanel = multiMode && panelCount > 1;
@@ -562,8 +570,30 @@ export class EventInteraction implements EventInteractionHandle {
         session.eventSelection.size > 0 ||
         [...session.multiEventSelection.values()].some((selection) => selection.size > 0);
       session.selectionMode = !hasSelection ? "none" : event.ctrlKey ? "multi" : "single";
-      // An event is selected here, never dragged: body, start, and end moves all
-      // go through the batch shortcuts so a click cannot reshape it by accident.
+      // RPE drag prekey: Z + left drag edits the selected event's head instead
+      // of merely selecting it. The commit path reuses the batch start-time
+      // shift, so several selected events move their heads together.
+      if (dragPrekey) {
+        const targetLine = rectangle.lineIndex ?? session.lineIndex;
+        const target = eventListAt(session, targetLine, rectangle.type, session.eventLayer)[
+          rectangle.index
+        ];
+        if (target) {
+          this.drag = {
+            kind: "startTime",
+            type: rectangle.type,
+            anchor: target.startTime,
+            lineIndex: targetLine,
+            pointerId: event.pointerId,
+            start: point,
+            current: point,
+            originSeconds: this.timeline.viewport.tempo.seconds(
+              this.timeline.viewport.origin,
+              this.timeline.viewport.factorForLine(targetLine),
+            ),
+          };
+        }
+      }
     }
     session.notify();
   }

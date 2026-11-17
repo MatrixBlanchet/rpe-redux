@@ -868,11 +868,27 @@ export function shiftSelectedEvents(
   ) {
     return;
   }
-  const change = (event: JudgeLineEvent): JudgeLineEvent => ({
-    ...event,
-    startTime: kind === "endTime" ? event.startTime : addBeats(event.startTime, increment),
-    endTime: kind === "startTime" ? event.endTime : addBeats(event.endTime, increment),
-  });
+  const change = (event: JudgeLineEvent): JudgeLineEvent => {
+    const start = kind === "endTime" ? event.startTime : addBeats(event.startTime, increment);
+    const end = kind === "startTime" ? event.endTime : addBeats(event.endTime, increment);
+    if (kind === "startTime") {
+      // A head cannot pass its tail or leave the chart before beat zero.
+      const boundedStart =
+        compareBeats(start, [0, 0, 1]) < 0
+          ? ([0, 0, 1] as Beat)
+          : compareBeats(start, end) > 0
+            ? normalizeBeat(end)
+            : normalizeBeat(start);
+      return { ...event, startTime: boundedStart, endTime: event.endTime };
+    }
+    if (kind === "endTime") {
+      // A tail cannot pass its head.
+      const boundedEnd =
+        compareBeats(end, event.startTime) < 0 ? event.startTime : normalizeBeat(end);
+      return { ...event, startTime: event.startTime, endTime: boundedEnd };
+    }
+    return { ...event, startTime: start, endTime: end };
+  };
   if (multi) {
     commitSelectionEdit(
       session,

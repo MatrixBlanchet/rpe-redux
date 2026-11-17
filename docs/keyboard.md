@@ -59,6 +59,8 @@ RPE Redux keeps the placement loop under the left hand. Q/W/E/R place notes and 
 
 `Z`/`X` step between lines when nothing is selected and nudge the selection when something is selected. Multi-line shortcuts apply while the editor workspace has an open document.
 
+Hold `Z` while pressing the primary button on an event or a Hold to drag its **head**; hold `Z` while pressing the secondary button on a Hold to drag its **tail**. The edit snaps to the same time grid as the note and event drags. If a profile still binds `Z` to line stepping or nudging, use the arrow-key alternatives or rebind `Z` in **Settings → Shortcuts** before using the drag prekey.
+
 Ctrl+wheel steps the active line. While multi-line editing is active the selected line set stays and only the active line moves, so the line field's `0-15 (3)` annotation follows the wheel. The field itself reads `0,15`, `0，15`, and `0 15` alike, and accepts `0-15`, `0:15`, and `0：15` ranges next to a trailing `(active)` annotation.
 
 While multi-line editing shows more than one panel, dragging empty timeline space with the primary button pans the panels horizontally instead of starting a sweep. Both sweep gestures are unavailable in that layout, so neither the primary-button sweep-select nor the right-button sweep-deselect starts a sweep, and a `Shift`+drag marquee takes over additive and subtractive selection; a primary click that does not drag clears the selection. Single-panel layouts keep both sweeps.

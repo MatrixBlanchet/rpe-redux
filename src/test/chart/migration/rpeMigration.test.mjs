@@ -445,3 +445,33 @@ test("migrated key bindings keep the action's wheel gestures", () => {
     dispose();
   }
 });
+
+test("a stale RPE profile gets the default wheel gesture back on re-import", () => {
+  const dispose = shortcutRegistry.registerShortcut({
+    id: "rpe.migration.wheel.stale",
+    category: "test",
+    title: "test",
+    scope: "editor",
+    defaults: [{ key: "WHEELUP", modifiers: ["CTRL"] }],
+  });
+  try {
+    // An import from before the wheel-preserving fix left only the key binding.
+    assert.equal(
+      shortcutRegistry.replaceAllBindings("rpe.migration.wheel.stale", ["ALT+1"]).ok,
+      true,
+    );
+    const result = applyRpeMigrationPlan({
+      settings: [],
+      shortcuts: [{ id: "rpe.migration.wheel.stale", bindings: ["ALT+2"] }],
+      language: null,
+      warnings: [],
+    });
+    assert.equal(result.shortcuts, 1);
+    assert.deepEqual(shortcutRegistry.bindingsOf("rpe.migration.wheel.stale"), [
+      { key: "2", modifiers: ["ALT"] },
+      { key: "WHEELUP", modifiers: ["CTRL"] },
+    ]);
+  } finally {
+    dispose();
+  }
+});

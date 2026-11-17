@@ -12,6 +12,7 @@ import {
   timelineSweepEnabled,
 } from "../../../../../../core/edit/timeline/selection.ts";
 import { moveTimelineNote } from "../../../../../../core/edit/timeline/dragPreview.ts";
+import { dragPrekeyHeld } from "../../../../../../core/edit/timeline/dragPrekey.ts";
 import { t } from "../../../../../../i18n/index.ts";
 import type {
   TimelineNote,
@@ -189,6 +190,7 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
   this.gestures.hoverArea = "notes";
   const hit = this.hit(position);
   const session = this.getSession();
+  const dragPrekey = dragPrekeyHeld();
   const multiMode = session.multiLineActive;
   const panelCount = this.viewport.panelCount("notes");
   const multiPanel = multiMode && panelCount > 1;
@@ -203,6 +205,33 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
     tool: Boolean(this.gestures.tool),
     pending: Boolean(this.gestures.pendingHold),
   });
+  // RPE drag prekey: Z + right drag edits a Hold tail, even when the pointer is
+  // not within the ordinary edge handle.
+  if (dragPrekey && hit?.item.type === 2 && event.button === 2) {
+    const lineIndex = hit.lineIndex ?? session.lineIndex;
+    if (lineIndex !== session.lineIndex) {
+      session.selectLine(lineIndex);
+    }
+    session.selection.clear();
+    session.selection.add(hit.index);
+    session.selectionMode = "single";
+    session.focus = "notes";
+    this.gestures.drag = {
+      kind: "endTime",
+      start: position,
+      current: position,
+      anchor: hit.index,
+      lineIndex,
+      originSeconds: this.viewport.tempo.seconds(
+        this.viewport.origin,
+        this.viewport.noteFactorForLine(lineIndex),
+      ),
+    };
+    this.notesCanvas.setPointerCapture(event.pointerId);
+    session.notify();
+    this.changed();
+    return;
+  }
   // A Ctrl+click on a note is the curve-note quick pick; it must win over the
   // ordinary additive selection and any sweep shortcut bound to the same press.
   if (event.button === 0 && event.ctrlKey && !event.shiftKey && !event.altKey && hit) {
@@ -450,11 +479,13 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
         ? this.viewport.noteVerticalForLine(beat, hit.lineIndex, this.notesCanvas.clientHeight)
         : this.viewport.vertical(beat);
     const kind =
-      hit.item.type === 2 && Math.abs(position.y - hitVertical(hit.end)) <= 8
-        ? "endTime"
-        : hit.item.type === 2 && Math.abs(position.y - hitVertical(hit.start)) <= 8
-          ? "startTime"
-          : "move";
+      dragPrekey && hit.item.type === 2
+        ? "startTime"
+        : hit.item.type === 2 && Math.abs(position.y - hitVertical(hit.end)) <= 8
+          ? "endTime"
+          : hit.item.type === 2 && Math.abs(position.y - hitVertical(hit.start)) <= 8
+            ? "startTime"
+            : "move";
     this.gestures.drag = {
       kind,
       start: position,
