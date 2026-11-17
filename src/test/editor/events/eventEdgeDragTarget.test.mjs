@@ -8,6 +8,7 @@ import {
   eventEdgeAt,
   eventEdgeDragFor,
 } from "../../../frontend/screens/editor/workspace/timeline/events/eventEdgeDrag.ts";
+import { eventEdgePointerDelta } from "../../../core/edit/timeline/dragPreview.ts";
 
 const rect = { x: 0, y: 100, width: 20, height: 40, index: 0, type: "moveXEvents" };
 
@@ -40,4 +41,26 @@ test("an edge drag anchors on the edge being moved", () => {
   assert.ok(tail);
   assert.equal(tail.kind, "endTime");
   assert.equal(beatValue(tail.anchor), 4);
+});
+
+test("an edge drag follows the pointer row instead of its travel distance", () => {
+  const context = {
+    tempo: {
+      beat: (seconds) => seconds,
+      seconds: (beat) => beat,
+    },
+    origin: 0,
+    scale: 1,
+    division: 4,
+  };
+  const drag = {
+    kind: "startTime",
+    anchor: [4, 0, 1],
+    startFactor: 1,
+    currentSeconds: 6,
+    start: { x: 0, y: 0 },
+    current: { x: 0, y: 0 },
+  };
+
+  assert.equal(beatValue(eventEdgePointerDelta(drag, context, 1)), 2);
 });

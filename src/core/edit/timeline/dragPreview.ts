@@ -132,6 +132,34 @@ export function eventDragDelta(
   return subtractBeats(snapTime(seconds, division, tempo, factor), drag.anchor);
 }
 
+/**
+ * How far an event edge must move to land on the pointer's current beat.
+ *
+ * An edge drag is anchored on the edge itself, but the pointer can start
+ * anywhere inside the bar (the Z prekey) and must still place that edge under
+ * the row it points at. Using the pointer's absolute time, not the distance it
+ * travelled, keeps the moved anchor aligned with the cursor row.
+ */
+export function eventEdgePointerDelta(
+  drag: TimelineEventDrag | null,
+  context: Pick<NoteMotionContext, "tempo" | "origin" | "scale" | "division">,
+  factor: number,
+): Beat {
+  if (
+    !drag ||
+    !("anchor" in drag) ||
+    !drag.anchor ||
+    !["startTime", "endTime"].includes(drag.kind) ||
+    drag.currentSeconds === undefined
+  ) {
+    return ZERO_BEAT;
+  }
+  return subtractBeats(
+    snapTime(drag.currentSeconds, context.division, context.tempo, factor),
+    drag.anchor,
+  );
+}
+
 /** How far a drag that has left the panel should scroll it, per elapsed fraction. */
 export function dragScrollDelta(y: number, height: number, scale: number, elapsed: number): number {
   const overflow = y < 0 ? -y : y > height ? height - y : 0;

@@ -4,7 +4,7 @@
  * The helper owns only the drag geometry and the selected edge's beat anchor; the
  * canvas interaction decides when a press means an edge edit and commits it.
  */
-import { eventListAt } from "../../../../../../core/edit/events/eventTracks.ts";
+import { eventKey, eventListAt } from "../../../../../../core/edit/events/eventTracks.ts";
 import type { EditorSession } from "../../../../../../core/edit/session/session.ts";
 import type {
   TimelineEventDrag,
@@ -31,6 +31,22 @@ export function eventEdgeAt(
     return "endTime";
   }
   return null;
+}
+
+/** Select one event for an edge drag without toggling Ctrl multi-selection. */
+export function selectEventEdgeTarget(session: EditorSession, rectangle: TimelineEventRect): void {
+  const lineIndex = rectangle.lineIndex ?? session.lineIndex;
+  const key = eventKey(rectangle.type, rectangle.index);
+  session.focus = "events";
+  if (
+    session.multiLineActive &&
+    session.multiLineMode === "events" &&
+    session.multiEventSelection
+  ) {
+    session.multiEventSelection.set(lineIndex, new Set([key]));
+  }
+  session.eventSelection = new Set([key]);
+  session.selectionMode = "single";
 }
 
 /**
@@ -62,6 +78,7 @@ export function eventEdgeDragFor(
     pointerId,
     start: point,
     current: point,
+    startFactor: timeline.viewport.factorForLine(lineIndex),
     originSeconds: timeline.viewport.tempo.seconds(
       timeline.viewport.origin,
       timeline.viewport.factorForLine(lineIndex),

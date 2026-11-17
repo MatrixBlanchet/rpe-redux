@@ -9,7 +9,10 @@ import {
   timelineEmptyPanPress,
   timelineSweepEnabled,
 } from "../../../../../../core/edit/timeline/selection.ts";
-import { eventDragDelta } from "../../../../../../core/edit/timeline/dragPreview.ts";
+import {
+  eventDragDelta,
+  eventEdgePointerDelta,
+} from "../../../../../../core/edit/timeline/dragPreview.ts";
 import { dragPrekeyHeld } from "../../../../../../core/edit/timeline/dragPrekey.ts";
 import {
   beatValue,
@@ -37,7 +40,7 @@ import {
   type OverlapMenuAction,
 } from "../../../../../overlays/overlap/overlapMenu.ts";
 import { lockSweepArea, timelineSweepMode } from "../selection/sweepSelection.ts";
-import { eventEdgeAt, eventEdgeDragFor } from "./eventEdgeDrag.ts";
+import { eventEdgeAt, eventEdgeDragFor, selectEventEdgeTarget } from "./eventEdgeDrag.ts";
 import { drawPendingEvent } from "./eventOverlayDrawing.ts";
 
 type EventTimeline = Pick<
@@ -67,6 +70,7 @@ type EventTimeline = Pick<
     | "overlapHover"
     | "overlapMenuOpen"
     | "isEventOverlapHovered"
+    | "suppressNextContextMenu"
   >;
   viewport: Pick<
     TimelineRuntimeSurface["viewport"],
@@ -231,13 +235,15 @@ export class EventInteraction implements EventInteractionHandle {
    * the canvas preview keeps converting the same displacement to pixels.
    */
   beatDelta(): Beat {
-    return eventDragDelta(
-      this.drag,
-      this.timeline.viewport,
-      this.timeline.viewport.factorForLine(
-        this.drag?.lineIndex ?? this.timeline.getSession().lineIndex,
-      ),
+    const drag = this.drag;
+    const factor = this.timeline.viewport.factorForLine(
+      drag?.lineIndex ?? this.timeline.getSession().lineIndex,
     );
+    // An edge drag follows the pointer row; a body drag follows its own delta.
+    if (drag && ["startTime", "endTime"].includes(drag.kind) && drag.currentSeconds !== undefined) {
+      return eventEdgePointerDelta(drag, this.timeline.viewport, factor);
+    }
+    return eventDragDelta(drag, this.timeline.viewport, factor);
   }
 
   /** The drag displacement as a number, for drawing. */
@@ -352,20 +358,9 @@ export class EventInteraction implements EventInteractionHandle {
     const sweepMode = timelineSweepEnabled({ multiLineActive: multiMode, panelCount })
       ? timelineSweepMode(session, event, "events")
       : null;
-    // Ctrl + right drag trims the tail; it wins over the right-button sweep.
-    if (event.ctrlKey && event.button === 2 && rectangle) {
-      const lineIndex = rectangle.lineIndex ?? session.lineIndex;
-      const key = eventKey(rectangle.type, rectangle.index);
-      session.focus = "events";
-      if (
-        session.multiLineActive &&
-        session.multiLineMode === "events" &&
-        session.multiEventSelection
-      ) {
-        session.multiEventSelection.set(lineIndex, new Set([key]));
-      }
-      session.eventSelection = new Set([key]);
-      session.selectionMode = "single";
+    // Ctrl or Z + right drag trims the tail; it wins over the right-button sweep.
+    if ((event.ctrlKey || dragPrekey) && event.button === 2 && rectangle) {
+      selectEventEdgeTarget(session, rectangle);
       const edgeDrag = eventEdgeDragFor(
         this.timeline,
         rectangle,
@@ -375,6 +370,7 @@ export class EventInteraction implements EventInteractionHandle {
       );
       if (edgeDrag) {
         this.drag = edgeDrag;
+        this.timeline.gestures.suppressNextContextMenu();
         this.canvas.setPointerCapture(event.pointerId);
         session.notify();
         this.timeline.changed();

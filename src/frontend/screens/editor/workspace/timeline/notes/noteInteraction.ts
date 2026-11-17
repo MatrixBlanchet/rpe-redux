@@ -228,6 +228,7 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
       ),
     };
     this.notesCanvas.setPointerCapture(event.pointerId);
+    this.gestures.suppressNextContextMenu();
     session.notify();
     this.changed();
     return;
