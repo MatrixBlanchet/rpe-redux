@@ -38,6 +38,7 @@ import {
   type KeyboardActionEvent,
 } from "../../../core/edit/operations/keyboard.ts";
 import { shortcutRegistry } from "../../../core/shortcuts/registry.ts";
+import { deferPlainZMovement } from "../../../core/edit/timeline/dragPrekey.ts";
 import { SHORTCUT_DISPATCHED_EVENT } from "../../../core/shell/shellEventNames.ts";
 import { registerCanvasShortcutBindings } from "./canvasShortcuts.ts";
 import { registerTransportShortcuts } from "./playbackKeys.ts";
@@ -154,6 +155,19 @@ export function registerEditorKeyboardBindings(deps: EditorKeyboardBindingDepend
 
   /** Editor actions that are active until their starting key is released. */
   const heldShortcuts: { id: string; binding: Shortcut; area: EditorShortcutArea }[] = [];
+  /**
+   * A plain Z tap waiting for key-up.
+   *
+   * Holding Z must not nudge a Hold while it is only being armed as the drag
+   * prekey. A pointer-down cancels the pending tap; releasing Z without a
+   * pointer gesture runs the original movement action once.
+   */
+  let deferredZ: {
+    readonly physical: string;
+    readonly action: string;
+    readonly area: EditorShortcutArea;
+    readonly repeated: boolean;
+  } | null = null;
 
   /** End held actions, optionally only the one whose key released. */
   const releaseHeldShortcuts = (event?: KeyboardEvent): void => {
@@ -303,6 +317,21 @@ export function registerEditorKeyboardBindings(deps: EditorKeyboardBindingDepend
           heldShortcuts.push({ id: editorAction, binding, area });
         }
       }
+      // Z doubles as the drag prekey. Do not commit its movement action on
+      // key-down: wait for key-up, and let a pointer-down cancel the tap.
+      if (editorAction && deferPlainZMovement(editorAction, event)) {
+        deferredZ = {
+          physical: inputIdentity(event),
+          action: editorAction,
+          area,
+          repeated: event.repeat || false,
+        };
+        event.preventDefault();
+        return;
+      }
+      if (editorAction) {
+        deferredZ = null;
+      }
       if (
         shortcutId ||
         (!context.textEntry &&
@@ -333,6 +362,25 @@ export function registerEditorKeyboardBindings(deps: EditorKeyboardBindingDepend
     (event) => {
       trackInputUp(event);
       releaseHeldShortcuts(event);
+      if (deferredZ && deferredZ.physical === inputIdentity(event)) {
+        const pending = deferredZ;
+        deferredZ = null;
+        const context = readShortcutContext(event.target);
+        if (
+          !pending.repeated &&
+          !context.capturing &&
+          context.modal === "none" &&
+          !context.textEntry &&
+          context.surface === null
+        ) {
+          void runEditorKeyboardAction(
+            event as KeyboardActionEvent,
+            pending.action,
+            pending.area,
+            keyboardDeps,
+          );
+        }
+      }
       if (
         deps.timeline.gestures.clipboardMode?.keepTime ||
         deps.timeline.gestures.clipboardMode?.mirror
@@ -379,6 +427,7 @@ export function registerEditorKeyboardBindings(deps: EditorKeyboardBindingDepend
       }
       clearShortcutKeys();
       releaseHeldShortcuts();
+      deferredZ = null;
       prefixDigitState = createPrefixDigitSequenceState();
     },
     true,
@@ -388,6 +437,7 @@ export function registerEditorKeyboardBindings(deps: EditorKeyboardBindingDepend
     "visibilitychange",
     () => {
       if (document.visibilityState === "hidden") {
+        deferredZ = null;
         clearShortcutKeys();
       }
     },
@@ -400,6 +450,7 @@ export function registerEditorKeyboardBindings(deps: EditorKeyboardBindingDepend
     window,
     "pointerdown",
     (event) => {
+      deferredZ = null;
       const context = readShortcutContext(event.target);
       if (context.capturing || context.modal === "urgent") {
         clearShortcutKeys();
