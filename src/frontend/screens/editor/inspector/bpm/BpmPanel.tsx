@@ -42,6 +42,7 @@ import {
   timingPointSelection,
 } from "../../../global/sections/timing/timingSelection.ts";
 import { shouldRunMetronome } from "./metronomeVisibility.ts";
+import { armOffsetAlign } from "./offsetAlign.ts";
 
 /** Renders the selected timing point, or the chart offset when `mode` says so. */
 export function BpmPanel({
@@ -450,9 +451,6 @@ function BpmOffset({ session, chart }: Pick<BpmForm, "session" | "chart">) {
       return;
     }
     try {
-      const runtime = editorRuntime;
-      const previousOffset = Number(source.offset ?? 0) / 1000;
-      const chartSeconds = runtime ? runtime.audio.time - previousOffset : null;
       const next = chartWithOffsetDraft(session.chart, nextValue);
       session.commitChart(
         t("editorPanels.inspector.form.bpm.offsetCommit"),
@@ -461,13 +459,11 @@ function BpmOffset({ session, chart }: Pick<BpmForm, "session" | "chart">) {
         undefined,
         { normalized: true },
       );
-      // Offset aligns the audio track with the chart. Keep the chart position
-      // fixed while moving the audio clock, so the playhead line does not jump
-      // when the author tunes the offset.
-      if (runtime && chartSeconds !== null) {
-        const nextOffset = Number(next.META.offset ?? 0) / 1000;
-        runtime.audio.seek(chartSeconds + nextOffset);
-      }
+      // The offset only remaps chart time onto the audio clock, so committing it
+      // slides the chart under an unchanged audio position. Republish the derived
+      // clocks instead of seeking: the playhead must stay where it is, and a
+      // running transport keeps running.
+      editorRuntime?.providers.playback.resync();
       setError("");
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : String(failure));
@@ -499,6 +495,18 @@ function BpmOffset({ session, chart }: Pick<BpmForm, "session" | "chart">) {
         }
       />
       {error && <InlineAlert className="bpm-offset-error">{error}</InlineAlert>}
+      <div className="bpm-offset-actions">
+        <Button
+          type="button"
+          variant="outlined"
+          block
+          disabled={!editorRuntime}
+          onClick={() => armOffsetAlign(editorRuntime)}
+        >
+          <Icon name="magnet" size={16} />
+          <span className="redux-button-label">{t("editorPanels.inspector.form.bpm.align")}</span>
+        </Button>
+      </div>
     </div>
   );
 }

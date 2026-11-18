@@ -111,9 +111,11 @@ export default {
   "editorPanels.newChart.unavailable": "编辑器已不可用，请重新打开新建谱面窗口。",
   "editorPanels.inspector.form.bpm.title": "BPM 列表",
 
-  "editorPanels.inspector.form.bpm.add": "添加 BPM",
+  "editorPanels.inspector.form.bpm.add": "添加时值点",
   "editorPanels.inspector.form.bpm.offset": "时间偏移",
   "editorPanels.inspector.form.bpm.offsetCommit": "调整谱面时间偏移",
+  "editorPanels.inspector.form.bpm.align": "对齐到横线",
+  "editorPanels.inspector.form.bpm.alignToast": "请在时间轴界面点击横线以调整偏移值",
   "editorPanels.inspector.form.bpm.time": "时间",
   "editorPanels.inspector.form.bpm.value": "BPM",
 
