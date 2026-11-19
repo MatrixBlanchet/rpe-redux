@@ -125,7 +125,6 @@ export default {
   "editor.app.curve.startX": "起点 X",
   "editor.app.curve.type": "类型",
   "editor.app.dialog.chooseChart": "选择谱面",
-  "editor.app.dialog.closeChart": "返回谱面库",
   "editor.app.dialog.discardAndReturn": "放弃并返回",
   "editor.app.dialog.openWithoutSaving": "不保存并打开",
   "editor.app.notice.droppedManyImported":
@@ -201,7 +200,6 @@ export default {
   "editor.app.notice.desktopOnlyOpenFile": "仅桌面版支持打开本地文件",
   "editor.app.notice.desktopOnlySaveFile": "仅桌面版支持保存到文件",
 
-  "editor.app.notice.noteSource": "该音符来自 {line} 号线，点击切换",
   "editor.app.notice.lineJumpMissing": "判定线 {line} 不存在。可用编号为 0–{max}。",
   "editor.app.notice.lineJumpInvalid": "判定线编号过长。",
   "editor.app.notice.nothingToRedo": "没有可重做的编辑",

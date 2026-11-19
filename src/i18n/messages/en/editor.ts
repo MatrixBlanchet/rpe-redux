@@ -127,7 +127,6 @@ export default {
   "editor.app.curve.startX": "Start X",
   "editor.app.curve.type": "Type",
   "editor.app.dialog.chooseChart": "Choose a chart",
-  "editor.app.dialog.closeChart": "Return to chart library",
   "editor.app.dialog.discardAndReturn": "Discard and return",
   "editor.app.dialog.openWithoutSaving": "Don't save, open",
   "editor.app.notice.droppedManyImported":
@@ -211,7 +210,6 @@ export default {
   "editor.app.notice.desktopOnlyOpenFile": "Opening local files needs the desktop app",
   "editor.app.notice.desktopOnlySaveFile": "Saving to a file needs the desktop app",
 
-  "editor.app.notice.noteSource": "From judge line {line}, click to switch",
   "editor.app.notice.lineJumpMissing":
     "Judge line {line} does not exist. Available lines are 0–{max}.",
   "editor.app.notice.lineJumpInvalid": "That judge line number is too long.",

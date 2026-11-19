@@ -77,7 +77,7 @@ export default {
   "editorPanels.preview.debug.no": "否",
 
   "editorPanels.multiLine.lines": "判定线",
-  "editorPanels.multiLine.linesPlaceholder": "例如 0-3,5",
+  "editorPanels.multiLine.linesPlaceholder": "例如 0-3, 80:119/5, Drums",
   "editorPanels.multiLine.mode": "多线编辑模式",
   "editorPanels.multiLine.notes": "音符",
   "editorPanels.multiLine.events": "事件",
@@ -111,9 +111,11 @@ export default {
   "editorPanels.newChart.unavailable": "编辑器已不可用，请重新打开新建谱面窗口。",
   "editorPanels.inspector.form.bpm.title": "BPM 列表",
 
-  "editorPanels.inspector.form.bpm.add": "添加 BPM",
+  "editorPanels.inspector.form.bpm.add": "添加时值点",
   "editorPanels.inspector.form.bpm.offset": "时间偏移",
   "editorPanels.inspector.form.bpm.offsetCommit": "调整谱面时间偏移",
+  "editorPanels.inspector.form.bpm.align": "对齐到横线",
+  "editorPanels.inspector.form.bpm.alignToast": "请在时间轴界面点击横线以调整偏移值",
   "editorPanels.inspector.form.bpm.time": "时间",
   "editorPanels.inspector.form.bpm.value": "BPM",
 
@@ -403,6 +405,7 @@ export default {
   "editorPanels.assetLibrary.shaderParametersCommit": "配置着色器参数",
   "editorPanels.assetLibrary.openExternal": "用外部编辑器打开",
   "editorPanels.assetLibrary.openExternalDesktopOnly": "外部编辑仅在桌面应用中可用",
+  "editorPanels.assetLibrary.openExternalUnavailable": "无法从项目素材库读取这个素材的数据",
   "editorPanels.assetLibrary.deleted": "素材已删除",
   "editorPanels.assetLibrary.moved": "素材已移动",
   "editorPanels.assetLibrary.movedFolder": "素材文件夹已移动",
@@ -426,7 +429,6 @@ export default {
   "editorPanels.assetLibrary.deleteFolder.notEmpty": "该分组内还有 {count} 个素材，请先移出或删除",
   "editorPanels.assetLibrary.deleteFolder.done": "素材分组已删除",
   "editorPanels.assetLibrary.rename.title": "重命名素材",
-  "editorPanels.assetLibrary.rename.description": "会同步更新引用该图片的判定线贴图。",
   "editorPanels.assetLibrary.rename.label": "新素材名称",
   "editorPanels.assetLibrary.rename.invalid": "请输入与原素材类型一致的有效扩展名",
   "editorPanels.assetLibrary.rename.exists": "目标文件名已存在",

@@ -650,7 +650,8 @@ export class RpeSkin {
    * Draw a Hold from its head to its tail, including body and both caps.
    *
    * `rotation` is the line's angle; without it, the Hold is drawn head-up or
-   * flipped when the tail is above the head.
+   * flipped when the tail is above the head. `drawBody` false paints the caps
+   * only, which is how a negative-length Hold matches Phira.
    */
   hold(
     context: CanvasRenderingContext2D,
@@ -663,6 +664,7 @@ export class RpeSkin {
     color?: NoteColor | null,
     rotation?: number,
     capScale = 1,
+    drawBody = true,
   ): boolean {
     const bodyName =
       highlight && this.images.has("hold_body_highlight") ? "hold_body_highlight" : "hold_body";
@@ -670,7 +672,7 @@ export class RpeSkin {
     const endName =
       highlight && this.images.has("hold_end_highlight") ? "hold_end_highlight" : "hold_end";
     const end = this.images.get(endName);
-    if (!body) {
+    if (drawBody && !body) {
       return false;
     }
     const axisRotation = rotation ?? (tail >= head ? 0 : Math.PI);
@@ -690,8 +692,12 @@ export class RpeSkin {
       }
       return picture;
     };
-    const bodyRect = this.bounds(bodyName, body);
-    const span = Math.abs(tail - head);
+    const bodyRect = body ? this.bounds(bodyName, body) : null;
+    // Caps extend along the line's own axis from their own anchors. The canvas
+    // Y axis runs opposite that frame, so project the anchor delta through the
+    // rotation: Phira keeps this direction fixed even when the painted length
+    // is negative and the two caps face each other.
+    const span = (tail - head) * Math.cos(axisRotation);
     const endRect = end ? this.bounds(endName, end) : null;
     const headRect = headPicture ? this.bounds(headName, headPicture) : null;
     const headLength =
@@ -701,8 +707,8 @@ export class RpeSkin {
     context.save();
     context.translate(horizontal, head);
     context.rotate(axisRotation);
-    if (layout.bodyLength > 0) {
-      const bodyCenter = (layout.bodyHead.y + layout.bodyTail.y) / 2;
+    if (drawBody && body && bodyRect && span > 0) {
+      const bodyCenter = span / 2;
       const bodyBox = alignedTextureBox(
         bodyRect,
         body.naturalWidth || body.width || bodyRect.width,
@@ -710,7 +716,7 @@ export class RpeSkin {
         0,
         bodyCenter,
         width,
-        layout.bodyLength,
+        span,
       );
       this.drawHoldTexture(context, texture(bodyName, highlight), bodyBox, 0, bodyCenter);
     }

@@ -24,7 +24,6 @@ import { planLeaveEditor } from "./leaveEditor.ts";
 export interface WorkspaceNavigationOptions {
   atHome(): boolean;
   hasDocument(): boolean;
-  clearNoteSourceToast(): void;
   resetLineSwitcher(): void;
   setMuteCurrentLine(muted: boolean): void;
   setLineInfoVisible(visible: boolean): void;
@@ -36,6 +35,11 @@ export interface WorkspaceNavigationOptions {
   save(): Promise<unknown>;
   closeDocument(): void;
   reportError(error: unknown): void;
+}
+
+/** Whether returning to the library also releases the open document. */
+interface LeaveLibraryOptions {
+  releaseDocument: boolean;
 }
 
 /** Owns the editor-to-library transition and its unsaved-document decision. */
@@ -50,7 +54,6 @@ export function createWorkspaceNavigation(options: WorkspaceNavigationOptions) {
       dirty: visible ? false : getEditorVisibility().dirty,
     });
     if (visible) {
-      options.clearNoteSourceToast();
       options.resetLineSwitcher();
       options.setMuteCurrentLine(false);
       options.setLineInfoVisible(false);
@@ -72,10 +75,12 @@ export function createWorkspaceNavigation(options: WorkspaceNavigationOptions) {
    *
    * Every path asks first, even a saved document. The prompt gains Save and
    * Discard only when the document is dirty, and it names the room outcome when
-   * returning would also close or leave a collaboration session. Returns true
-   * when the library is showing and false when the user stayed.
+   * returning would also close or leave a collaboration session. `releaseDocument`
+   * closes the open chart once the answer leaves the editor; without it the chart
+   * stays open behind the library. Returns true when the library is showing and
+   * false when the user stayed.
    */
-  const openLibrary = async (): Promise<boolean> => {
+  const leaveLibrary = async ({ releaseDocument }: LeaveLibraryOptions): Promise<boolean> => {
     if (options.atHome()) {
       return true;
     }
@@ -113,7 +118,8 @@ export function createWorkspaceNavigation(options: WorkspaceNavigationOptions) {
           if (options.hasUnsavedChanges()) {
             throw new Error(t("editor.app.error.stillUnsaved"));
           }
-        } else if (answer === "discard") {
+        }
+        if (answer === "discard" || releaseDocument) {
           options.closeDocument();
         }
         if (plan.room !== "none") {
@@ -129,6 +135,12 @@ export function createWorkspaceNavigation(options: WorkspaceNavigationOptions) {
       leaving = false;
     }
   };
+
+  /** Shows the library and leaves the chart open behind it. */
+  const openLibrary = (): Promise<boolean> => leaveLibrary({ releaseDocument: false });
+
+  /** Closes the chart and shows the library through the same confirmation. */
+  const closeLibrary = (): Promise<boolean> => leaveLibrary({ releaseDocument: true });
 
   /**
    * Leave for an address change without prompting when nothing blocks it.
@@ -155,7 +167,7 @@ export function createWorkspaceNavigation(options: WorkspaceNavigationOptions) {
     return openLibrary();
   };
 
-  return { setHome, openLibrary, leaveForRoute };
+  return { setHome, openLibrary, closeLibrary, leaveForRoute };
 }
 
 // ------------------------------------------------------------ the library trip
@@ -179,5 +191,9 @@ export const navigation = Object.freeze({
   setHome: (visible: boolean): void => navigationBinding.value()?.setHome(visible),
   openLibrary: (): void => {
     void navigationBinding.value()?.openLibrary();
+  },
+  /** File → Return to chart library: one prompt, then the document is released. */
+  closeLibrary: (): void => {
+    void navigationBinding.value()?.closeLibrary();
   },
 });
