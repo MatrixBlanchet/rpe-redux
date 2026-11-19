@@ -125,6 +125,9 @@ import { createLayoutApiHost } from "../bindings/layoutBindings.ts";
 import { bindPreviewSelection } from "../../preview/interaction/previewSelection.ts";
 import { createPreviewFrameCapture } from "../../preview/frame/frameCapture.ts";
 import { createEditorRuntime, type EditorRuntime } from "./EditorRuntime.tsx";
+import { disarmOffsetAlign, offsetAlignArmed } from "../../../inspector/bpm/offsetAlign.ts";
+import { alignedOffsetMs, offsetAlignBeatAt } from "../../../inspector/bpm/offsetAlignMath.ts";
+import { chartWithOffsetDraft } from "../../../../../../core/global/chart/editing/drafts.ts";
 import { createEditorUiState } from "./editorUiState.ts";
 import type { EditorSessionRuntime } from "../providers/SessionProvider.tsx";
 import {
@@ -214,6 +217,13 @@ export function createEditorAssembly(
     setEditorVisibility({ ...getEditorVisibility(), hasDocument: value });
   }
   const sessionRendererRef: { current?: ReturnType<typeof createEditorSessionRenderer> } = {};
+  /**
+   * The runtime is created last, but pick handlers registered earlier need it.
+   *
+   * They only read it while handling a click or a teardown, both of which happen
+   * after assembly has finished.
+   */
+  const runtimeRef: { current: EditorRuntime | null } = { current: null };
   let sessionRenderMode: "document" | "selection" | null = null;
   let sessionRenderDeferred = false;
   /** Repaints the session-derived readouts and panel contents synchronously. */
@@ -396,7 +406,6 @@ export function createEditorAssembly(
     audioAnalysis,
     scrubberSpectrum,
     eventInteraction,
-    noteSourceToast,
     batchControls,
     selectionOverlay,
     lineSwitcher,
@@ -493,6 +502,58 @@ export function createEditorAssembly(
   } = playbackRuntime;
   deferSessionRenderDuringPlayback = () => playback.audio.playing || playback.pending;
   scope.add(playbackRuntime.dispose);
+  // Aligning the offset to a timeline line captures one press on a grid line.
+  // The picked line's chart time becomes the time the unchanged audio clock
+  // should sit on, so the new offset is `audio − chart`; the transport is never
+  // seeked, and a press that misses every line leaves the pick armed.
+  timeline.gestures.offsetPick = (vertical, lineIndex) => {
+    if (!offsetAlignArmed.get()) {
+      return false;
+    }
+    const viewport = timeline.viewport;
+    const height = surfaces.timeline.notes.clientHeight;
+    // The visible lines are the snapped grid rows between the canvas bottom and
+    // top; the press has to land on one of them, not merely near in beat space.
+    const beat = offsetAlignBeatAt(
+      vertical,
+      viewport.snappedBeat(height),
+      viewport.snappedBeat(0),
+      viewport.division,
+      (candidate) => viewport.vertical(candidate, height),
+    );
+    if (beat === null) {
+      return false;
+    }
+    const current = session.current;
+    const factor =
+      lineIndex === null ? 1 : (current.chart.judgeLineList?.[lineIndex]?.bpmfactor ?? 1);
+    const nextOffsetMs = alignedOffsetMs(audio.time, tempo.get().seconds(beat, factor));
+    // Disarm first: a refused commit must not leave the pick swallowing presses.
+    disarmOffsetAlign(runtimeRef.current);
+    if (nextOffsetMs === null) {
+      return false;
+    }
+    try {
+      current.commitChart(
+        t("editorPanels.inspector.form.bpm.offsetCommit"),
+        chartWithOffsetDraft(current.chart, String(nextOffsetMs)),
+        current.selectionState(),
+        undefined,
+        { normalized: true },
+      );
+      playbackRuntime.resync();
+      return true;
+    } catch (error) {
+      reportError(error);
+      return false;
+    }
+  };
+  timeline.gestures.offsetPickCancel = () => disarmOffsetAlign(runtimeRef.current);
+  scope.add(() => {
+    timeline.gestures.offsetPick = null;
+    timeline.gestures.offsetPickCancel = undefined;
+    disarmOffsetAlign(runtimeRef.current);
+  });
   createTimelineMarkers({
     root: surfaces.transport.timelineMarkers,
     scrubber: surfaces.transport.scrubber,
@@ -799,7 +860,6 @@ export function createEditorAssembly(
   const workspaceNavigationBinding = bindWorkspaceNavigation({
     atHome,
     hasDocument,
-    clearNoteSourceToast: () => noteSourceToast.clear(),
     resetLineSwitcher: () => lineSwitcher.reset(),
     setMuteCurrentLine: (muted) => {
       hitSounds.onlyCurrentLine = muted;
@@ -996,8 +1056,8 @@ export function createEditorAssembly(
   const { documentSaver } = documentRuntime;
   libraryBackup = documentRuntime.backup;
   /** Runs a document action after the unsaved-changes confirmation. */
-  function guardReplace(action: () => unknown, title?: string): Promise<boolean> {
-    return documentRuntime.guardReplace(action, title);
+  function guardReplace(action: () => unknown): Promise<boolean> {
+    return documentRuntime.guardReplace(action);
   }
   /** Loads a parsed candidate through the document runtime. */
   async function loadCandidate(
@@ -1396,5 +1456,6 @@ export function createEditorAssembly(
     },
     dispose,
   });
+  runtimeRef.current = runtime;
   return { runtime };
 }

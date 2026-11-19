@@ -86,7 +86,7 @@ export default {
   "editorPanels.preview.debug.no": "No",
 
   "editorPanels.multiLine.lines": "Judge lines",
-  "editorPanels.multiLine.linesPlaceholder": "For example 0-3,5",
+  "editorPanels.multiLine.linesPlaceholder": "For example 0-3, 80:119/5, Drums",
   "editorPanels.multiLine.mode": "Multi-line editing mode",
   "editorPanels.multiLine.notes": "Notes",
   "editorPanels.multiLine.events": "Events",
@@ -121,9 +121,11 @@ export default {
     "The editor is no longer available. Reopen the creation dialog.",
   "editorPanels.inspector.form.bpm.title": "BPM list",
 
-  "editorPanels.inspector.form.bpm.add": "Add BPM",
+  "editorPanels.inspector.form.bpm.add": "Add timing point",
   "editorPanels.inspector.form.bpm.offset": "Offset",
   "editorPanels.inspector.form.bpm.offsetCommit": "Adjust chart offset",
+  "editorPanels.inspector.form.bpm.align": "Align to a timeline line",
+  "editorPanels.inspector.form.bpm.alignToast": "Click a line in the timeline to align the offset",
   "editorPanels.inspector.form.bpm.time": "Time",
   "editorPanels.inspector.form.bpm.value": "BPM",
   "editorPanels.inspector.form.bpm.delete": "Delete timing point",
@@ -422,6 +424,8 @@ export default {
   "editorPanels.assetLibrary.openExternal": "Open externally",
   "editorPanels.assetLibrary.openExternalDesktopOnly":
     "External editing is available in the desktop app",
+  "editorPanels.assetLibrary.openExternalUnavailable":
+    "This asset's bytes could not be read from the project library",
   "editorPanels.assetLibrary.deleted": "The asset was deleted",
   "editorPanels.assetLibrary.moved": "The asset was moved",
   "editorPanels.assetLibrary.movedFolder": "The asset folder was moved",
@@ -446,8 +450,6 @@ export default {
     "This group still holds {count} assets; move or delete them first",
   "editorPanels.assetLibrary.deleteFolder.done": "The asset group was deleted",
   "editorPanels.assetLibrary.rename.title": "Rename asset",
-  "editorPanels.assetLibrary.rename.description":
-    "Judgement line textures that reference an image are updated too.",
   "editorPanels.assetLibrary.rename.label": "New asset name",
   "editorPanels.assetLibrary.rename.invalid":
     "Enter a valid name with the same image or audio extension",

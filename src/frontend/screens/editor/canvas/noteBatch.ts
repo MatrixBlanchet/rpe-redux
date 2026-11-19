@@ -633,7 +633,12 @@ export class NoteBatch {
     return descriptor;
   }
 
-  /** Queue a Hold body, tail cap, and optional head cap as one sprite set. */
+  /**
+   * Queue a Hold body, tail cap, and optional head cap as one sprite set.
+   *
+   * `drawBody` false paints the two caps only; an inverted Hold uses that to
+   * match Phira, which rejects a Hold body whose longitudinal size is negative.
+   */
   addHold(
     skin: NoteBatchSkin | null,
     highlight: boolean,
@@ -647,6 +652,7 @@ export class NoteBatch {
     color?: NoteColor | null,
     fallbackRotation = 0,
     capScale = 1,
+    drawBody = true,
   ): boolean {
     if (!this.active || this.isContextLost()) {
       return false;
@@ -662,13 +668,16 @@ export class NoteBatch {
       );
       textures.head = head;
     }
-    if (!body || !end || (showHead && !head)) {
+    if ((drawBody && !body) || !end || (showHead && !head)) {
       return false;
     }
     // A Hold with no visible body (speed zero, or a tail already at the line)
-    // carries cap textures. It has no head-to-tail vector, so its rotation
-    // comes from the line's angle.
-    const rotation = holdRenderRotation(headX, headY, tailX, tailY, fallbackRotation);
+    // carries cap textures. Its caps extend along the line's own axis, which is
+    // also why a negative painted span keeps them upright instead of mirroring
+    // them with the reversed head-to-tail vector.
+    const rotation = drawBody
+      ? holdRenderRotation(headX, headY, tailX, tailY, fallbackRotation)
+      : fallbackRotation;
     if (showHead && textures.headRatio === undefined) {
       textures.headRatio = head ? head.useful.height / head.useful.width : 0;
     }
@@ -686,21 +695,24 @@ export class NoteBatch {
       tailLength,
       this.holdDirection,
     );
-    const bodyAdded =
-      layout.bodyLength <= 0.5 ||
-      this.add(
-        body,
-        (layout.bodyHead.x + layout.bodyTail.x) / 2,
-        (layout.bodyHead.y + layout.bodyTail.y) / 2,
-        width,
-        layout.bodyLength,
-        rotation,
-        0,
-        alpha,
-        true,
-        color,
-        HOLD_PAINT_LAYER,
-      );
+    let bodyAdded = true;
+    if (drawBody && body) {
+      bodyAdded =
+        layout.bodyLength <= 0.5 ||
+        this.add(
+          body,
+          (layout.bodyHead.x + layout.bodyTail.x) / 2,
+          (layout.bodyHead.y + layout.bodyTail.y) / 2,
+          width,
+          layout.bodyLength,
+          rotation,
+          0,
+          alpha,
+          true,
+          color,
+          HOLD_PAINT_LAYER,
+        );
+    }
     return (
       bodyAdded &&
       this.addHoldCap(

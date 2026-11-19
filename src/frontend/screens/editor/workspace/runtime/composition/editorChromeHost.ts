@@ -23,7 +23,6 @@ export function connectEditorChromeHost(): () => void {
       newDocument: () => documentService.newDocument(),
       openDocument: () => documentService.openDocument(),
       saveDocument: () => documentService.saveDocument(),
-      closeDocument: () => documentService.closeDocument(),
     },
     transport: {
       togglePlayback: () => transport.togglePlayback(),
@@ -47,6 +46,7 @@ export function connectEditorChromeHost(): () => void {
     },
     navigation: {
       openLibrary: () => navigation.openLibrary(),
+      closeLibrary: () => navigation.closeLibrary(),
     },
     inspector: {
       openPane: (id) => openPane(id),

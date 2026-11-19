@@ -15,7 +15,6 @@ import type {
   TimelineArea,
   TimelineDrag,
   TimelineNote,
-  TimelineNoteEntry,
   TimelineEventRect,
   PendingHold,
 } from "../../../../../../core/edit/timeline/types.ts";
@@ -85,11 +84,21 @@ export class TimelineGestures {
   curvePickPoint?: ((beat: number, positionX: number) => unknown) | null;
   curveQuickPick: ((note: TimelineNote, index: number, lineIndex: number) => boolean) | null = null;
   curveGhost?: () => TimelineNote[];
+  /**
+   * Consume one press as a chart-offset alignment target.
+   *
+   * Receives the pointer's vertical position in notes-canvas pixels so the
+   * handler can require a press on a grid line. Returning true means the press
+   * was taken: selection, placement, note hit testing, and drag are all skipped.
+   * `lineIndex` is null outside any judge-line panel.
+   */
+  offsetPick: ((vertical: number, lineIndex: number | null) => boolean) | null = null;
+  /** Drop an armed offset pick; wired by the editor that owns the pick state. */
+  offsetPickCancel?: () => void;
   previewPick?: (event: PointerEvent) => unknown;
   previewCancel?: () => void;
   onDragScroll?: (seconds: number) => void;
   onWheel: (event: WheelEvent) => boolean = () => false;
-  onNoteHover?: (entry: TimelineNoteEntry | null | undefined) => void;
   onEvent: (type: string, index: number, beat?: number) => void = () => {};
   onContextMenu: (event: MouseEvent, canvas: HTMLCanvasElement) => void = () => {};
   notify?: (message: string, level?: string) => void;
@@ -291,6 +300,9 @@ export class TimelineGestures {
     this.selectionHistoryChart = null;
     trackedSession?.endSelectionNotificationBatch();
     this.suppressContextMenu = false;
+    // An armed offset pick is a pointer mode of its own, so every cancel path
+    // that ends placement or a drag must end it too.
+    this.offsetPickCancel?.();
   }
 
   /** Clear pointer routing state without resetting the selected document. */

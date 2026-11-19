@@ -108,6 +108,7 @@ export function gridBatchKey(
     receiver.appearance.barAlpha,
     receiver.appearance.hoverGuidesEnabled,
     receiver.appearance.gridHighlightColor,
+    receiver.appearance.alignHighlight,
     receiver.appearance.subdivisionColors.join(","),
     palette.gridMajor,
     palette.gridMinor,
@@ -270,12 +271,38 @@ function renderGridPacket(
 type TimelineHoverGuideReceiver = {
   appearance: Pick<
     TimelineAppearance,
-    "hoverGuidesEnabled" | "nearbyGuidesOnly" | "gridHighlightColor"
+    "hoverGuidesEnabled" | "nearbyGuidesOnly" | "gridHighlightColor" | "alignHighlight"
   >;
   cache: TempoSecondsCache;
   gestures: Pick<TimelineGestures, "cursor" | "eventCursor" | "hoverArea">;
   viewport: TimelineViewport;
 };
+
+/**
+ * Resolve one grid line's highlight colour and opacity.
+ *
+ * An armed offset pick emphasizes only the line nearest the pointer, exactly
+ * like the ordinary hover highlight, so the author can aim at one line; the
+ * difference is that the pick keeps working with guides switched off and paints
+ * the emphasized colour at full strength.
+ */
+function gridLineHighlight(
+  appearance: TimelineAppearance,
+  palette: ReturnType<typeof readCanvasPalette>,
+  baseColor: string,
+  baseAlpha: number,
+  nearestHover: boolean,
+  hoverOpacity: number,
+): { color: string; alpha: number } {
+  if (appearance.alignHighlight && nearestHover) {
+    return { color: palette.alignHighlight, alpha: 1 };
+  }
+  const highlighted = appearance.hoverGuidesEnabled !== false && nearestHover;
+  return {
+    color: highlighted ? sourceOverColor(baseColor, appearance.gridHighlightColor) : baseColor,
+    alpha: appearance.nearbyGuidesOnly === true ? hoverOpacity : Math.max(baseAlpha, hoverOpacity),
+  };
+}
 
 /** Resolve the snapped beat under the pointer for the requested timeline area. */
 function hoveredGridLine(
@@ -286,7 +313,10 @@ function hoveredGridLine(
 ): { lineIndex: number; beat: number; pointerY: number } | null {
   if (
     receiver.appearance.hoverGuidesEnabled === false &&
-    receiver.appearance.nearbyGuidesOnly !== true
+    receiver.appearance.nearbyGuidesOnly !== true &&
+    // An armed offset pick has to show the line it would snap to even when the
+    // author turned guide highlighting off.
+    !receiver.appearance.alignHighlight
   ) {
     return null;
   }
@@ -405,15 +435,14 @@ export function grid(
         : nearestHover
           ? 1
           : 0;
-    // Only the nearest snapped beat line receives the highlight colour. The
-    // surrounding lines keep their own colours and use hoverOpacity solely as
-    // the sampling-style fade.
-    const highlighted = this.appearance.hoverGuidesEnabled !== false && nearestHover;
-    const color = highlighted
-      ? sourceOverColor(baseColor, this.appearance.gridHighlightColor)
-      : baseColor;
-    const alpha =
-      this.appearance.nearbyGuidesOnly === true ? hoverOpacity : Math.max(baseAlpha, hoverOpacity);
+    const { color, alpha } = gridLineHighlight(
+      this.appearance,
+      palette,
+      baseColor,
+      baseAlpha,
+      nearestHover,
+      hoverOpacity,
+    );
     if (draws(parts, "lines")) {
       commands.push({
         kind: "fillRect",
@@ -521,14 +550,14 @@ export function gridForLine(
         : nearestHover
           ? 1
           : 0;
-    // Match note-lane guides: colour only the nearest snapped line, while the
-    // neighbouring lines retain their base colours and fade by pixel distance.
-    const highlighted = this.appearance.hoverGuidesEnabled !== false && nearestHover;
-    const color = highlighted
-      ? sourceOverColor(baseColor, this.appearance.gridHighlightColor)
-      : baseColor;
-    const alpha =
-      this.appearance.nearbyGuidesOnly === true ? hoverOpacity : Math.max(baseAlpha, hoverOpacity);
+    const { color, alpha } = gridLineHighlight(
+      this.appearance,
+      palette,
+      baseColor,
+      baseAlpha,
+      nearestHover,
+      hoverOpacity,
+    );
     if (draws(parts, "lines")) {
       commands.push({
         kind: "fillRect",
