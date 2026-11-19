@@ -41,6 +41,10 @@ export interface EditorViewCommands {
   toggleRegion(region: "showNotes" | "showEvents"): void;
   toggleStagePreview(): void;
   toggleRegions(): void;
+  /** Apply a vertical timeline scale while the transport stretch bar is dragged. */
+  setTimelineScale(scale: number): void;
+  /** Persist the scale the transport stretch bar settled on. */
+  commitTimelineScale(): void;
 }
 
 /** Workspace navigation shared by the application menu and shortcuts. */

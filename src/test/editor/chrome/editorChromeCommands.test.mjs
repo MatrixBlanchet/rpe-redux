@@ -29,6 +29,8 @@ test("chrome commands are absent until bound and cleared by their disposer", () 
       toggleRegion: (region) => calls.push(region),
       toggleStagePreview: () => calls.push("stage-preview"),
       toggleRegions: () => calls.push("regions"),
+      setTimelineScale: (scale) => calls.push(`timeline-scale:${scale}`),
+      commitTimelineScale: () => calls.push("timeline-scale-commit"),
     },
     navigation: {
       openLibrary: () => calls.push("library"),
@@ -44,6 +46,8 @@ test("chrome commands are absent until bound and cleared by their disposer", () 
   commands.transport.beginAudition({ previewOnly: true });
   commands.transport.seekToBeat("4");
   commands.view.toggleRegion("showNotes");
+  commands.view.setTimelineScale(750);
+  commands.view.commitTimelineScale();
   commands.navigation.openLibrary();
   commands.navigation.closeLibrary();
   assert.equal(commands.view.isPreviewLayout(), true);
@@ -55,6 +59,8 @@ test("chrome commands are absent until bound and cleared by their disposer", () 
     "audition-start:true",
     "seek:4",
     "showNotes",
+    "timeline-scale:750",
+    "timeline-scale-commit",
     "library",
     "close-library",
   ]);
