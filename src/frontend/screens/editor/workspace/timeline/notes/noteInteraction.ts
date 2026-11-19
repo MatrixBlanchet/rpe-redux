@@ -222,6 +222,14 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
       current: position,
       anchor: hit.index,
       lineIndex,
+      startFactor: this.viewport.noteFactorForLine(lineIndex),
+      currentSeconds:
+        this.viewport.tempo.seconds(
+          this.viewport.origin,
+          this.viewport.noteFactorForLine(lineIndex),
+        ) +
+        (this.viewport.viewHeight() - this.viewport.judgementOffset - position.y) /
+          this.viewport.scaleForArea("notes"),
       originSeconds: this.viewport.tempo.seconds(
         this.viewport.origin,
         this.viewport.noteFactorForLine(lineIndex),
@@ -260,6 +268,14 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
         current: position,
         anchor: hit.index,
         lineIndex,
+        startFactor: this.viewport.noteFactorForLine(lineIndex),
+        currentSeconds:
+          this.viewport.tempo.seconds(
+            this.viewport.origin,
+            this.viewport.noteFactorForLine(lineIndex),
+          ) +
+          (this.viewport.viewHeight() - this.viewport.judgementOffset - position.y) /
+            this.viewport.scaleForArea("notes"),
         originSeconds: this.viewport.tempo.seconds(
           this.viewport.origin,
           this.viewport.noteFactorForLine(lineIndex),
@@ -531,6 +547,14 @@ export function down(this: TimelineNoteInteractionReceiver, event: PointerEvent)
       current: position,
       anchor: hit.index,
       lineIndex: hit.lineIndex,
+      startFactor: this.viewport.noteFactorForLine(hit.lineIndex ?? session.lineIndex),
+      currentSeconds:
+        this.viewport.tempo.seconds(
+          this.viewport.origin,
+          this.viewport.noteFactorForLine(hit.lineIndex ?? session.lineIndex),
+        ) +
+        (this.viewport.viewHeight() - this.viewport.judgementOffset - position.y) /
+          this.viewport.scaleForArea("notes"),
       originSeconds: this.viewport.tempo.seconds(
         this.viewport.origin,
         this.viewport.noteFactorForLine(hit.lineIndex ?? session.lineIndex),
