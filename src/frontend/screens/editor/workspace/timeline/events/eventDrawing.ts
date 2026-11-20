@@ -25,7 +25,7 @@ import {
   gridBatchKey,
   strokeVerticalGrid,
 } from "../drawing/gridDrawing.ts";
-import { eventLayerOf } from "../../../../../../core/edit/timeline/model.ts";
+import { eventLayerOf, isHookedEvent } from "../../../../../../core/edit/timeline/model.ts";
 import { eventColumnBoundary } from "../../../../../../core/edit/timeline/timelineCoordinates.ts";
 import type {
   TimelineEventLayer,
@@ -34,7 +34,7 @@ import type {
 import type { JudgeLineEvent } from "../../../../../../core/global/chart/chart.ts";
 import type { EventChain } from "../../../../../../core/edit/timeline/eventChains.ts";
 import type { TimelineEventDrawingReceiver } from "../drawing/timelineReceiver.ts";
-import { readCanvasPalette, type CanvasPalette } from "../../../canvas/palette.ts";
+import { readCanvasPalette, rgbChannels, type CanvasPalette } from "../../../canvas/palette.ts";
 import type { TimelineOverlayBatch } from "../../../canvas/timelineOverlayBatch.ts";
 import { multiLineLineOpacity } from "../multiLine/multiLinePresentation.ts";
 import { drawEventCurves, eventCurveStroke } from "./eventCurve.ts";
@@ -275,6 +275,9 @@ function drawSelectedEventValues(
 export function drawEvents(this: TimelineEventDrawingReceiver, playBeat: number): void {
   this.gestures.beginEventRectFrame();
   const palette = this.cache.palette() ?? readCanvasPalette();
+  const hookedTint = palette.eventHookedFill
+    ? (rgbChannels(palette.eventHookedFill) ?? undefined)
+    : undefined;
   const measurement = measureCanvas(this.eventsCanvas);
   const width = measurement.width;
   const height = measurement.height;
@@ -514,8 +517,11 @@ export function drawEvents(this: TimelineEventDrawingReceiver, playBeat: number)
       ) {
         scratch.remoteSelectedRectangles.push(projected);
       }
+      // Hooked events tint the bar material with the theme's hooked colour, so
+      // they stay distinguishable from ordinary events without an extra border.
+      const hooked = isHookedEvent(entry.item);
       context.globalAlpha = eventBarOpacity(this.appearance.eventOpacity);
-      drawEventBar(this, context, projected);
+      drawEventBar(this, context, projected, 1, hooked ? hookedTint : undefined);
       if (cached.overlaps[channel].has(entry.index) || entry.invalid) {
         drawEventOverlapFilter(context, projected, palette);
       }
@@ -678,6 +684,9 @@ export function drawMultiLineEvents(
   const scratch = scratchFor(this);
   scratch.selectedIndexesBySelection.clear();
   const palette = this.cache.palette() ?? readCanvasPalette();
+  const hookedTint = palette.eventHookedFill
+    ? (rgbChannels(palette.eventHookedFill) ?? undefined)
+    : undefined;
   const session = this.getSession();
   const overlapSelectionSuppressed = this.gestures.overlapMenuOpen;
   const hasRemoteSelection = this.remoteSelectedEventIds.size > 0;
@@ -813,8 +822,9 @@ export function drawMultiLineEvents(
         ) {
           scratch.remoteSelectedRectangles.push(projected);
         }
+        const hooked = isHookedEvent(event);
         context.globalAlpha = eventBarOpacity(this.appearance.eventOpacity, lineOpacity);
-        drawEventBar(this, context, projected, lineOpacity);
+        drawEventBar(this, context, projected, lineOpacity, hooked ? hookedTint : undefined);
         if (display.overlaps.has(index) || invalid) {
           drawEventOverlapFilter(context, projected, palette);
         }
