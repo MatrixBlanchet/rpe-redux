@@ -362,3 +362,23 @@ export function bezier(
   const value = component(parameter, firstY, secondY);
   return Number.isFinite(value) ? value : amount;
 }
+
+/**
+ * Slope of a cubic bezier's start tangent, in curve-value units per unit progress.
+ *
+ * A bezier is only defined on `[0, 1]`, so the event layer extends its prefix along
+ * the tangent at the start instead of evaluating the curve outside its domain. The
+ * first control point `(x1, y1)` sets that direction, giving `y1 / x1`; a vertical
+ * or degenerate handle has no finite slope, so the identity's unit slope stands in.
+ */
+export function bezierTangentSlope(points: ArrayLike<number> | null | undefined): number {
+  if (!points || points.length < 4) {
+    return 1;
+  }
+  const firstX = Number(points[0]);
+  const firstY = Number(points[1]);
+  if (!Number.isFinite(firstX) || !Number.isFinite(firstY) || firstX === 0) {
+    return 1;
+  }
+  return firstY / firstX;
+}

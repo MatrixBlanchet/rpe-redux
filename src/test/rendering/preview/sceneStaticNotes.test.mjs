@@ -75,11 +75,13 @@ test("note-only controls keep the line state static during playback", () => {
 
 test("flat endpoint events fold into the static line path", () => {
   const chart = createChart();
+  // Every channel is a flat constant, and the geometric ones are deliberately away
+  // from their neutral value so the folded offsets have to survive the static path.
   chart.judgeLineList[0].eventLayers[0] = {
-    moveXEvents: [createEvent(0, 0, 0, 100000)],
-    moveYEvents: [createEvent(0, 0, 0, 100000)],
-    rotateEvents: [createEvent(0, 0, 0, 100000)],
-    alphaEvents: [createEvent(0, 0, 0, 100000)],
+    moveXEvents: [createEvent(40, 40, 0, 100000)],
+    moveYEvents: [createEvent(-30, -30, 0, 100000)],
+    rotateEvents: [createEvent(15, 15, 0, 100000)],
+    alphaEvents: [createEvent(200, 200, 0, 100000)],
     scaleXEvents: [createEvent(1, 1, 0, 100000)],
     scaleYEvents: [createEvent(1.2, 1.2, 0, 100000)],
   };
@@ -90,6 +92,13 @@ test("flat endpoint events fold into the static line path", () => {
   assert.equal(scene.lines[0].staticState, true);
   assert.equal(scene.allStatesStatic, true);
   assert.deepEqual(scene.sample(0)[0], scene.sample(120)[0]);
+  const state = scene.sampleInto(0, [])[0];
+  assert.equal(state.x, 40);
+  assert.equal(state.y, -30);
+  assert.equal(state.rotation, 15);
+  assert.equal(state.alpha, 200);
+  assert.equal(state.scaleX, 1);
+  assert.equal(state.scaleY, 1.2);
 });
 
 test("mixed step and continuous channels preserve both contributions", () => {
@@ -103,10 +112,12 @@ test("mixed step and continuous channels preserve both contributions", () => {
   scene.compile(chart, tempo);
 
   const sampleAtBeat = (beat) => scene.sampleInto(tempo.seconds(beat), [])[0].x;
-  assert.equal(sampleAtBeat(5), 5);
+  // The flat layer folds into an offset of 5; the ramping layer owns the prefix
+  // before its start, so half a span to the left of beat 10 reads -5.
+  assert.equal(sampleAtBeat(5), 0);
   assert.equal(sampleAtBeat(15), 10);
   assert.equal(sampleAtBeat(25), 15);
-  assert.equal(sampleAtBeat(5), 5, "backward seeks reset the step contribution exactly");
+  assert.equal(sampleAtBeat(5), 0, "backward seeks reset the step contribution exactly");
 });
 
 test("equal endpoint events use the normal event cursor path", () => {

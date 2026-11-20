@@ -1,9 +1,10 @@
 /* eslint-disable max-lines -- event tracks and floor integration share one sampling contract. */
 /** Event tracks and speed integration used by the scene runtime. */
-import { channelInteger } from "../chart.ts";
+import { channelInteger, isHookedEvent } from "../chart.ts";
 import { lowerBound, upperBound } from "../../../utils/search.ts";
 import {
   bezier,
+  bezierTangentSlope,
   easing,
   easingIntegral,
   easingParameters,
@@ -425,7 +426,9 @@ export class EventTrack<T extends JudgeLineEvent = JudgeLineEvent> {
     }
     const first = this.startValues[0];
     const second = this.endValues[0];
-    if (!Number.isFinite(first) || first !== second || Number(this.fallback) !== first) {
+    // A flat track extends across its own prefix, so the value holds from the
+    // start of the chart and the caller may fold it into a constant offset.
+    if (!Number.isFinite(first) || first !== second) {
       return null;
     }
     for (let index = 1; index < this.sources.length; index += 1) {
@@ -464,7 +467,7 @@ export class EventTrack<T extends JudgeLineEvent = JudgeLineEvent> {
       return Number(this.fallback);
     }
     if (seconds < this.starts[0]) {
-      return Number(this.fallback);
+      return Number(this.extendedFirst(seconds));
     }
     if (sourceCount === 1) {
       return this.sampleNumber(seconds, this.sources[0], 0);
@@ -511,14 +514,69 @@ export class EventTrack<T extends JudgeLineEvent = JudgeLineEvent> {
     return this.sampleNumber(seconds, this.sources[index], index);
   }
 
-  /** Sample the active event at `seconds`, or the fallback before the first event. */
+  /**
+   * Value of the first event before its own start.
+   *
+   * RPE reads a layer as one function of time and extends the first event's curve
+   * to the left of its start, so a track without a padding event still has a value
+   * at beat zero and at negative beats. The curve keeps its easing and only the
+   * domain grows: a `quad in` ramp from 0 to 300 across beats 3-4 therefore shows a
+   * parabola that reaches 2700 at beat zero instead of holding the type default.
+   * Only this prefix extends; the gap between two events keeps holding the earlier
+   * event's end value, and a padding event at beat zero ends the extension.
+   *
+   * A bezier payload is only defined inside its own span, so its prefix continues
+   * along the start tangent: the curve's own slope at progress zero, scaled by the
+   * span. A hooked event locks its value pair, so the prefix holds that value and no
+   * curve is extended; a trajectory payload is not a curve of time and holds the
+   * authored start the same way.
+   */
+  private extendedFirst(seconds: number): LineEventValue {
+    const source = this.sources[0];
+    const start = this.starts[0];
+    const end = this.ends[0];
+    // Text and colour payloads have no numeric curve to extend.
+    if (!this.numericOnly) {
+      return source.start;
+    }
+    if (!(end > start) || isHookedEvent(source) || source.trajectory) {
+      return this.normalizedStartValues[0];
+    }
+    const progress = (seconds - start) * this.inverseDurations[0];
+    const easingType = this.easingTypes[0] || 1;
+    const amount =
+      this.bezierFlags[0] === 1
+        ? bezierTangentSlope(source.bezierPoints) * progress
+        : this.linearFlags[0] === 1
+          ? progress
+          : this.easingRangeValid[0] && Number.isFinite(progress)
+            ? easingWithKnownRange(
+                progress,
+                easingType,
+                this.easingLefts[0],
+                this.easingRights[0],
+                this.easingBases[0],
+                this.easingRanges[0],
+              )
+            : easingWithRange(
+                progress,
+                easingType,
+                this.easingLefts[0],
+                this.easingRights[0],
+                this.easingBases[0],
+                this.easingRanges[0],
+              );
+    const normalizedStart = this.normalizedStartValues[0];
+    return normalizedStart + (this.normalizedEndValues[0] - normalizedStart) * amount;
+  }
+
+  /** Sample the active event at `seconds`; the first event's curve owns the prefix. */
   value(seconds: number): LineEventValue {
     if (!this.sources.length) {
       return this.fallback;
     }
-    // A later-starting event does not contribute before its first beat.
     if (seconds < this.starts[0]) {
-      return this.fallback;
+      return this.extendedFirst(seconds);
     }
     // Once a numeric track has passed its final event, its value is fixed. Avoid
     // walking the playback cursor and re-evaluating easing for tracks whose

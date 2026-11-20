@@ -81,6 +81,16 @@ export interface JudgeLineEvent {
   [extra: string]: unknown;
 }
 
+/**
+ * Whether an event is hooked.
+ *
+ * RPE writes `inst: 1` on a hooked event, which locks its value pair and leaves the
+ * span with no duration; older charts spell the same flag as a boolean.
+ */
+export function isHookedEvent(event: JudgeLineEvent | null | undefined): boolean {
+  return event?.inst === true || Number(event?.inst) === 1;
+}
+
 export interface JudgeLineNote {
   id?: ChartObjectId;
   type: number;

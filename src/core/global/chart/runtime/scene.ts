@@ -881,10 +881,12 @@ export class LineRuntime {
           incline: 0,
           floor: 0,
         } satisfies LineState);
-      result.x = 0;
-      result.y = 0;
-      result.rotation = 0;
-      result.alpha = 0;
+      // Every channel is constant, but a constant need not be the channel's neutral
+      // value: a flat moveX of 40 holds the line at 40 for the whole chart.
+      result.x = this.trackOffsetList[0];
+      result.y = this.trackOffsetList[1];
+      result.rotation = this.trackOffsetList[2];
+      result.alpha = this.trackOffsetList[3];
       result.scaleX = 1;
       result.scaleY = this.staticScaleY;
       result.color = this.staticColor;

@@ -9,12 +9,7 @@
  * timeline's view shape is here.
  */
 
-import type {
-  JudgeLineEvent,
-  JudgeLineNote,
-  LineEventLayer,
-  LineEventValue,
-} from "../../global/chart/chart.ts";
+import type { JudgeLineNote, LineEventLayer, LineEventValue } from "../../global/chart/chart.ts";
 import { beatValue, isOrderedBeatRange } from "../../global/chart/timing/beat.ts";
 import type { TimelineEventLayer, TimelineNote } from "./types.ts";
 
@@ -117,7 +112,6 @@ export function eventValueNumber(value: LineEventValue): number {
   return typeof value === "number" ? value : Number.NaN;
 }
 
-/** An instant event (`inst`) has no duration, so its track draws one edge. */
-export function isHookedEvent(event: JudgeLineEvent | null | undefined): boolean {
-  return event?.inst === true || Number(event?.inst) === 1;
-}
+// The hooked flag is chart data, so the predicate lives beside `JudgeLineEvent`
+// and is re-exported here for the timeline's own readers.
+export { isHookedEvent } from "../../global/chart/chart.ts";
