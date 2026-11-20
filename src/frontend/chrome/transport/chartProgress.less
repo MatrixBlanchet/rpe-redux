@@ -44,7 +44,9 @@
 
 .redux-app-root .transport-scrubber {
   height: 100%;
-  min-height: 40px;
+  // The scrubber fills the track the card gives it. A floor here would push the
+  // readouts and the stretch rail out of the card once the toolbar shrinks.
+  min-height: 0;
   background: transparent;
   border-color: transparent;
 }
@@ -112,19 +114,23 @@
   grid-column: 2;
   grid-row: 1;
   display: grid;
-  grid-template-rows: minmax(40px, 1fr) auto;
+  // Both tracks follow the card, so the card never asks for more height than the
+  // toolbar has. A floor on either track is what used to clip the card once the
+  // toolbar was scaled down.
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 1px;
   padding: var(--space-1-5);
   border: 0;
   border-radius: var(--radius-panel);
   background: transparent;
   min-width: 0;
+  min-height: 0;
 }
 
 .redux-status-card .scrubber-wrap {
   margin: 0;
   height: 100%;
-  min-height: 40px;
+  min-height: 0;
 }
 
 .redux-status-line {
@@ -160,9 +166,11 @@
 
 // The vertical stretch rail sits under the readouts, with its caption directly
 // below the track. The rail spans the card so it aligns with the scrubber above.
+// Every measurement is a design token times the region's scale, so the rail grows
+// and shrinks with the rest of the chrome instead of staying one fixed size.
 .transport-stretch {
   display: grid;
-  grid-template-rows: 12px auto;
+  grid-template-rows: calc(20px * var(--ui-scale)) auto;
   justify-items: center;
   min-width: 0;
   color: var(--foreground-muted);
@@ -179,7 +187,7 @@
   position: relative;
   width: 100%;
   min-width: 0;
-  height: 12px;
+  height: calc(20px * var(--ui-scale));
 }
 
 .transport-stretch-track {
@@ -187,10 +195,14 @@
   left: 0;
   right: 0;
   top: 50%;
-  height: 4px;
+  // The track is tall enough to hold the thumb inside it, so the ball reads as
+  // part of the rail instead of overhanging a hairline.
+  height: calc(14px * var(--ui-scale));
   transform: translateY(-50%);
   border: 1px solid var(--edge-control);
-  border-radius: 999px;
+  // The same radius the scrubber track above uses, so the two rails read as one
+  // family instead of one of them being a one-off value.
+  border-radius: var(--radius-control);
   background: var(--input-surface-disabled);
   pointer-events: none;
 }
@@ -200,8 +212,9 @@
   top: 50%;
   left: var(--stretch-ratio, 50%);
   box-sizing: border-box;
-  width: 12px;
-  height: 12px;
+  // Smaller than the track it sits in, and scaled with the region like the rail.
+  width: calc(12px * var(--ui-scale));
+  height: calc(12px * var(--ui-scale));
   transform: translate(-50%, -50%);
   border: 1px solid var(--input-border-focus);
   border-radius: 50%;
@@ -242,7 +255,7 @@
 
 .redux-app-root .redux-status-card {
   .scrubber-wrap {
-    min-height: 48px;
+    min-height: 0;
     padding-top: 0;
   }
 }
